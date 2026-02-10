@@ -1,0 +1,223 @@
+/* --- 1. CONFIGURATION GÉNÉRALE & VARIABLES --- */
+:root {
+  --orange-basket: #e65100;
+  --noir-sidebar: #1a1a1a;
+  --gris-fond: #f4f4f4;
+  --blanc-pur: #ffffff;
+}
+
+* { 
+  box-sizing: border-box; 
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Inter', sans-serif;
+  /* On force le gris ici pour que tout le site soit propre par défaut */
+  background-color: var(--gris-fond) !important;
+  color: #1a1a1a;
+}
+
+/* --- 2. STRUCTURE LOGIN (Fond noir uniquement ici) --- */
+.login-body {
+  background-color: #111 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  color: white;
+}
+
+/* --- 3. STRUCTURE APPLI (Sidebar + Contenu) --- */
+.app-body {
+  background-color: var(--gris-fond) !important;
+  display: block !important;
+}
+
+.sidebar {
+  width: 250px;
+  background-color: var(--noir-sidebar) !important;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column; /* Indispensable pour le sticky footer */
+  z-index: 1000;
+  color: white;
+  border-right: 1px solid #333;
+  overflow-y: hidden; /* On gère le scroll sur la liste interne */
+}
+
+.main-content {
+  margin-left: 250px;
+  padding: 40px;
+  min-height: 100vh;
+  background-color: var(--gris-fond) !important;
+  transition: margin-left 0.3s ease;
+}
+
+/* --- 4. NAVIGATION --- */
+.nav-container { 
+  flex: 1; 
+  padding: 10px; 
+  overflow-y: auto; /* Permet de scroller les liens si la liste est longue */
+}
+
+.nav-link {
+  color: #ccc !important;
+  text-decoration: none;
+  padding: 12px 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+  margin-bottom: 5px;
+  transition: 0.2s;
+}
+
+.nav-link:hover, .nav-link.active {
+  background: var(--orange-basket);
+  color: white !important;
+}
+
+/* --- 5. COMPOSANTS (CARDS & WRAPPERS) --- */
+.dashboard-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.card {
+  background: var(--blanc-pur) !important;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  border: 1px solid #eee;
+  color: #1a1a1a;
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+/* --- 6. ÉLÉMENTS SPÉCIFIQUES --- */
+.header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.header-title-row h1 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.welcome-text {
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.profile-box {
+  background: #111;
+  padding: 20px;
+  border-top: 1px solid #333;
+  margin-top: auto; /* Pousse le profil vers le bas */
+  flex-shrink: 0; /* Empêche le bouton de s'écraser */
+}
+
+/* --- 7. CHARGEMENT (LOADER) --- */
+.loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: var(--gris-fond) !important;
+}
+
+.bouncing-ball {
+  font-size: 3.5rem;
+  animation: bounce 0.6s infinite alternate;
+}
+
+@keyframes bounce {
+  from { transform: translateY(0); }
+  to { transform: translateY(-30px); }
+}
+
+/* --- 8. RESPONSIVE MOBILE --- */
+@media (max-width: 992px) {
+  .sidebar {
+    left: -260px;
+    width: 260px;
+    transition: left 0.3s ease;
+  }
+
+  .sidebar.mobile-open {
+    left: 0;
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+    padding: 20px;
+    padding-top: 80px;
+  }
+
+  .burger-toggle {
+    display: flex;
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    z-index: 2000;
+    background: var(--orange-basket);
+    color: white;
+    border: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 8px;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(3px);
+    z-index: 998;
+  }
+
+  /* Correctif pour que le profil soit toujours visible sur petit écran mobile */
+  .profile-box {
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  }
+}
+
+/* --- 9. AJOUTS SPÉCIFIQUES POUR BOUTON DÉCONNEXION --- */
+.btn-logout {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: 1px solid #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444 !important;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: 0.3s;
+}
+
+.btn-logout:hover {
+  background: #ef4444;
+  color: white !important;
+}
