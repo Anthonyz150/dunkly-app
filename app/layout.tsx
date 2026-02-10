@@ -37,7 +37,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     setIsMenuOpen(false);
   }, [pathname]);
 
-  const isLoginPage = pathname === '/login';
+  // 👇 --- CORRECTION : Condition robuste pour masquer sidebar ---
+  const isLoginPage = pathname?.toLowerCase() === '/login';
   const isAdmin = user?.role?.toLowerCase() === 'admin' || user?.email === 'anthony.didier.pro@gmail.com';
 
   // Récupération de l'initiale
@@ -48,6 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     return <html lang="fr"><body style={{background: 'white'}}></body></html>;
   }
 
+  // --- CORRECTION : Retourner le layout minimal pour la page de login ---
   if (isLoginPage) return <html lang="fr"><body>{children}</body></html>;
 
   return (
