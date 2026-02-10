@@ -7,11 +7,11 @@ function createWindow() {
     height: 800,
     webPreferences: {
       nodeIntegration: true,
+      contextIsolation: false, 
     },
   });
 
-  // Charge le site Next.js en développement
-  win.loadURL('http://localhost:3000');
+  win.loadURL('https://dunkly-app.vercel.app'); 
 }
 
 app.whenReady().then(createWindow);

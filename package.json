@@ -40,7 +40,8 @@
     "appId": "com.dunkly.app",
     "productName": "Dunkly",
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "build/icon.ico"
     },
     "directories": {
       "output": "dist"
