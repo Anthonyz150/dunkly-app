@@ -13,19 +13,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    // --- MODIFICATION ICI ---
+    // On ne cherche plus à rediriger vers /login
     const stored = localStorage.getItem("currentUser");
-    if (!stored) {
-      router.replace("/login");
-      return;
+    if (stored) {
+      try {
+        setUser(JSON.parse(stored));
+      } catch {
+        localStorage.clear();
+      }
     }
-
-    try {
-      setUser(JSON.parse(stored));
-    } catch {
-      localStorage.clear();
-      router.replace("/login");
-    }
-
     setReady(true);
     setMenuOpen(false);
   }, [pathname]);
@@ -144,6 +141,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             color: #ef4444;
             font-weight: bold;
             cursor: pointer;
+            padding: 0;
+            text-align: left;
+            width: 100%;
           }
 
           /* CONTENT */
@@ -192,6 +192,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               font-size: 24px;
               background: none;
               border: none;
+              cursor: pointer;
             }
 
             .avatar {

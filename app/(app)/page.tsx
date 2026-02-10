@@ -30,33 +30,32 @@ export default function Dashboard() {
   const [prochainMatch, setProchainMatch] = useState<any>(null);
   const [dernierResultat, setDernierResultat] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
-  // 👇 1. ÉTAT DE CHARGEMENT ROBUSTE
   const [loading, setLoading] = useState(true); 
   const router = useRouter();
 
   useEffect(() => {
     const initDashboard = async () => {
-      // Sécurité : Timeout pour forcer l'affichage si ça rame trop
-      const forceDisplay = setTimeout(() => setLoading(false), 5000);
+      // Sécurité : Timeout pour forcer l'affichage
+      const forceDisplay = setTimeout(() => setLoading(false), 3000);
 
       try {
         const { data: { session } } = await supabase.auth.getSession();
         
+        // --- MODIFICATION ICI ---
+        // On ne redirige plus vers /login pour forcer l'affichage
         if (!session) { 
-          router.replace('/login'); 
-          return; 
+          console.log("Pas de session active");
+        } else {
+            // VÉRIFICATION DE L'UTILISATEUR
+            const localUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const userData = {
+              ...session.user,
+              ...localUser
+            };
+            setUser(userData);
         }
-        
-        // 🔥 2. VÉRIFICATION FORCÉE DE L'UTILISATEUR
-        const localUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-        const userData = {
-          ...session.user,
-          ...localUser
-        };
-        setUser(userData);
-        console.log("User chargé:", userData);
 
-        // Initialisation OneSignal non-bloquante
+        // Initialisation OneSignal
         if (typeof window !== "undefined") {
             OneSignal.init({
                 appId: "a60eae06-8739-4515-8827-858c2ec0c07b",
@@ -86,11 +85,10 @@ export default function Dashboard() {
       } catch (error) {
         console.error("Erreur chargement:", error);
       } finally {
-        // 🔥 3. NE PAS CHARGER TANT QUE USER N'EST PAS DÉFINI
-        if (user || !loading) {
-            setLoading(false);
-            clearTimeout(forceDisplay);
-        }
+        // --- MODIFICATION ICI ---
+        // On désactive le chargement quoi qu'il arrive
+        setLoading(false);
+        clearTimeout(forceDisplay);
       }
     };
 
@@ -106,8 +104,9 @@ export default function Dashboard() {
 
   const isAdmin = user?.role === 'admin' || user?.username?.toLowerCase() === 'admin' || user?.username?.toLowerCase() === 'anthony.didier.prop' || user?.user_metadata?.role === 'admin';
 
-  // 👇 4. ÉCRAN DE CHARGEMENT SI USER OU STATS PAS PRÊTS
-  if (loading || !user) return (
+  // --- MODIFICATION ICI ---
+  // On affiche le contenu même si l'utilisateur n'est pas chargé (user est null)
+  if (loading) return (
     <div style={{ height: '80vh', display: 'flex', justifyContent: 'center', alignItems: 'center', fontFamily: 'sans-serif', background: 'white' }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🏀</div>
@@ -126,7 +125,7 @@ export default function Dashboard() {
             ACCUEIL <span style={{ color: '#F97316' }}>.</span>
           </h1>
           <p style={{ color: '#64748B', fontSize: '0.9rem', marginTop: '5px' }}>
-            Ravi de vous revoir, <strong>{user?.prenom || user?.username || user?.email}</strong>.
+            Ravi de vous revoir, <strong>{user?.prenom || user?.username || user?.email || 'Invité'}</strong>.
           </p>
         </div>
 
