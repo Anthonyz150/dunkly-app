@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import OneSignal from 'react-onesignal';
 
-// --- 1. COMPOSANTS DE STYLE INTERNES (TES ORIGINAUX ADAPTÉS MOBILE) ---
+// --- 1. COMPOSANTS DE STYLE INTERNES ---
 function StatCard({ label, value, icon, color }: { label: string; value: number | string; icon: string; color: string }) {
   return (
     <div style={{ 
@@ -30,13 +30,14 @@ export default function Dashboard() {
   const [prochainMatch, setProchainMatch] = useState<any>(null);
   const [dernierResultat, setDernierResultat] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  // 👇 1. ÉTAT DE CHARGEMENT ROBUSTE
+  const [loading, setLoading] = useState(true); 
   const router = useRouter();
 
   useEffect(() => {
     const initDashboard = async () => {
-      // Sécurité : Timeout pour forcer l'affichage même si OneSignal ou Supabase rame
-      const forceDisplay = setTimeout(() => setLoading(false), 3000);
+      // Sécurité : Timeout pour forcer l'affichage si ça rame trop
+      const forceDisplay = setTimeout(() => setLoading(false), 5000);
 
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -46,10 +47,14 @@ export default function Dashboard() {
           return; 
         }
         
-        setUser({
+        // 🔥 2. VÉRIFICATION FORCÉE DE L'UTILISATEUR
+        const localUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        const userData = {
           ...session.user,
-          ...JSON.parse(localStorage.getItem('currentUser') || '{}')
-        });
+          ...localUser
+        };
+        setUser(userData);
+        console.log("User chargé:", userData);
 
         // Initialisation OneSignal non-bloquante
         if (typeof window !== "undefined") {
@@ -81,8 +86,11 @@ export default function Dashboard() {
       } catch (error) {
         console.error("Erreur chargement:", error);
       } finally {
-        setLoading(false);
-        clearTimeout(forceDisplay);
+        // 🔥 3. NE PAS CHARGER TANT QUE USER N'EST PAS DÉFINI
+        if (user || !loading) {
+            setLoading(false);
+            clearTimeout(forceDisplay);
+        }
       }
     };
 
@@ -98,11 +106,12 @@ export default function Dashboard() {
 
   const isAdmin = user?.role === 'admin' || user?.username?.toLowerCase() === 'admin' || user?.username?.toLowerCase() === 'anthony.didier.prop' || user?.user_metadata?.role === 'admin';
 
-  if (loading) return (
-    <div style={{ height: '80vh', display: 'flex', justifyContent: 'center', alignItems: 'center', fontFamily: 'sans-serif' }}>
+  // 👇 4. ÉCRAN DE CHARGEMENT SI USER OU STATS PAS PRÊTS
+  if (loading || !user) return (
+    <div style={{ height: '80vh', display: 'flex', justifyContent: 'center', alignItems: 'center', fontFamily: 'sans-serif', background: 'white' }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🏀</div>
-        <p style={{ color: '#64748B', fontWeight: 'bold' }}>Préparation du parquet...</p>
+        <p style={{ color: '#64748B', fontWeight: 'bold' }}>Chargement du parquet...</p>
       </div>
     </div>
   );
@@ -128,7 +137,7 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* STATS GRID - Responsive 1 col mobile / 3 col PC */}
+      {/* STATS GRID */}
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
