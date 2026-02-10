@@ -11,9 +11,14 @@ import { saveTokenToDatabase } from "@/lib/firebase";
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  // 👇 1. ÉTAT POUR GÉRER L'AFFICHAGE ET ÉVITER LE BUG VISUEL
+  const [isReady, setIsReady] = useState(false); 
   const pathname = usePathname();
 
   useEffect(() => {
+    // 2. --- MODIFICATION : Indiquer que le composant est prêt côté client ---
+    setIsReady(true); 
+
     // 1. Gestion de l'utilisateur
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) {
@@ -21,7 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
         
-        // 2. --- MODIFICATION ICI : Enregistrement du token FCM ---
+        // 2. --- Modification : Enregistrement du token FCM ---
         if (parsedUser.id) {
           saveTokenToDatabase(parsedUser.id);
         }
@@ -37,6 +42,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   // Récupération de l'initiale
   const initial = user?.username ? user.username.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U');
+
+  // 👇 3. PROTECTION : Affiche une page blanche tant que localStorage n'est pas chargé
+  if (!isReady) {
+    return <html lang="fr"><body style={{background: 'white'}}></body></html>;
+  }
 
   if (isLoginPage) return <html lang="fr"><body>{children}</body></html>;
 
