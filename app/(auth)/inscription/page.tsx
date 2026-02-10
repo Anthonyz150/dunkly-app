@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase'; // Ajustez le chemin selon votre structure
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation'; // --- MODIFICATION ICI ---
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
@@ -10,6 +10,11 @@ export default function RegisterPage() {
   const [username, setUsername] = useState('');
   const [message, setMessage] = useState('');
   const router = useRouter();
+  const searchParams = useSearchParams(); // --- MODIFICATION ICI ---
+  
+  // --- MODIFICATION ICI ---
+  // Récupère l'URL de redirection, par défaut vers '/dashboard'
+  const redirectTo = searchParams.get('redirect') || '/dashboard';
 
   // Fonction pour envoyer l'e-mail de bienvenue via votre API route
   const sendWelcomeEmail = async (email: string, username: string) => {
@@ -45,8 +50,11 @@ export default function RegisterPage() {
     // 2. Si succès, envoi de l'email de bienvenue
     if (data.user) {
       await sendWelcomeEmail(email, username);
-      setMessage('🎉 Compte créé ! Vérifiez votre boîte mail.');
-      // Optionnel: router.push('/dashboard');
+      setMessage('🎉 Compte créé ! Redirection...');
+      
+      // --- MODIFICATION ICI ---
+      // Redirige vers l'URL stockée dans le paramètre
+      router.push(redirectTo);
     }
   };
 

@@ -2,7 +2,7 @@
 
 import { useState, type CSSProperties } from "react";
 import { supabase } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation"; // --- MODIFICATION ICI ---
 import { motion } from "framer-motion";
 
 export default function AuthPage() {
@@ -14,6 +14,11 @@ export default function AuthPage() {
   const [error, setError] = useState("");
 
   const router = useRouter();
+  const searchParams = useSearchParams(); // --- MODIFICATION ICI ---
+
+  // --- MODIFICATION ICI ---
+  // Récupère l'URL de redirection, par défaut vers '/'
+  const redirectTo = searchParams.get('redirect') || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +33,7 @@ export default function AuthPage() {
         });
         if (error) throw error;
 
-        // --- AJOUT : Synchronisation avec ton Dashboard ---
+        // --- Synchronisation avec ton Dashboard ---
         if (data?.user) {
           localStorage.setItem('currentUser', JSON.stringify({
             id: data.user.id,
@@ -37,6 +42,10 @@ export default function AuthPage() {
             role: data.user.user_metadata?.role || 'user'
           }));
         }
+
+        // --- MODIFICATION ICI ---
+        // Redirige vers l'URL stockée dans le paramètre
+        window.location.href = redirectTo;
 
       } else {
         const { error } = await supabase.auth.signUp({
@@ -49,14 +58,16 @@ export default function AuthPage() {
           }
         });
         if (error) throw error;
+        
         alert("Inscription réussie ! Vérifiez vos emails ou connectez-vous.");
-        setMode("login");
+        
+        // --- MODIFICATION ICI ---
+        // Après inscription réussie, on redirige vers le login avec le paramètre de redirection
+        router.push(`/login?redirect=${encodeURIComponent(redirectTo)}`);
+        
         setLoading(false);
         return;
       }
-
-      // Utilisation de window.location pour forcer un rafraîchissement propre du middleware
-      window.location.href = "/"; 
       
     } catch (err: any) {
       setError(err.message || "Une erreur est survenue.");
