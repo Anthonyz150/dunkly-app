@@ -46,7 +46,7 @@ export default function DetailMatchPage({ params }: { params: Promise<{ id: stri
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      timeZone: 'Europe/Paris' // Corrigé ici pour Paris
+      timeZone: 'Europe/Paris'
     }).format(new Date(dateString));
   };
 
@@ -79,9 +79,16 @@ export default function DetailMatchPage({ params }: { params: Promise<{ id: stri
         <div className="match-flex-mobile" style={matchFlex}>
           {/* CLUB & EQUIPE DOMICILE */}
           <div style={teamSide}>
-            <div style={{ ...logoCircle, backgroundColor: match.logoColorA || '#1e293b' }}>
-              {match.clubA?.[0] || 'A'}
-            </div>
+            
+            {/* --- MODIF: LOGO DOMICILE --- */}
+            {match.logo_urlA ? (
+                <img src={match.logo_urlA} alt={match.clubA} style={logoImageStyle} />
+            ) : (
+                <div style={{ ...logoCircle, backgroundColor: match.logoColorA || '#1e293b' }}>
+                    {match.clubA?.[0] || 'A'}
+                </div>
+            )}
+            
             <h2 style={teamName}>{match.clubA}</h2>
             <p style={clubSub}>{match.equipeA}</p>
           </div>
@@ -98,9 +105,16 @@ export default function DetailMatchPage({ params }: { params: Promise<{ id: stri
 
           {/* CLUB & EQUIPE EXTERIEUR */}
           <div style={teamSide}>
-            <div style={{ ...logoCircle, backgroundColor: match.logoColorB || '#1e293b' }}>
-              {match.clubB?.[0] || 'B'}
-            </div>
+            
+            {/* --- MODIF: LOGO EXTÉRIEUR --- */}
+            {match.logo_urlB ? (
+                <img src={match.logo_urlB} alt={match.clubB} style={logoImageStyle} />
+            ) : (
+                <div style={{ ...logoCircle, backgroundColor: match.logoColorB || '#1e293b' }}>
+                    {match.clubB?.[0] || 'B'}
+                </div>
+            )}
+            
             <h2 style={teamName}>{match.clubB}</h2>
             <p style={clubSub}>{match.equipeB}</p>
           </div>
@@ -112,7 +126,7 @@ export default function DetailMatchPage({ params }: { params: Promise<{ id: stri
           <h3 style={infoTitle}>📍 Lieu</h3>
           {match.lieu ? (
             <a 
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(match.lieu)}`}
+              href={`https://maps.google.com/?q=${encodeURIComponent(match.lieu)}`}
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: '#F97316', textDecoration: 'none', fontWeight: 'bold', fontSize: '1.1rem' }}
@@ -129,7 +143,6 @@ export default function DetailMatchPage({ params }: { params: Promise<{ id: stri
         </div>
       </div>
 
-      {/* AJOUT : CSS pour l'optimisation mobile sans toucher au reste */}
       <style jsx>{`
         @media (max-width: 768px) {
           .match-flex-mobile {
@@ -148,7 +161,7 @@ export default function DetailMatchPage({ params }: { params: Promise<{ id: stri
   );
 }
 
-// --- TES STYLES (INCHANGÉS) ---
+// --- STYLES MODIFIÉS ---
 const containerStyle = { padding: '40px 20px', maxWidth: '900px', margin: '0 auto', fontFamily: 'sans-serif', color: '#1e293b' };
 const backBtn = { background: '#f1f5f9', border: 'none', color: '#64748b', padding: '10px 20px', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold' as const, marginBottom: '30px' };
 const scoreCard = { backgroundColor: 'white', borderRadius: '30px', padding: '50px 30px', boxShadow: '0 10px 40px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9', textAlign: 'center' as const };
@@ -156,6 +169,8 @@ const competitionLabel = { color: '#F97316', fontWeight: 'bold' as const, textTr
 const dateLabel = { color: '#94a3b8', fontSize: '0.9rem', marginBottom: '40px', textTransform: 'capitalize' as const };
 const matchFlex = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px' };
 const teamSide = { flex: 1, display: 'flex', flexDirection: 'column' as const, alignItems: 'center' };
+// Ajout style pour l'image
+const logoImageStyle = { width: '90px', height: '90px', borderRadius: '50%', objectFit: 'contain' as const, marginBottom: '15px', border: '1px solid #e2e8f0' };
 const logoCircle = { width: '90px', height: '90px', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: 'bold' as const, marginBottom: '15px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' };
 const teamName = { fontSize: '1.6rem', fontWeight: '900' as const, margin: '0 0 5px 0', textTransform: 'uppercase' as const };
 const clubSub = { margin: 0, color: '#64748b', fontSize: '1rem', fontWeight: '600' as const };
