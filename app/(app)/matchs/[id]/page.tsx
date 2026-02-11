@@ -16,7 +16,32 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
   useEffect(() => {
     const storedUser = localStorage.getItem("currentUser");
     if (storedUser) setUser(JSON.parse(storedUser));
+    
+    // 1. Charger le match initialement
     chargerMatch();
+
+    // 2. --- SOUSCRIPTION REALTIME ---
+    const channel = supabase
+      .channel('match-detail')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'matchs',
+          filter: `id=eq.${matchId}`, // Écouter uniquement ce match
+        },
+        (payload) => {
+          console.log('Changement reçu en temps réel!', payload);
+          setMatch(payload.new); // Mettre à jour l'affichage
+        }
+      )
+      .subscribe();
+
+    // Nettoyage lors du démontage du composant
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [matchId]);
 
   const chargerMatch = async () => {
@@ -35,23 +60,23 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
   // --- LOGIQUE DE SAISIE DES SCORES PAR QUART-TEMPS ---
   const ouvrirSaisieScore = async () => {
     // Saisie Q1
-    const q1A = prompt(`Score ${match.clubA} - Quart-temps 1 :`, "0");
-    const q1B = prompt(`Score ${match.clubB} - Quart-temps 1 :`, "0");
+    const q1A = prompt(`Score ${match.clubA} - Quart-temps 1 :`, match.config?.scores_quart_temps?.q1?.a || "0");
+    const q1B = prompt(`Score ${match.clubB} - Quart-temps 1 :`, match.config?.scores_quart_temps?.q1?.b || "0");
     if (q1A === null || q1B === null) return;
 
     // Saisie Q2
-    const q2A = prompt(`Score ${match.clubA} - Quart-temps 2 :`, "0");
-    const q2B = prompt(`Score ${match.clubB} - Quart-temps 2 :`, "0");
+    const q2A = prompt(`Score ${match.clubA} - Quart-temps 2 :`, match.config?.scores_quart_temps?.q2?.a || "0");
+    const q2B = prompt(`Score ${match.clubB} - Quart-temps 2 :`, match.config?.scores_quart_temps?.q2?.b || "0");
     if (q2A === null || q2B === null) return;
 
     // Saisie Q3
-    const q3A = prompt(`Score ${match.clubA} - Quart-temps 3 :`, "0");
-    const q3B = prompt(`Score ${match.clubB} - Quart-temps 3 :`, "0");
+    const q3A = prompt(`Score ${match.clubA} - Quart-temps 3 :`, match.config?.scores_quart_temps?.q3?.a || "0");
+    const q3B = prompt(`Score ${match.clubB} - Quart-temps 3 :`, match.config?.scores_quart_temps?.q3?.b || "0");
     if (q3A === null || q3B === null) return;
 
     // Saisie Q4
-    const q4A = prompt(`Score ${match.clubA} - Quart-temps 4 :`, "0");
-    const q4B = prompt(`Score ${match.clubB} - Quart-temps 4 :`, "0");
+    const q4A = prompt(`Score ${match.clubA} - Quart-temps 4 :`, match.config?.scores_quart_temps?.q4?.a || "0");
+    const q4B = prompt(`Score ${match.clubB} - Quart-temps 4 :`, match.config?.scores_quart_temps?.q4?.b || "0");
     if (q4A === null || q4B === null) return;
 
     // Calcul des totaux
@@ -76,8 +101,8 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
       .eq("id", matchId);
 
     if (!error) {
-      alert("Match clôturé avec succès !");
-      chargerMatch();
+      alert("Scores mis à jour !");
+      // chargerMatch(); // Plus besoin d'appeler ça, Realtime s'en charge
     } else {
       alert("Erreur : " + error.message);
     }
@@ -155,7 +180,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
   );
 }
 
-// --- STYLES OBJETS ---
+// --- STYLES OBJETS (Inchangés) ---
 const containerStyle = { padding: "40px 20px", maxWidth: "800px", margin: "0 auto", fontFamily: "sans-serif" };
 const backBtn = { background: "none", border: "none", color: "#64748b", cursor: "pointer", fontWeight: "bold" as const, marginBottom: "20px" };
 const matchCard = { display: "flex", justifyContent: "space-around", alignItems: "center", backgroundColor: "#1e293b", color: "white", padding: "40px", borderRadius: "24px", marginBottom: "30px" };
