@@ -17,6 +17,8 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
 
   const [selectedClubId, setSelectedClubId] = useState('');
   const [selectedEquipe, setSelectedEquipe] = useState<any>(null);
+  // --- NOUVEL ÉTAT POUR LE LOGO DE COMPET ---
+  const [newLogoUrl, setNewLogoUrl] = useState('');
 
   useEffect(() => {
     const storedUser = localStorage.getItem('currentUser');
@@ -29,7 +31,6 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
     try {
       const { data: comp } = await supabase.from('competitions').select('*').eq('id', compId).single();
       
-      // Récupérer tous les clubs pour avoir leurs logos à jour
       const { data: listeClubs } = await supabase.from('equipes_clubs').select('*, logo_url').order('nom');
       
       if (comp) {
@@ -41,6 +42,8 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
 
         setCompetition(comp);
         setMatchsTermines(matchs || []);
+        // Initialiser le champ du logo avec l'URL actuelle
+        setNewLogoUrl(comp.logo_url || '');
       }
       setClubs(listeClubs || []);
     } catch (error) {
@@ -55,14 +58,12 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
     
     const stats: Record<string, any> = {};
     
-    // Créer une map pour trouver rapidement le logo d'un club actuel
     const clubLogos = new Map(clubs.map(c => [c.nom, c.logo_url]));
 
     competition.equipes_engagees.forEach((eq: any) => {
       const key = `${eq.clubNom}-${eq.nom}`;
       stats[key] = { 
         ...eq,
-        // --- CORRECTION LOGO: On force l'utilisation du logo actuel du club ---
         logoUrl: clubLogos.get(eq.clubNom) || eq.logoUrl,
         m: 0, v: 0, d: 0, ptsPlus: 0, ptsMoins: 0, points: 0 
       };
@@ -105,6 +106,18 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
     }
   };
 
+  // --- NOUVELLE FONCTION POUR MAJ LOGO ---
+  const updateCompetLogo = async () => {
+    if (!isAdmin) return;
+    const { error } = await supabase.from('competitions').update({ logo_url: newLogoUrl }).eq('id', compId);
+    if (!error) {
+      setCompetition({ ...competition, logo_url: newLogoUrl });
+      alert("Logo de la compétition mis à jour !");
+    } else {
+      alert("Erreur lors de la mise à jour : " + error.message);
+    }
+  };
+
   const ajouterEquipeACompete = async () => {
     if (!selectedEquipe || !selectedClubId || !competition) return;
     const club = clubs.find(c => c.id === selectedClubId);
@@ -134,6 +147,8 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
     <div style={containerStyle}>
       <div style={heroSection}>
         <button onClick={() => router.push('/competitions')} style={backBtn}>← Retour</button>
+        {/* --- AFFICHAGE DU LOGO DE COMPET --- */}
+        {competition.logo_url && <img src={competition.logo_url} alt={competition.nom} style={{ width: '80px', height: '80px', objectFit: 'contain', marginBottom: '10px' }} />}
         <h1 style={titleStyle}>{competition.nom}</h1>
         <div style={badgeGrid}>
           <div style={miniBadge}>🏆 {competition.type}</div>
@@ -182,13 +197,25 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
           </div>
         </div>
 
-        {/* --- PARTIE ADMIN CONSERVÉE --- */}
         <div style={actionColumn}>
           {isAdmin && (
             <button onClick={cloturerCompet} style={cloturerBtnStyle}>🔒 CLÔTURER</button>
           )}
           {isAdmin && (
             <div style={adminCard}>
+              {/* --- FORMULAIRE MAJ LOGO --- */}
+              <h3 style={{marginTop: 0}}>Logo Compétition</h3>
+              <input 
+                type="text" 
+                value={newLogoUrl} 
+                onChange={(e) => setNewLogoUrl(e.target.value)}
+                placeholder="URL du logo"
+                style={{...selectStyle, marginBottom: '10px'}}
+              />
+              <button onClick={updateCompetLogo} style={addBtn}>Mettre à jour le logo</button>
+              
+              <hr style={{margin: '20px 0', borderColor: '#334155'}}/>
+
               <h3>Engager une équipe</h3>
               <select style={selectStyle} value={selectedClubId} onChange={(e) => setSelectedClubId(e.target.value)}>
                 <option value="">-- Club --</option>
@@ -201,7 +228,6 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
               <button onClick={ajouterEquipeACompete} style={addBtn}>Engager</button>
             </div>
           )}
-          {/* --- PARTIE INSCRIPTIONS SUPPRIMÉE --- */}
         </div>
       </div>
 
