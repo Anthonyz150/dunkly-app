@@ -167,10 +167,9 @@ export default function ResultatsPage() {
         <div className="empty-state">Aucun match ne correspond à votre recherche.</div>
       )}
 
-      <style jsx>{`
+<style jsx>{`
         .page-container { animation: fadeIn 0.4s ease; padding-bottom: 40px; padding: 20px; }
         
-        /* --- NOUVEAUX STYLES HEADER --- */
         .dashboard-header { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
         .header-top { display: flex; justify-content: space-between; align-items: center; gap: 15px; }
         
@@ -181,8 +180,13 @@ export default function ResultatsPage() {
         .search-input { padding: 12px 16px; border-radius: 12px; border: 1px solid #e2e8f0; background: white; width: 100%; outline: none; font-size: 0.95rem; box-sizing: border-box; }
         
         .btn-admin-mobile { 
-          background: #0f172a; color: white; text-decoration: none;
-          padding: 10px 15px; borderRadius: 10px; font-weight: bold; fontSize: 0.85rem;
+          background: #0f172a; /* <--- AJOUTEZ CETTE LIGNE POUR LE NOIR */
+          color: white; 
+          text-decoration: none;
+          padding: 10px 15px; 
+          borderRadius: 10px; 
+          font-weight: bold; 
+          fontSize: 0.85rem;
           white-space: nowrap;
         }
         /* ----------------------------- */
