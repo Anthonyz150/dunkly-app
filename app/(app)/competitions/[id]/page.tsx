@@ -147,8 +147,18 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
     <div style={containerStyle}>
       <div style={heroSection}>
         <button onClick={() => router.push('/competitions')} style={backBtn}>← Retour</button>
-        {/* --- AFFICHAGE DU LOGO DE COMPET --- */}
-        {competition.logo_url && <img src={competition.logo_url} alt={competition.nom} style={{ width: '80px', height: '80px', objectFit: 'contain', marginBottom: '10px' }} />}
+        
+        {/* --- LOGO EN DESSOUS DU BOUTON RETOUR --- */}
+        <div style={{ marginTop: '15px', marginBottom: '15px' }}>
+          {competition.logo_url && (
+            <img 
+              src={competition.logo_url} 
+              alt={competition.nom} 
+              style={{ width: '150px', height: '150px', objectFit: 'contain' }} // --- TAILLE AUGMENTÉE ---
+            />
+          )}
+        </div>
+        
         <h1 style={titleStyle}>{competition.nom}</h1>
         <div style={badgeGrid}>
           <div style={miniBadge}>🏆 {competition.type}</div>
