@@ -17,8 +17,12 @@ interface Match {
   scoreB: number;
   lieu: string;
   status: 'en-cours' | 'termine' | 'a-venir';
-  logo_urlA?: string; // --- AJOUT ---
-  logo_urlB?: string; // --- AJOUT ---
+  logo_urlA?: string;
+  logo_urlB?: string;
+  // --- AJOUT DE LA JOINTURE COMPETITION ---
+  competitions?: {
+    logo_url?: string;
+  };
 }
 
 export default function ResultatsPage() {
@@ -39,10 +43,10 @@ export default function ResultatsPage() {
 
   const chargerTousLesMatchs = async () => {
     setLoading(true);
-    // --- MODIF: On récupère bien les colonnes de logos ---
+    // --- MODIF: JOINTURE POUR LE LOGO DE COMPETITION ---
     const { data, error } = await supabase
       .from('matchs')
-      .select('*')
+      .select('*, competitions(logo_url)') // Jointure
       .order('date', { ascending: false });
     if (!error) setMatchs(data || []);
     setLoading(false);
@@ -102,7 +106,14 @@ export default function ResultatsPage() {
       {/* --- 3. AFFICHAGE TYPÉ PAR COMPETITION --- */}
       {Object.entries(matchGroupes).map(([compet, matchsSection]) => (
         <div key={compet} className="compet-section">
-          <h2 className="compet-title">🏆 {compet}</h2>
+          {/* --- MODIF: AFFICHAGE LOGO COMPETITION A COTE DU TITRE --- */}
+          <h2 className="compet-title" style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
+            {matchsSection[0]?.competitions?.logo_url && (
+              <img src={matchsSection[0].competitions.logo_url} alt={compet} style={{width: '40px', height: '40px', objectFit: 'contain'}} />
+            )}
+            🏆 {compet}
+          </h2>
+          
           <div className="matchs-grid">
             {matchsSection.map((m: Match) => (
               <Link href={`/matchs/resultats/${m.id}`} key={m.id} className="match-card-link">
