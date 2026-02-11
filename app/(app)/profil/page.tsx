@@ -9,6 +9,10 @@ export default function ProfilPage() {
   const [username, setUsername] = useState('');
   const [prenom, setPrenom] = useState('');
   const [nom, setNom] = useState('');
+  // --- NOUVEAU : État pour l'avatar ---
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  // ------------------------------------
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -29,10 +33,61 @@ export default function ProfilPage() {
       setUsername(storedUser.username || '');
       setPrenom(storedUser.prenom || '');
       setNom(storedUser.nom || '');
+      // --- NOUVEAU : Récupérer l'avatar actuel ---
+      setAvatarUrl(storedUser.avatar_url || session.user.user_metadata.avatar_url || null);
+      // ------------------------------------------
       setLoading(false);
     };
     getProfile();
   }, [router]);
+
+  // --- NOUVEAU : Fonction pour uploader l'avatar ---
+  const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      setUploading(true);
+      if (!event.target.files || event.target.files.length === 0) {
+        throw new Error('Vous devez sélectionner une image.');
+      }
+
+      const file = event.target.files[0];
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}.${fileExt}`;
+      const filePath = `${fileName}`; // On stocke directement à la racine du bucket 'avatars'
+
+      // 1. Upload dans Supabase Storage
+      let { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // 2. Récupérer l'URL publique
+      const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+      const newAvatarUrl = data.publicUrl;
+
+      // 3. Mettre à jour l'URL dans Supabase Auth (metadata)
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: { avatar_url: newAvatarUrl },
+      });
+
+      if (updateError) throw updateError;
+      
+      setAvatarUrl(newAvatarUrl);
+      setMessage('✅ Photo de profil mise à jour !');
+      setTimeout(() => setMessage(''), 3000);
+      
+      // Mettre à jour le localStorage pour refléter le changement
+      const currentData = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      localStorage.setItem('currentUser', JSON.stringify({ ...currentData, avatar_url: newAvatarUrl }));
+      window.dispatchEvent(new Event('storage'));
+
+    } catch (error: any) {
+      setMessage('❌ Erreur photo : ' + error.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+  // --------------------------------------------------
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,6 +174,29 @@ export default function ProfilPage() {
         )}
 
         <form onSubmit={handleSave} className="profile-form">
+          {/* --- NOUVEAU : Zone Avatar --- */}
+          <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+            <img
+              src={avatarUrl || 'https://via.placeholder.com/150?text=Avatar'}
+              alt="Avatar"
+              style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', marginBottom: '15px', border: '4px solid white', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
+            />
+            <div>
+              <label htmlFor="avatar-upload" style={{ ...btnSave, padding: '10px 20px', fontSize: '0.8rem', cursor: 'pointer', display: 'inline-block' }}>
+                {uploading ? '⏳...' : 'Changer de photo'}
+              </label>
+              <input
+                type="file"
+                id="avatar-upload"
+                accept="image/*"
+                onChange={uploadAvatar}
+                disabled={uploading}
+                style={{ display: 'none' }}
+              />
+            </div>
+          </div>
+          {/* ------------------------------ */}
+
           <div style={inputGroup}>
             <label style={labelStyle}>Pseudo (Nom d'utilisateur)</label>
             <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} style={inputStyle} required />
@@ -149,7 +227,6 @@ export default function ProfilPage() {
           </div>
 
           <style jsx>{`
-            /* --- MODIFICATION ICI : Padding augmenté à 40px --- */
             .profile-form { 
               display: flex; 
               flex-direction: column; 
@@ -160,8 +237,6 @@ export default function ProfilPage() {
               box-shadow: 0 10px 25px rgba(0,0,0,0.03); 
               border: 1px solid #F1F5F9; 
             }
-            /* -------------------------------------------------- */
-
             .name-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
             @media (max-width: 480px) { .name-grid { grid-template-columns: 1fr; gap: 15px; } }
           `}</style>
