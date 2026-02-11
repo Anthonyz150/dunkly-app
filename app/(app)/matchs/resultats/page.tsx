@@ -19,10 +19,10 @@ interface Match {
   status: 'en-cours' | 'termine' | 'a-venir';
   logo_urlA?: string;
   logo_urlB?: string;
-  // --- AJOUT DE LA JOINTURE COMPETITION ---
+  // --- CORRECTION DU TYPAGE DE LA JOINTURE ---
   competitions?: {
     logo_url?: string;
-  };
+  } | null; // Peut être null si pas de correspondance
 }
 
 export default function ResultatsPage() {
@@ -43,12 +43,17 @@ export default function ResultatsPage() {
 
   const chargerTousLesMatchs = async () => {
     setLoading(true);
-    // --- MODIF: JOINTURE POUR LE LOGO DE COMPETITION ---
+    // --- MODIFICATION ICI : !left force la récupération des matchs ---
     const { data, error } = await supabase
       .from('matchs')
-      .select('*, competitions(logo_url)') // Jointure
+      .select('*, competitions!left(logo_url)') 
       .order('date', { ascending: false });
-    if (!error) setMatchs(data || []);
+    
+    if (error) {
+      console.error("Erreur Supabase:", error);
+    } else {
+      setMatchs(data || []);
+    }
     setLoading(false);
   };
 
@@ -106,8 +111,8 @@ export default function ResultatsPage() {
       {/* --- 3. AFFICHAGE TYPÉ PAR COMPETITION --- */}
       {Object.entries(matchGroupes).map(([compet, matchsSection]) => (
         <div key={compet} className="compet-section">
-          {/* --- MODIF: AFFICHAGE LOGO COMPETITION A COTE DU TITRE --- */}
           <h2 className="compet-title" style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
+            {/* --- AFFICHAGE LOGO COMPETITION SI DISPONIBLE --- */}
             {matchsSection[0]?.competitions?.logo_url && (
               <img src={matchsSection[0].competitions.logo_url} alt={compet} style={{width: '40px', height: '40px', objectFit: 'contain'}} />
             )}
