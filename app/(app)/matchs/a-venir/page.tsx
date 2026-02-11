@@ -14,13 +14,13 @@ export default function MatchsAVenirPage() {
   const [arbitres, setArbitres] = useState<any[]>([]);
   const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [user, setUser] = useState<any>(null);
-  
+
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  
+
   const [selectedClubA, setSelectedClubA] = useState("");
   const [selectedClubB, setSelectedClubB] = useState("");
-  const [dureePeriode, setDureePeriode] = useState("10"); 
+  const [dureePeriode, setDureePeriode] = useState("10");
   const [tmMT1, setTmMT1] = useState("2");
   const [tmMT2, setTmMT2] = useState("3");
 
@@ -28,17 +28,17 @@ export default function MatchsAVenirPage() {
 
   const [newMatch, setNewMatch] = useState({
     equipeA: "", clubA: "", equipeB: "", clubB: "",
-    date: "", competition: "", lieu: "" 
+    date: "", competition: "", lieu: ""
   });
 
   const router = useRouter();
 
-  useEffect(() => { 
+  useEffect(() => {
     const stored = localStorage.getItem('currentUser');
     if (stored) {
       setUser(JSON.parse(stored));
     }
-    chargerDonnees(); 
+    chargerDonnees();
   }, []);
 
   const isAdmin = user?.role === 'admin' || user?.username?.toLowerCase() === 'admin' || user?.username?.toLowerCase() === 'anthony.didier.prop';
@@ -49,7 +49,7 @@ export default function MatchsAVenirPage() {
       .select('*')
       .eq('status', 'a-venir')
       .order('date', { ascending: true });
-    
+
     if (listMatchs) setMatchs(listMatchs);
 
     const { data: listClubs } = await supabase.from('equipes_clubs').select('*');
@@ -72,7 +72,7 @@ export default function MatchsAVenirPage() {
   const handleSoumettre = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAdmin) return;
-    
+
     const matchData = {
       clubA: clubs.find(c => c.id === selectedClubA)?.nom,
       equipeA: newMatch.equipeA,
@@ -82,11 +82,11 @@ export default function MatchsAVenirPage() {
       competition: newMatch.competition,
       arbitre: selectedArbitres.join(" / "),
       lieu: newMatch.lieu,
-      status: 'a-venir', 
-      scoreA: 0, 
+      status: 'a-venir',
+      scoreA: 0,
       scoreB: 0,
-      config: { 
-        tempsInitial: parseInt(dureePeriode) * 60, 
+      config: {
+        tempsInitial: parseInt(dureePeriode) * 60,
         tmMT1: parseInt(tmMT1),
         tmMT2: parseInt(tmMT2)
       }
@@ -99,7 +99,7 @@ export default function MatchsAVenirPage() {
       const { error } = await supabase.from('matchs').insert([matchData]);
       if (error) alert("Erreur Insert: " + error.message);
     }
-    
+
     await chargerDonnees();
     resetForm();
   };
@@ -110,7 +110,7 @@ export default function MatchsAVenirPage() {
       equipeA: m.equipeA, clubA: m.clubA, equipeB: m.equipeB, clubB: m.clubB,
       date: m.date, competition: m.competition, lieu: m.lieu || ""
     });
-    
+
     if (m.arbitre) {
       setSelectedArbitres(m.arbitre.split(" / "));
     }
@@ -143,7 +143,7 @@ export default function MatchsAVenirPage() {
 
   return (
     <div style={{ padding: '20px', maxWidth: '1000px', margin: '0 auto', fontFamily: 'sans-serif' }}>
-      
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: '800', margin: 0 }}>📅 Matchs à venir</h1>
         {isAdmin && (
@@ -156,14 +156,14 @@ export default function MatchsAVenirPage() {
       {isAdmin && showForm && (
         <div style={formCardStyle}>
           <form onSubmit={handleSoumettre} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-            
+
             <div style={colStyle}>
               <label style={miniLabel}>ÉQUIPE DOMICILE</label>
               <select required value={selectedClubA} onChange={e => setSelectedClubA(e.target.value)} style={inputStyle}>
                 <option value="">Choisir Club...</option>
                 {clubs.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
               </select>
-              <select required value={newMatch.equipeA} onChange={e => setNewMatch({...newMatch, equipeA: e.target.value})} style={inputStyle} disabled={!selectedClubA}>
+              <select required value={newMatch.equipeA} onChange={e => setNewMatch({ ...newMatch, equipeA: e.target.value })} style={inputStyle} disabled={!selectedClubA}>
                 <option value="">Choisir Équipe...</option>
                 {(clubs.find(c => c.id === selectedClubA)?.equipes || []).map(eq => <option key={eq.id} value={eq.nom}>{eq.nom}</option>)}
               </select>
@@ -175,13 +175,13 @@ export default function MatchsAVenirPage() {
                 <option value="">Choisir Club...</option>
                 {clubs.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
               </select>
-              <select required value={newMatch.equipeB} onChange={e => setNewMatch({...newMatch, equipeB: e.target.value})} style={inputStyle} disabled={!selectedClubB}>
+              <select required value={newMatch.equipeB} onChange={e => setNewMatch({ ...newMatch, equipeB: e.target.value })} style={inputStyle} disabled={!selectedClubB}>
                 <option value="">Choisir Équipe...</option>
                 {(clubs.find(c => c.id === selectedClubB)?.equipes || []).map(eq => <option key={eq.id} value={eq.nom}>{eq.nom}</option>)}
               </select>
             </div>
 
-            <div style={{...colStyle, gridColumn: '1 / span 2'}}>
+            <div style={{ ...colStyle, gridColumn: '1 / span 2' }}>
               <label style={miniLabel}>ARBITRES (SÉLECTIONNEZ UN OU PLUSIEURS)</label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '12px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
                 {arbitres.length > 0 ? arbitres.map(a => {
@@ -207,7 +207,7 @@ export default function MatchsAVenirPage() {
                       {nomComplet} {isSelected ? '✕' : '+'}
                     </button>
                   );
-                }) : <span style={{fontSize: '0.8rem', color: '#94a3b8'}}>Aucun arbitre dans la base...</span>}
+                }) : <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Aucun arbitre dans la base...</span>}
               </div>
             </div>
 
@@ -222,12 +222,12 @@ export default function MatchsAVenirPage() {
 
             <div style={colStyle}>
               <label style={miniLabel}>DATE & HEURE</label>
-              <input type="datetime-local" required value={newMatch.date} onChange={e => setNewMatch({...newMatch, date: e.target.value})} style={inputStyle} />
+              <input type="datetime-local" required value={newMatch.date} onChange={e => setNewMatch({ ...newMatch, date: e.target.value })} style={inputStyle} />
             </div>
 
             <div style={colStyle}>
               <label style={miniLabel}>COMPÉTITION</label>
-              <select required value={newMatch.competition} onChange={e => setNewMatch({...newMatch, competition: e.target.value})} style={inputStyle}>
+              <select required value={newMatch.competition} onChange={e => setNewMatch({ ...newMatch, competition: e.target.value })} style={inputStyle}>
                 <option value="">Sélectionner...</option>
                 {competitions.map(comp => <option key={comp.id} value={comp.nom}>{comp.nom}</option>)}
               </select>
@@ -235,7 +235,7 @@ export default function MatchsAVenirPage() {
 
             <div style={colStyle}>
               <label style={miniLabel}>📍 LIEU / GYMNASE</label>
-              <input type="text" placeholder="Ex: Gymnase André Carton" value={newMatch.lieu} onChange={e => setNewMatch({...newMatch, lieu: e.target.value})} style={inputStyle} />
+              <input type="text" placeholder="Ex: Gymnase André Carton" value={newMatch.lieu} onChange={e => setNewMatch({ ...newMatch, lieu: e.target.value })} style={inputStyle} />
             </div>
 
             <button type="submit" style={submitBtn}>{editingId ? "METTRE À JOUR" : "CRÉER LE MATCH"}</button>
@@ -248,7 +248,7 @@ export default function MatchsAVenirPage() {
         {matchs.map((m) => (
           <div key={m.id} style={matchCardStyle}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              
+
               <div style={{ flex: 1, textAlign: 'right' }}>
                 <div style={{ fontWeight: '800', fontSize: '1.2rem', color: '#1e293b', textTransform: 'uppercase' }}>{m.clubA}</div>
                 <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 'bold' }}>{m.equipeA}</div>
@@ -265,18 +265,22 @@ export default function MatchsAVenirPage() {
             <div style={footerCard}>
               <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
                 <div>📅 {formatteDateParis(m.date)} | {m.competition}</div>
-                <div style={{marginTop: 4}}>🏁 <span style={{fontWeight: 'bold', color: '#1e293b'}}>{m.arbitre || "Non assigné"}</span></div>
+                <div style={{ marginTop: 4 }}>🏁 <span style={{ fontWeight: 'bold', color: '#1e293b' }}>{m.arbitre || "Non assigné"}</span></div>
               </div>
               <div style={{ display: 'flex', gap: '10px' }}>
                 {isAdmin && (
                   <>
-                    <button onClick={() => { if(confirm("Supprimer ?")) supabase.from('matchs').delete().eq('id', m.id).then(() => chargerDonnees()) }} style={iconBtn}>🗑️</button>
+                    <button onClick={() => { if (confirm("Supprimer ?")) supabase.from('matchs').delete().eq('id', m.id).then(() => chargerDonnees()) }} style={iconBtn}>🗑️</button>
                     <button onClick={() => handleEditer(m)} style={editBtnSmall}>✎</button>
-                    <Link href={`/matchs/${m.id}`} style={startBtnStyle}>GÉRER (LIVE)</Link>
+                    <Link href={`/matchs/${m.id}`} style={startBtnStyle}>
+                      GÉRER (LIVE)
+                    </Link>
                   </>
                 )}
                 {/* LIEN DE REDIRECTION CORRIGÉ ICI */}
-                <Link href={`/matchs/resultats/${m.id}`} style={detailsBtnStyle}>VOIR DÉTAILS</Link>
+                <Link href={`/matchs/resultats/${m.id}`} style={detailsBtnStyle}>
+                  VOIR DÉTAILS
+                </Link>
               </div>
             </div>
           </div>
