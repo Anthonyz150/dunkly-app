@@ -6,8 +6,10 @@ import { useRouter } from "next/navigation";
 
 // Interfaces
 interface EquipeIntern { id: string; nom: string; }
-interface Club { id: string; nom: string; equipes: EquipeIntern[]; }
+// --- MODIFICATION: ajout logo_url ---
+interface Club { id: string; nom: string; equipes: EquipeIntern[]; logo_url?: string; }
 interface Competition { id: string; nom: string; }
+
 interface Match {
   id: string;
   clubA: string;
@@ -19,6 +21,10 @@ interface Match {
   lieu: string;
   arbitre: string;
   status: string;
+  // --- MODIFICATION: ajout des champs logos ---
+  logo_urlA?: string;
+  logo_urlB?: string;
+  // --------------------------------------------
 }
 
 export default function MatchsAVenirPage() {
@@ -54,7 +60,6 @@ export default function MatchsAVenirPage() {
     chargerDonnees();
   }, []);
 
-  // --- LOGIQUE ADMIN AMÉLIORÉE ---
   const isAdmin = user && (
     user.role === 'admin' ||
     user.username?.toLowerCase() === 'admin' ||
@@ -70,6 +75,7 @@ export default function MatchsAVenirPage() {
 
     if (listMatchs) setMatchs(listMatchs);
 
+    // Assurez-vous que votre table "equipes_clubs" contient une colonne "logo_url"
     const { data: listClubs } = await supabase.from('equipes_clubs').select('*');
     const { data: listArb } = await supabase.from('arbitres').select('*').order('nom', { ascending: true });
     const { data: listComp } = await supabase.from('competitions').select('*');
@@ -91,11 +97,22 @@ export default function MatchsAVenirPage() {
     e.preventDefault();
     if (!isAdmin) return;
 
+    // --- MODIFICATION: Récupération des objets clubs ---
+    const clubAObj = clubs.find(c => c.id === selectedClubA);
+    const clubBObj = clubs.find(c => c.id === selectedClubB);
+
     const matchData = {
-      clubA: clubs.find(c => c.id === selectedClubA)?.nom,
+      clubA: clubAObj?.nom,
+      // --- MODIFICATION: Sauvegarde du logo ---
+      logo_urlA: clubAObj?.logo_url || null, 
       equipeA: newMatch.equipeA,
-      clubB: clubs.find(c => c.id === selectedClubB)?.nom,
+      
+      clubB: clubBObj?.nom,
+      // --- MODIFICATION: Sauvegarde du logo ---
+      logo_urlB: clubBObj?.logo_url || null,
       equipeB: newMatch.equipeB,
+      // ----------------------------------------
+      
       date: newMatch.date,
       competition: newMatch.competition,
       arbitre: selectedArbitres.join(" / "),
@@ -294,7 +311,6 @@ export default function MatchsAVenirPage() {
                 <div style={{ marginTop: 4 }}>🏁 <span style={{ fontWeight: 'bold', color: '#1e293b' }}>{m.arbitre || "Non assigné"}</span></div>
               </div>
               
-              {/* --- ZONE BOUTONS (ADMIN OU PUBLIC) --- */}
               <div style={{ display: 'flex', gap: '10px' }}>
                 {isAdmin ? (
                   <>
