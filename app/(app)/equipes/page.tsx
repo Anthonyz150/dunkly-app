@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import Link from 'next/link'; // Import important pour la navigation
+import Link from 'next/link';
 
 interface Club {
   id: string;
@@ -9,6 +9,7 @@ interface Club {
   ville: string;
   logoColor: string;
   equipes: any[];
+  logo_url: string | null; // --- AJOUT DU LOGO ---
 }
 
 export default function EquipesPage() {
@@ -16,7 +17,6 @@ export default function EquipesPage() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   
-  // Modale Club uniquement
   const [showClubModal, setShowClubModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingClubId, setEditingClubId] = useState<string | null>(null);
@@ -31,6 +31,7 @@ export default function EquipesPage() {
 
   const chargerClubs = async () => {
     setLoading(true);
+    // --- MODIF: ON SÉLECTIONNE logo_url ---
     const { data, error } = await supabase.from('equipes_clubs').select('*').order('nom');
     if (!error && data) {
       setClubs(data);
@@ -59,7 +60,7 @@ export default function EquipesPage() {
   };
 
   const handleDeleteClub = async (e: React.MouseEvent, id: string) => {
-    e.preventDefault(); // Empêche le clic de naviguer vers la page du club
+    e.preventDefault();
     if (!confirm("Supprimer ce club ?")) return;
     const { error } = await supabase.from('equipes_clubs').delete().eq('id', id);
     if (!error) setClubs(clubs.filter(c => c.id !== id));
@@ -89,7 +90,15 @@ export default function EquipesPage() {
             <div style={cardStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                  <div style={{ ...logoStyle, backgroundColor: club.logoColor }}>{club.nom[0]}</div>
+                  
+                  {/* --- MODIF: AFFICHAGE LOGO OU INITIALE --- */}
+                  {club.logo_url ? (
+                    <img src={club.logo_url} alt={club.nom} style={logoImageStyle} />
+                  ) : (
+                    <div style={{ ...logoStyle, backgroundColor: club.logoColor }}>{club.nom[0]}</div>
+                  )}
+                  {/* ----------------------------------------- */}
+
                   <div>
                     <h3 style={{ margin: 0 }}>{club.nom}</h3>
                     <small style={{ color: '#64748b' }}>📍 {club.ville}</small>
@@ -141,6 +150,8 @@ const cardStyle = {
   transition: 'transform 0.1s',
   boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
 };
+// Ajout style pour l'image
+const logoImageStyle = { width: '45px', height: '45px', borderRadius: '12px', objectFit: 'contain' as const, border: '1px solid #e2e8f0' };
 const logoStyle = { width: '45px', height: '45px', borderRadius: '12px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' as const };
 const badgeCount = { backgroundColor: '#f1f5f9', color: '#64748b', padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold' as const };
 const miniBtnDanger = { background: '#fee2e2', border: 'none', borderRadius: '8px', padding: '8px', cursor: 'pointer' };
