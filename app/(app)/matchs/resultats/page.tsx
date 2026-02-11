@@ -19,10 +19,10 @@ interface Match {
   status: 'en-cours' | 'termine' | 'a-venir';
   logo_urlA?: string;
   logo_urlB?: string;
-  // --- CORRECTION DU TYPAGE DE LA JOINTURE ---
+  // --- TYPAGE DE LA JOINTURE ---
   competitions?: {
     logo_url?: string;
-  } | null; // Peut être null si pas de correspondance
+  } | null;
 }
 
 export default function ResultatsPage() {
@@ -43,7 +43,6 @@ export default function ResultatsPage() {
 
   const chargerTousLesMatchs = async () => {
     setLoading(true);
-    // --- MODIFICATION ICI : !left force la récupération des matchs ---
     const { data, error } = await supabase
       .from('matchs')
       .select('*, competitions!left(logo_url)') 
@@ -57,16 +56,13 @@ export default function ResultatsPage() {
     setLoading(false);
   };
 
-  // --- 2. TYPAGE DU REGROUPEMENT ET FILTRAGE ---
   const matchGroupes = useMemo(() => {
-    // 1. Filtrer selon la recherche
     const filtered = matchs.filter(m => 
       m.clubA?.toLowerCase().includes(searchTerm.toLowerCase()) || 
       m.clubB?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       m.competition?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // 2. Regrouper par compétition
     return filtered.reduce((acc, match) => {
       const compet = match.competition || 'Autres';
       if (!acc[compet]) acc[compet] = [];
@@ -80,39 +76,34 @@ export default function ResultatsPage() {
 
   return (
     <div className="page-container">
+      
+      {/* --- HEADER MODIFIÉ POUR MOBILE --- */}
       <header className="dashboard-header">
-        <div className="header-left">
-          <h1>RÉSULTATS <span className="orange-dot">.</span></h1>
-          <p className="subtitle">Consultez les derniers scores de la saison.</p>
-        </div>
-        <div className="header-right" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <div className="header-top">
+          <div className="header-left">
+            <h1>RÉSULTATS <span className="orange-dot">.</span></h1>
+            <p className="subtitle">Consultez les derniers scores de la saison.</p>
+          </div>
+          
           {isAdmin && (
-            <Link href="/matchs/a-venir" style={{ 
-              background: '#0f172a', 
-              color: 'white', 
-              textDecoration: 'none',
-              padding: '10px 15px', 
-              borderRadius: '10px', 
-              fontWeight: 'bold', 
-              fontSize: '0.85rem' 
-            }}>
+            <Link href="/matchs/a-venir" className="btn-admin-mobile">
               Match à venir
             </Link>
           )}
-          <input 
-            type="text" 
-            placeholder="Rechercher un club ou une compétition..." 
-            className="search-input"
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
         </div>
+        
+        <input 
+          type="text" 
+          placeholder="Rechercher un club ou une compétition..." 
+          className="search-input"
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
       </header>
+      {/* --------------------------------- */}
 
-      {/* --- 3. AFFICHAGE TYPÉ PAR COMPETITION --- */}
       {Object.entries(matchGroupes).map(([compet, matchsSection]) => (
         <div key={compet} className="compet-section">
           <h2 className="compet-title" style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
-            {/* --- AFFICHAGE LOGO COMPETITION SI DISPONIBLE --- */}
             {matchsSection[0]?.competitions?.logo_url && (
               <img src={matchsSection[0].competitions.logo_url} alt={compet} style={{width: '40px', height: '40px', objectFit: 'contain'}} />
             )}
@@ -131,7 +122,6 @@ export default function ResultatsPage() {
                     </div>
                     <div className="main-score-row">
                       
-                      {/* --- EQUIPE A AVEC LOGO --- */}
                       <div className="team-info home">
                         <div style={{display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'flex-end'}}>
                             <span className="team-name">{m.clubA}</span>
@@ -150,7 +140,6 @@ export default function ResultatsPage() {
                         <span className="score-num">{m.scoreB ?? 0}</span>
                       </div>
                       
-                      {/* --- EQUIPE B AVEC LOGO --- */}
                       <div className="team-info away">
                         <div style={{display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'flex-start'}}>
                             {m.logo_urlB ? (
@@ -180,11 +169,23 @@ export default function ResultatsPage() {
 
       <style jsx>{`
         .page-container { animation: fadeIn 0.4s ease; padding-bottom: 40px; padding: 20px; }
-        .dashboard-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; }
+        
+        /* --- NOUVEAUX STYLES HEADER --- */
+        .dashboard-header { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; gap: 15px; }
+        
         .dashboard-header h1 { font-size: 1.8rem; font-weight: 800; color: #1e293b; margin: 0; }
         .orange-dot { color: #f97316; }
         .subtitle { color: #64748b; font-size: 0.9rem; margin: 5px 0 0; }
-        .search-input { padding: 10px 16px; border-radius: 10px; border: 1px solid #e2e8f0; background: white; width: 300px; outline: none; font-size: 0.85rem; }
+        
+        .search-input { padding: 12px 16px; border-radius: 12px; border: 1px solid #e2e8f0; background: white; width: 100%; outline: none; font-size: 0.95rem; box-sizing: border-box; }
+        
+        .btn-admin-mobile { 
+          background: #0f172a; color: white; text-decoration: none;
+          padding: 10px 15px; borderRadius: 10px; font-weight: bold; fontSize: 0.85rem;
+          white-space: nowrap;
+        }
+        /* ----------------------------- */
         
         .compet-section { margin-bottom: 40px; }
         .compet-title { font-size: 1.3rem; font-weight: 800; color: #1e293b; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #f1f5f9; }
@@ -212,6 +213,13 @@ export default function ResultatsPage() {
         
         .empty-state { text-align: center; padding: 40px; color: #64748b; background: white; border-radius: 16px; border: 2px dashed #e2e8f0; }
         
+        /* --- MÉDIA QUERY POUR ADAPTER LE HEADER --- */
+        @media (max-width: 600px) {
+          .header-top { flex-direction: column; align-items: flex-start; }
+          .btn-admin-mobile { width: 100%; text-align: center; box-sizing: border-box; }
+        }
+        /* ------------------------------------------- */
+
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
       `}</style>
@@ -219,6 +227,5 @@ export default function ResultatsPage() {
   );
 }
 
-// --- STYLES COMPLÉMENTAIRES POUR LES LOGOS ---
 const logoStyle = { width: '35px', height: '35px', borderRadius: '50%', objectFit: 'contain' as const, backgroundColor: 'white', border: '1px solid #f1f5f9' };
 const logoPlaceholderStyle = { width: '35px', height: '35px', borderRadius: '50%', backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' as const, fontSize: '1rem', color: '#64748b' };
