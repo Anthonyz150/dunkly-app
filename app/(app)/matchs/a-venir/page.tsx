@@ -4,12 +4,25 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+// Interfaces
 interface EquipeIntern { id: string; nom: string; }
 interface Club { id: string; nom: string; equipes: EquipeIntern[]; }
 interface Competition { id: string; nom: string; }
+interface Match {
+  id: string;
+  clubA: string;
+  equipeA: string;
+  clubB: string;
+  equipeB: string;
+  date: string;
+  competition: string;
+  lieu: string;
+  arbitre: string;
+  status: string;
+}
 
 export default function MatchsAVenirPage() {
-  const [matchs, setMatchs] = useState<any[]>([]);
+  const [matchs, setMatchs] = useState<Match[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [arbitres, setArbitres] = useState<any[]>([]);
   const [competitions, setCompetitions] = useState<Competition[]>([]);
@@ -41,7 +54,12 @@ export default function MatchsAVenirPage() {
     chargerDonnees();
   }, []);
 
-  const isAdmin = user?.role === 'admin' || user?.username?.toLowerCase() === 'admin' || user?.username?.toLowerCase() === 'anthony.didier.prop';
+  // --- LOGIQUE ADMIN AMÉLIORÉE ---
+  const isAdmin = user && (
+    user.role === 'admin' ||
+    user.username?.toLowerCase() === 'admin' ||
+    user.username?.toLowerCase() === 'anthony.didier.prop'
+  );
 
   const chargerDonnees = async () => {
     const { data: listMatchs } = await supabase
@@ -122,14 +140,25 @@ export default function MatchsAVenirPage() {
     setShowForm(true);
   };
 
-  const resetForm = () => {
-    setShowForm(false); setEditingId(null);
-    setNewMatch({ equipeA: "", clubA: "", equipeB: "", clubB: "", date: "", competition: "", lieu: "" });
-    setSelectedArbitres([]);
-    setSelectedClubA(""); setSelectedClubB("");
+  const handleSupprimer = async (id: string) => {
+    if (!confirm("Voulez-vous vraiment supprimer ce match ?")) return;
+    const { error } = await supabase.from('matchs').delete().eq('id', id);
+    if (error) {
+      alert("Erreur: " + error.message);
+    } else {
+      chargerDonnees();
+    }
   };
 
-  // FONCTION DE FORMATAGE FRANÇAIS + PARIS
+  const resetForm = () => {
+    setShowForm(false);
+    setEditingId(null);
+    setNewMatch({ equipeA: "", clubA: "", equipeB: "", clubB: "", date: "", competition: "", lieu: "" });
+    setSelectedArbitres([]);
+    setSelectedClubA("");
+    setSelectedClubB("");
+  };
+
   const formatteDateParis = (dateString: string) => {
     if (!dateString) return "";
     return new Intl.DateTimeFormat('fr-FR', {
@@ -143,7 +172,7 @@ export default function MatchsAVenirPage() {
 
   return (
     <div style={{ padding: '20px', maxWidth: '1000px', margin: '0 auto', fontFamily: 'sans-serif' }}>
-
+      
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: '800', margin: 0 }}>📅 Matchs à venir</h1>
         {isAdmin && (
@@ -153,10 +182,11 @@ export default function MatchsAVenirPage() {
         )}
       </div>
 
+      {/* FORMULAIRE DE CRÉATION/ÉDITION */}
       {isAdmin && showForm && (
         <div style={formCardStyle}>
           <form onSubmit={handleSoumettre} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-
+            
             <div style={colStyle}>
               <label style={miniLabel}>ÉQUIPE DOMICILE</label>
               <select required value={selectedClubA} onChange={e => setSelectedClubA(e.target.value)} style={inputStyle}>
@@ -182,7 +212,7 @@ export default function MatchsAVenirPage() {
             </div>
 
             <div style={{ ...colStyle, gridColumn: '1 / span 2' }}>
-              <label style={miniLabel}>ARBITRES (SÉLECTIONNEZ UN OU PLUSIEURS)</label>
+              <label style={miniLabel}>ARBITRES</label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '12px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
                 {arbitres.length > 0 ? arbitres.map(a => {
                   const nomComplet = `${a.prenom} ${a.nom}`;
@@ -248,39 +278,33 @@ export default function MatchsAVenirPage() {
         {matchs.map((m) => (
           <div key={m.id} style={matchCardStyle}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-
               <div style={{ flex: 1, textAlign: 'right' }}>
                 <div style={{ fontWeight: '800', fontSize: '1.2rem', color: '#1e293b', textTransform: 'uppercase' }}>{m.clubA}</div>
                 <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 'bold' }}>{m.equipeA}</div>
               </div>
-
               <div style={{ padding: '0 20px', fontWeight: '900', color: '#F97316', fontSize: '1.3rem' }}>VS</div>
-
               <div style={{ flex: 1, textAlign: 'left' }}>
                 <div style={{ fontWeight: '800', fontSize: '1.2rem', color: '#1e293b', textTransform: 'uppercase' }}>{m.clubB}</div>
                 <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 'bold' }}>{m.equipeB}</div>
               </div>
-
             </div>
             <div style={footerCard}>
               <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
                 <div>📅 {formatteDateParis(m.date)} | {m.competition}</div>
                 <div style={{ marginTop: 4 }}>🏁 <span style={{ fontWeight: 'bold', color: '#1e293b' }}>{m.arbitre || "Non assigné"}</span></div>
               </div>
+              
+              {/* --- ZONE BOUTONS (ADMIN OU PUBLIC) --- */}
               <div style={{ display: 'flex', gap: '10px' }}>
-                {isAdmin && (
+                {isAdmin ? (
                   <>
-                    <button onClick={() => { if (confirm("Supprimer ?")) supabase.from('matchs').delete().eq('id', m.id).then(() => chargerDonnees()) }} style={iconBtn}>🗑️</button>
-                    <button onClick={() => handleEditer(m)} style={editBtnSmall}>✎</button>
-                    <Link href={`/matchs/${m.id}`} style={startBtnStyle}>
-                      GÉRER (LIVE)
-                    </Link>
+                    <button onClick={() => handleSupprimer(m.id)} style={iconBtn}>🗑️</button>
+                    <button onClick={() => handleEditer(m)} style={editBtnSmall}>✎ Modifier</button>
+                    <Link href={`/matchs/${m.id}`} style={startBtnStyle}>🚀 GÉRER</Link>
                   </>
+                ) : (
+                  <Link href={`/matchs/resultats/${m.id}`} style={detailsBtnStyle}>VOIR DÉTAILS</Link>
                 )}
-                {/* LIEN DE REDIRECTION CORRIGÉ ICI */}
-                <Link href={`/matchs/resultats/${m.id}`} style={detailsBtnStyle}>
-                  VOIR DÉTAILS
-                </Link>
               </div>
             </div>
           </div>
@@ -290,6 +314,7 @@ export default function MatchsAVenirPage() {
   );
 }
 
+// --- STYLES ---
 const inputStyle = { padding: '12px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '14px', width: '100%', boxSizing: 'border-box' as const };
 const addBtnStyle = { backgroundColor: '#111827', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold' as const, cursor: 'pointer' };
 const submitBtn = { gridColumn: '1/span 2', backgroundColor: '#F97316', color: 'white', padding: '14px', borderRadius: '8px', cursor: 'pointer', fontWeight: '900' as const, border: 'none', marginTop: '10px' };
