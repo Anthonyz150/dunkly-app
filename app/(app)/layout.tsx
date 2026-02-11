@@ -10,19 +10,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   const [user, setUser] = useState<any>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null); // --- NOUVEAU ---
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // --- NOUVEAU : Fonction pour charger/rafraîchir l'utilisateur et l'avatar ---
     const loadUser = () => {
       const stored = localStorage.getItem("currentUser");
       if (stored) {
         try {
           const userData = JSON.parse(stored);
           setUser(userData);
-          // On récupère l'URL de l'avatar stockée
           setAvatarUrl(userData.avatar_url || null);
         } catch {
           localStorage.clear();
@@ -32,10 +30,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     };
 
     loadUser();
-    
-    // Écouter les changements dans localStorage (ex: mise à jour profil)
     window.addEventListener('storage', loadUser);
-    
     setMenuOpen(false);
 
     return () => {
@@ -60,7 +55,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     user?.email?.[0]?.toUpperCase() ||
     "U";
 
-  // --- NOUVEAU : Composant Avatar réutilisable ---
   const AvatarDisplay = ({ size = "36px" }: { size?: string }) => (
     avatarUrl ? (
       <img src={avatarUrl} alt="Avatar" style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", border: "2px solid #F97316" }} />
@@ -70,7 +64,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
     )
   );
-  // ------------------------------------------------
 
   return (
     <html lang="fr">
@@ -82,7 +75,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <button onClick={() => setMenuOpen(true)} className="burger">☰</button>
             <span className="logo">🏀 DUNKLY</span>
             <Link href="/profil">
-              <AvatarDisplay /> {/* --- MODIFIÉ --- */}
+              <AvatarDisplay />
             </Link>
           </header>
 
@@ -92,17 +85,33 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <aside className={`sidebar ${menuOpen ? "open" : ""}`}>
             <h2 className="brand">🏀 DUNKLY</h2>
             
-            {/* --- NOUVEAU : Photo et nom dans la sidebar --- */}
-            <div style={{ textAlign: "center", marginBottom: "30px", padding: "10px", background: "#1e293b", borderRadius: "16px" }}>
+            {/* --- BLOC PROFIL MODIFIÉ --- */}
+            <div style={{ textAlign: "center", marginBottom: "20px", padding: "10px", background: "#1e293b", borderRadius: "16px" }}>
               <div style={{display: "flex", justifyContent: "center", marginBottom: "10px"}}>
                 <AvatarDisplay size="80px" />
               </div>
-              <div style={{ fontWeight: "bold", fontSize: "1.1rem", color: "white" }}>
+              {/* Pseudo en grand */}
+              <div style={{ fontWeight: "900", fontSize: "1.2rem", color: "white" }}>
+                {user?.username || 'Utilisateur'}
+              </div>
+              {/* Nom/Prénom en petit */}
+              <div style={{ color: "#94a3b8", fontSize: "0.85rem", marginTop: "2px" }}>
                 {user?.prenom} {user?.nom}
               </div>
-              <div style={{ color: "#94a3b8", fontSize: "0.85rem" }}>{user?.username}</div>
             </div>
-            {/* ----------------------------------------------- */}
+            {/* --------------------------- */}
+
+            {/* --- BOUTON DÉCONNEXION REMONTÉ --- */}
+            <button
+              className="logout"
+              onClick={() => {
+                localStorage.clear();
+                router.push("/login");
+              }}
+            >
+              Déconnexion
+            </button>
+            {/* ---------------------------------- */}
 
             <nav>
               <Link href="/">🏠 Accueil</Link>
@@ -121,16 +130,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <hr style={{borderColor: "#334155"}} />
               <Link href="/profil">👤 Profil</Link>
             </nav>
-
-            <button
-              className="logout"
-              onClick={() => {
-                localStorage.clear();
-                router.push("/login");
-              }}
-            >
-              Déconnexion
-            </button>
           </aside>
 
           {/* CONTENU */}
@@ -160,6 +159,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             z-index: 1000;
             display: flex;
             flex-direction: column;
+            box-sizing: border-box;
           }
 
           .sidebar nav a {
@@ -176,19 +176,24 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
           .brand {
             margin-bottom: 30px;
+            margin-top: 0;
           }
 
           .logout {
-            margin-top: auto;
-            background: none;
+            background: #334155;
             border: none;
-            color: #ef4444;
+            color: #f87171;
             font-weight: bold;
             cursor: pointer;
-            padding: 0;
-            text-align: left;
+            padding: 10px;
+            text-align: center;
             width: 100%;
+            border-radius: 8px;
             margin-bottom: 20px;
+          }
+
+          .logout:hover {
+            background: #475569;
           }
 
           /* CONTENT */
