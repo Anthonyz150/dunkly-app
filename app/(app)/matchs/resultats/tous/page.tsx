@@ -11,11 +11,10 @@ export default function TousLesResultatsPage() {
   useEffect(() => {
     const chargerMatchs = async () => {
       setLoading(true);
-      // --- MODIF: Sélection des colonnes logo_urlA/B ---
+      // --- MODIF: Jointure pour logo de comp et retrait filtre statut ---
       const { data, error } = await supabase
         .from('matchs')
-        .select('*')
-        .eq('status', 'termine')
+        .select('*, competitions!left(logo_url)')
         .order('date', { ascending: false });
       
       if (!error) setMatchs(data || []);
@@ -44,9 +43,15 @@ export default function TousLesResultatsPage() {
         {matchs.map((m) => (
           <Link href={`/matchs/detail/${m.id}`} key={m.id} style={{ textDecoration: 'none' }}>
             <div style={cardStyle}>
-              {/* Header card: Compétition et Date */}
+              {/* Header card: Logo Compétition et Date */}
               <div style={cardHeaderStyle}>
-                <span style={competitionStyle}>{m.competition}</span>
+                <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                    {/* --- AFFICHAGE LOGO COMPETITION --- */}
+                    {m.competitions?.logo_url && (
+                        <img src={m.competitions.logo_url} alt={m.competition} style={{width: '24px', height: '24px', objectFit: 'contain'}} />
+                    )}
+                    <span style={competitionStyle}>{m.competition}</span>
+                </div>
                 <span style={dateStyle}>{formatDate(m.date)}</span>
               </div>
               
@@ -85,7 +90,7 @@ export default function TousLesResultatsPage() {
   );
 }
 
-// --- NOUVEAUX STYLES (Sombre et moderne) ---
+// --- STYLES (Sombre et moderne) ---
 const containerStyle = { padding: '20px', maxWidth: '800px', margin: '0 auto', fontFamily: 'sans-serif', color: 'white', minHeight: '100vh', backgroundColor: '#0f172a' };
 const titleStyle = { fontWeight: '900', marginBottom: '30px', color: 'white' };
 const gridStyle = { display: 'flex', flexDirection: 'column' as const, gap: '15px' };
@@ -99,7 +104,7 @@ const cardStyle = {
   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
 };
 
-const cardHeaderStyle = { display: 'flex', justifyContent: 'space-between', marginBottom: '15px', fontSize: '0.85rem' };
+const cardHeaderStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', fontSize: '0.85rem' };
 const competitionStyle = { color: '#F97316', fontWeight: 'bold' as const, textTransform: 'uppercase' as const };
 const dateStyle = { color: '#94a3b8' };
 
