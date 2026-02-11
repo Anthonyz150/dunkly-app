@@ -14,18 +14,16 @@ export default function TousLesResultatsPage() {
       setLoading(true);
       setError(null);
 
-      // --- CORRECTION ICI : Requête sécurisée ---
-      // On sélectionne * pour la table matchs, et uniquement logo_url pour la jointure
+      // --- CORRECTION ICI : Requête simplifiée sans jointure ---
       const { data, error: supabaseError } = await supabase
         .from('matchs')
-        .select('*, competitions!left(logo_url)')                
+        .select('*') // On récupère toutes les colonnes de la table matchs
         .order('date', { ascending: false });
       
       if (supabaseError) {
         console.error("Erreur Supabase:", supabaseError);
         setError(`Erreur: ${supabaseError.message}`);
       } else {
-        // Log pour vérifier les données dans la console F12
         console.log("Données reçues :", data); 
         setMatchs(data || []);
       }
@@ -56,13 +54,10 @@ export default function TousLesResultatsPage() {
         {matchs.map((m) => (
           <Link href={`/matchs/detail/${m.id}`} key={m.id} style={{ textDecoration: 'none' }}>
             <div style={cardStyle}>
-              {/* Header card: Logo Compétition et Date */}
+              {/* Header card: Nom Compétition et Date */}
               <div style={cardHeaderStyle}>
                 <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                    {/* --- AFFICHAGE LOGO COMPETITION --- */}
-                    {m.competitions?.logo_url && (
-                        <img src={m.competitions.logo_url} alt={m.competition} style={{width: '24px', height: '24px', objectFit: 'contain'}} />
-                    )}
+                    {/* Le logo de compétition ne peut pas s'afficher ici sans jointure */}
                     <span style={competitionStyle}>{m.competition || 'Compétition inconnue'}</span>
                 </div>
                 <span style={dateStyle}>{formatDate(m.date)}</span>
