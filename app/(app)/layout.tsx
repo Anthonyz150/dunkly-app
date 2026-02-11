@@ -118,6 +118,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <Link href="/competitions">🏆 Compétitions</Link>
               <Link href="/matchs/resultats">✅ Résultats</Link>
               <Link href="/equipes">🛡️ Clubs</Link>
+              <Link href="/arbitres">⚖️ Arbitre</Link>
 
               {isAdmin && (
                 <>
