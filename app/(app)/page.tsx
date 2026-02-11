@@ -35,23 +35,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     const initDashboard = async () => {
-      // Sécurité : Timeout pour forcer l'affichage
-      const forceDisplay = setTimeout(() => setLoading(false), 3000);
+      setLoading(true);
 
       try {
         const { data: { session } } = await supabase.auth.getSession();
         
-        // --- MODIFICATION ICI ---
-        // On ne redirige plus vers /login pour forcer l'affichage
-        if (!session) { 
-          console.log("Pas de session active");
-        } else {
-            // VÉRIFICATION DE L'UTILISATEUR
+        if (session) {
             const localUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-            const userData = {
-              ...session.user,
-              ...localUser
-            };
+            const userData = { ...session.user, ...localUser };
             setUser(userData);
         }
 
@@ -65,12 +56,15 @@ export default function Dashboard() {
             }).catch(e => console.log("OneSignal load issue"));
         }
 
+        // --- CORRECTION REQUÊTES : Jointures et logos ---
         const [competsRes, equipesRes, matchsRes, nextRes, lastRes] = await Promise.all([
           supabase.from('competitions').select('*', { count: 'exact', head: true }),
           supabase.from('equipes_clubs').select('*', { count: 'exact', head: true }),
           supabase.from('matchs').select('*', { count: 'exact', head: true }),
-          supabase.from('matchs').select('*').eq('status', 'a-venir').order('date', { ascending: true }).limit(1).maybeSingle(),
-          supabase.from('matchs').select('*').eq('status', 'termine').order('date', { ascending: false }).limit(1).maybeSingle()
+          // Jointure pour le prochain match
+          supabase.from('matchs').select('*, competitions(logo_url)').eq('status', 'a-venir').order('date', { ascending: true }).limit(1).maybeSingle(),
+          // Jointure pour le dernier résultat
+          supabase.from('matchs').select('*, competitions(logo_url)').eq('status', 'termine').order('date', { ascending: false }).limit(1).maybeSingle()
         ]);
 
         setStats({
@@ -85,10 +79,7 @@ export default function Dashboard() {
       } catch (error) {
         console.error("Erreur chargement:", error);
       } finally {
-        // --- MODIFICATION ICI ---
-        // On désactive le chargement quoi qu'il arrive
         setLoading(false);
-        clearTimeout(forceDisplay);
       }
     };
 
@@ -104,8 +95,6 @@ export default function Dashboard() {
 
   const isAdmin = user?.role === 'admin' || user?.username?.toLowerCase() === 'admin' || user?.username?.toLowerCase() === 'anthony.didier.prop' || user?.user_metadata?.role === 'admin';
 
-  // --- MODIFICATION ICI ---
-  // On affiche le contenu même si l'utilisateur n'est pas chargé (user est null)
   if (loading) return (
     <div style={{ height: '80vh', display: 'flex', justifyContent: 'center', alignItems: 'center', fontFamily: 'sans-serif', background: 'white' }}>
       <div style={{ textAlign: 'center' }}>
@@ -155,11 +144,28 @@ export default function Dashboard() {
           <h3 style={titleSectionStyle}>📅 Prochain RDV</h3>
           {prochainMatch ? (
             <div style={{ position: 'relative', zIndex: 2 }}>
-              <div style={{ fontSize: '0.8rem', color: '#F97316', fontWeight: 'bold', marginBottom: '10px' }}>{prochainMatch.competition}</div>
+              {/* --- LOGO COMPETITION --- */}
+              <div style={{display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px'}}>
+                {prochainMatch.competitions?.logo_url && (
+                    <img src={prochainMatch.competitions.logo_url} alt="Logo" style={{width: '24px', height: '24px', objectFit: 'contain'}} />
+                )}
+                <div style={{ fontSize: '0.8rem', color: '#F97316', fontWeight: 'bold' }}>{prochainMatch.competition}</div>
+              </div>
+              
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '15px' }}>
-                <div style={{ flex: 1 }}><div style={{ fontSize: '1.2rem', fontWeight: '900' }}>{prochainMatch.clubA}</div></div>
-                <div style={{ color: '#F97316', fontWeight: '900' }}>VS</div>
-                <div style={{ flex: 1 }}><div style={{ fontSize: '1.2rem', fontWeight: '900' }}>{prochainMatch.clubB}</div></div>
+                {/* --- LOGO A --- */}
+                <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', flex: 1}}>
+                    {prochainMatch.logo_urlA && <img src={prochainMatch.logo_urlA} alt={prochainMatch.clubA} style={logoStyle} />}
+                    <div style={{ fontSize: '1rem', fontWeight: '900', textAlign: 'center' }}>{prochainMatch.clubA}</div>
+                </div>
+                
+                <div style={{ color: '#F97316', fontWeight: '900', fontSize: '1.2rem' }}>VS</div>
+                
+                {/* --- LOGO B --- */}
+                <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', flex: 1}}>
+                    {prochainMatch.logo_urlB && <img src={prochainMatch.logo_urlB} alt={prochainMatch.clubB} style={logoStyle} />}
+                    <div style={{ fontSize: '1rem', fontWeight: '900', textAlign: 'center' }}>{prochainMatch.clubB}</div>
+                </div>
               </div>
               <div style={{ color: '#94A3B8', fontSize: '0.85rem' }}>
                 <div style={{ color: 'white', fontWeight: '600' }}>🕒 {formatteDateParis(prochainMatch.date)}</div>
@@ -174,13 +180,30 @@ export default function Dashboard() {
           <h3 style={{ ...titleSectionStyle, color: '#64748B' }}>🏆 Dernier Résultat</h3>
           {dernierResultat ? (
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '0.75rem', color: '#F97316', fontWeight: 'bold', marginBottom: '15px' }}>{dernierResultat.competition}</div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '15px' }}>
-                <div style={{ flex: 1, fontWeight: '900', fontSize: '0.9rem' }}>{dernierResultat.clubA}</div>
-                <div style={{ fontSize: '1.4rem', fontWeight: '900', color: 'white', backgroundColor: '#1E293B', padding: '5px 15px', borderRadius: '12px' }}>
+              {/* --- LOGO COMPETITION --- */}
+              <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '15px'}}>
+                {dernierResultat.competitions?.logo_url && (
+                    <img src={dernierResultat.competitions.logo_url} alt="Logo" style={{width: '24px', height: '24px', objectFit: 'contain'}} />
+                )}
+                <div style={{ fontSize: '0.75rem', color: '#F97316', fontWeight: 'bold' }}>{dernierResultat.competition}</div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginBottom: '15px' }}>
+                {/* --- LOGO A --- */}
+                <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', flex: 1}}>
+                    {dernierResultat.logo_urlA && <img src={dernierResultat.logo_urlA} alt={dernierResultat.clubA} style={{...logoStyle, border: '1px solid #E2E8F0'}} />}
+                    <div style={{ fontWeight: '900', fontSize: '0.9rem' }}>{dernierResultat.clubA}</div>
+                </div>
+
+                <div style={{ fontSize: '1.4rem', fontWeight: '900', color: 'white', backgroundColor: '#1E293B', padding: '10px 15px', borderRadius: '12px' }}>
                   {dernierResultat.scoreA} - {dernierResultat.scoreB}
                 </div>
-                <div style={{ flex: 1, fontWeight: '900', fontSize: '0.9rem' }}>{dernierResultat.clubB}</div>
+                
+                {/* --- LOGO B --- */}
+                <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', flex: 1}}>
+                    {dernierResultat.logo_urlB && <img src={dernierResultat.logo_urlB} alt={dernierResultat.clubB} style={{...logoStyle, border: '1px solid #E2E8F0'}} />}
+                    <div style={{ fontWeight: '900', fontSize: '0.9rem' }}>{dernierResultat.clubB}</div>
+                </div>
               </div>
               <Link href="/matchs/resultats" style={{ color: '#64748B', fontSize: '0.8rem', fontWeight: 'bold' }}>Tous les résultats ↗</Link>
             </div>
@@ -202,6 +225,7 @@ export default function Dashboard() {
   );
 }
 
+// --- Styles additionnels pour les logos ---
 const titleSectionStyle = { fontSize: '0.75rem', fontWeight: '700', marginBottom: '20px', textTransform: 'uppercase' as const, letterSpacing: '1px' };
 
 const btnAdminStyle = { 
@@ -209,3 +233,5 @@ const btnAdminStyle = {
   padding: '10px 15px', borderRadius: '12px', fontWeight: '800' as const, fontSize: '0.75rem',
   display: 'flex', alignItems: 'center', gap: '5px'
 };
+
+const logoStyle = { width: '45px', height: '45px', borderRadius: '50%', objectFit: 'contain' as const, backgroundColor: 'white', padding: '3px' };
