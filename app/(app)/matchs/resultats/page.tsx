@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from "react";
-import { supabase } from "@/lib/supabase"; 
+import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 
 // --- 1. DÉFINITION DE L'INTERFACE AVEC LOGOS ---
@@ -45,9 +45,9 @@ export default function ResultatsPage() {
     setLoading(true);
     const { data, error } = await supabase
       .from('matchs')
-      .select('*, competitions!left(logo_url)') 
+      .select('*, competitions!left(logo_url)')
       .order('date', { ascending: false });
-    
+
     if (error) {
       console.error("Erreur Supabase:", error);
     } else {
@@ -57,8 +57,8 @@ export default function ResultatsPage() {
   };
 
   const matchGroupes = useMemo(() => {
-    const filtered = matchs.filter(m => 
-      m.clubA?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const filtered = matchs.filter(m =>
+      m.clubA?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       m.clubB?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       m.competition?.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -76,7 +76,7 @@ export default function ResultatsPage() {
 
   return (
     <div className="page-container">
-      
+
       {/* --- HEADER MODIFIÉ POUR MOBILE --- */}
       <header className="dashboard-header">
         <div className="header-top">
@@ -84,17 +84,17 @@ export default function ResultatsPage() {
             <h1>RÉSULTATS <span className="orange-dot">.</span></h1>
             <p className="subtitle">Consultez les derniers scores de la saison.</p>
           </div>
-          
+
           {isAdmin && (
             <Link href="/matchs/a-venir" className="btn-admin-mobile">
               Match à venir
             </Link>
           )}
         </div>
-        
-        <input 
-          type="text" 
-          placeholder="Rechercher un club ou une compétition..." 
+
+        <input
+          type="text"
+          placeholder="Rechercher un club ou une compétition..."
           className="search-input"
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -103,13 +103,13 @@ export default function ResultatsPage() {
 
       {Object.entries(matchGroupes).map(([compet, matchsSection]) => (
         <div key={compet} className="compet-section">
-          <h2 className="compet-title" style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
+          <h2 className="compet-title" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             {matchsSection[0]?.competitions?.logo_url && (
-              <img src={matchsSection[0].competitions.logo_url} alt={compet} style={{width: '40px', height: '40px', objectFit: 'contain'}} />
+              <img src={matchsSection[0].competitions.logo_url} alt={compet} style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
             )}
             🏆 {compet}
           </h2>
-          
+
           <div className="matchs-grid">
             {matchsSection.map((m: Match) => (
               <Link href={`/matchs/resultats/${m.id}`} key={m.id} className="match-card-link">
@@ -121,33 +121,33 @@ export default function ResultatsPage() {
                       {m.status === 'en-cours' && <span className="live-tag">DIRECT</span>}
                     </div>
                     <div className="main-score-row">
-                      
+
                       <div className="team-info home">
-                        <div style={{display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'flex-end'}}>
-                            <span className="team-name">{m.clubA}</span>
-                            {m.logo_urlA ? (
-                                <img src={m.logo_urlA} alt={m.clubA} style={logoStyle} />
-                            ) : (
-                                <div style={logoPlaceholderStyle}>{m.clubA[0]}</div>
-                            )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'flex-end' }}>
+                          <span className="team-name">{m.clubA}</span>
+                          {m.logo_urlA ? (
+                            <img src={m.logo_urlA} alt={m.clubA} style={logoStyle} />
+                          ) : (
+                            <div style={logoPlaceholderStyle}>{m.clubA[0]}</div>
+                          )}
                         </div>
                         <span className="team-cat">{m.equipeA}</span>
                       </div>
-                      
+
                       <div className="score-badge">
                         <span className="score-num">{m.scoreA ?? 0}</span>
                         <span className="score-sep">-</span>
                         <span className="score-num">{m.scoreB ?? 0}</span>
                       </div>
-                      
+
                       <div className="team-info away">
-                        <div style={{display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'flex-start'}}>
-                            {m.logo_urlB ? (
-                                <img src={m.logo_urlB} alt={m.clubB} style={logoStyle} />
-                            ) : (
-                                <div style={logoPlaceholderStyle}>{m.clubB[0]}</div>
-                            )}
-                            <span className="team-name">{m.clubB}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'flex-start' }}>
+                          {m.logo_urlB ? (
+                            <img src={m.logo_urlB} alt={m.clubB} style={logoStyle} />
+                          ) : (
+                            <div style={logoPlaceholderStyle}>{m.clubB[0]}</div>
+                          )}
+                          <span className="team-name">{m.clubB}</span>
                         </div>
                         <span className="team-cat">{m.equipeB}</span>
                       </div>
@@ -162,12 +162,12 @@ export default function ResultatsPage() {
           </div>
         </div>
       ))}
-      
+
       {Object.keys(matchGroupes).length === 0 && (
         <div className="empty-state">Aucun match ne correspond à votre recherche.</div>
       )}
 
-<style jsx>{`
+      <style jsx>{`
         .page-container { animation: fadeIn 0.4s ease; padding-bottom: 40px; padding: 20px; }
         
         .dashboard-header { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
@@ -180,14 +180,17 @@ export default function ResultatsPage() {
         .search-input { padding: 12px 16px; border-radius: 12px; border: 1px solid #e2e8f0; background: white; width: 100%; outline: none; font-size: 0.95rem; box-sizing: border-box; }
         
         .btn-admin-mobile { 
-          background: #0f172a; /* <--- AJOUTEZ CETTE LIGNE POUR LE NOIR */
+          background-color: #0f172a;
           color: white; 
           text-decoration: none;
           padding: 10px 15px; 
-          borderRadius: 10px; 
+          border-radius: 10px;
           font-weight: bold; 
-          fontSize: 0.85rem;
+          font-size: 0.85rem;
           white-space: nowrap;
+          display: inline-block;
+          text-align: center;
+        }
         }
         /* ----------------------------- */
         
