@@ -12,6 +12,16 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
   const [match, setMatch] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  
+  // --- ÉTATS POUR LA MODALE DE SAISIE ---
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [scores, setScores] = useState({
+    q1: { a: "0", b: "0" },
+    q2: { a: "0", b: "0" },
+    q3: { a: "0", b: "0" },
+    q4: { a: "0", b: "0" },
+  });
+  // --------------------------------------
 
   useEffect(() => {
     const storedUser = localStorage.getItem("currentUser");
@@ -29,16 +39,15 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
           event: 'UPDATE',
           schema: 'public',
           table: 'matchs',
-          filter: `id=eq.${matchId}`, // Écouter uniquement ce match
+          filter: `id=eq.${matchId}`,
         },
         (payload) => {
           console.log('Changement reçu en temps réel!', payload);
-          setMatch(payload.new); // Mettre à jour l'affichage
+          setMatch(payload.new);
         }
       )
       .subscribe();
 
-    // Nettoyage lors du démontage du composant
     return () => {
       supabase.removeChannel(channel);
     };
@@ -51,44 +60,30 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
       .eq("id", matchId)
       .single();
 
-    if (data) setMatch(data);
+    if (data) {
+      setMatch(data);
+      // Pré-remplir les scores si déjà existants
+      if (data.config?.scores_quart_temps) {
+        setScores(data.config.scores_quart_temps);
+      }
+    }
     setLoading(false);
   };
 
   const isAdmin = user?.role === "admin" || user?.email === "anthony.didier.pro@gmail.com";
 
-  // --- LOGIQUE DE SAISIE DES SCORES PAR QUART-TEMPS ---
-  const ouvrirSaisieScore = async () => {
-    // Saisie Q1
-    const q1A = prompt(`Score ${match.clubA} - Quart-temps 1 :`, match.config?.scores_quart_temps?.q1?.a || "0");
-    const q1B = prompt(`Score ${match.clubB} - Quart-temps 1 :`, match.config?.scores_quart_temps?.q1?.b || "0");
-    if (q1A === null || q1B === null) return;
+  // --- FONCTION POUR OUVRIR LA MODALE ET INITIALISER LES SCORES ---
+  const ouvrirModale = () => {
+    if (match.config?.scores_quart_temps) {
+      setScores(match.config.scores_quart_temps);
+    }
+    setIsModalOpen(true);
+  };
 
-    // Saisie Q2
-    const q2A = prompt(`Score ${match.clubA} - Quart-temps 2 :`, match.config?.scores_quart_temps?.q2?.a || "0");
-    const q2B = prompt(`Score ${match.clubB} - Quart-temps 2 :`, match.config?.scores_quart_temps?.q2?.b || "0");
-    if (q2A === null || q2B === null) return;
-
-    // Saisie Q3
-    const q3A = prompt(`Score ${match.clubA} - Quart-temps 3 :`, match.config?.scores_quart_temps?.q3?.a || "0");
-    const q3B = prompt(`Score ${match.clubB} - Quart-temps 3 :`, match.config?.scores_quart_temps?.q3?.b || "0");
-    if (q3A === null || q3B === null) return;
-
-    // Saisie Q4
-    const q4A = prompt(`Score ${match.clubA} - Quart-temps 4 :`, match.config?.scores_quart_temps?.q4?.a || "0");
-    const q4B = prompt(`Score ${match.clubB} - Quart-temps 4 :`, match.config?.scores_quart_temps?.q4?.b || "0");
-    if (q4A === null || q4B === null) return;
-
-    // Calcul des totaux
-    const totalA = Number(q1A) + Number(q2A) + Number(q3A) + Number(q4A);
-    const totalB = Number(q1B) + Number(q2B) + Number(q3B) + Number(q4B);
-
-    const scoresDetails = {
-      q1: { a: q1A, b: q1B },
-      q2: { a: q2A, b: q2B },
-      q3: { a: q3A, b: q3B },
-      q4: { a: q4A, b: q4B }
-    };
+  // --- FONCTION POUR ENREGISTRER LES SCORES DEPUIS LA MODALE ---
+  const enregistrerScores = async () => {
+    const totalA = Number(scores.q1.a) + Number(scores.q2.a) + Number(scores.q3.a) + Number(scores.q4.a);
+    const totalB = Number(scores.q1.b) + Number(scores.q2.b) + Number(scores.q3.b) + Number(scores.q4.b);
 
     const { error } = await supabase
       .from("matchs")
@@ -96,13 +91,12 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
         scoreA: totalA,
         scoreB: totalB,
         status: "termine",
-        config: { ...match.config, scores_quart_temps: scoresDetails }
+        config: { ...match.config, scores_quart_temps: scores }
       })
       .eq("id", matchId);
 
     if (!error) {
-      alert("Scores mis à jour !");
-      // chargerMatch(); // Plus besoin d'appeler ça, Realtime s'en charge
+      setIsModalOpen(false);
     } else {
       alert("Erreur : " + error.message);
     }
@@ -115,7 +109,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
     <div style={containerStyle}>
       <button onClick={() => router.back()} style={backBtn}>← Retour</button>
 
-      {/* Affichage Score Final Style Tableau Noir */}
+      {/* Affichage Score Final */}
       <div style={matchCard}>
         <div style={teamSection}>
           <div style={teamName}>{match.clubA}</div>
@@ -137,7 +131,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
         <p><strong>Statut :</strong> {match.status === 'termine' ? '✅ Terminé' : '🕒 À venir'}</p>
       </div>
 
-      {/* Affichage du détail si le match est terminé */}
+      {/* Tableau Détails */}
       {match.config?.scores_quart_temps && (
         <div style={detailBox}>
           <h3 style={{ marginTop: 0 }}>Détail par Quart-temps</h3>
@@ -172,15 +166,39 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
       )}
 
       {isAdmin && (
-        <button onClick={ouvrirSaisieScore} style={actionBtn}>
+        <button onClick={ouvrirModale} style={actionBtn}>
           {match.status === "termine" ? "✏️ Modifier les scores" : "🏁 Renseigner les résultats"}
         </button>
       )}
+
+      {/* --- COMPOSANT MODALE (POP-UP) --- */}
+      {isModalOpen && (
+        <div style={modalOverlay}>
+          <div style={modalContent}>
+            <h2 style={{marginTop: 0}}>Saisie des scores</h2>
+            
+            {["q1", "q2", "q3", "q4"].map((q, i) => (
+              <div key={q} style={modalRow}>
+                <span style={{fontWeight: 'bold', width: '40px'}}>Q{i+1}</span>
+                <input type="number" value={scores[q as keyof typeof scores].a} onChange={e => setScores({...scores, [q]: {...scores[q as keyof typeof scores], a: e.target.value}})} style={modalInput} placeholder={match.clubA} />
+                <span style={{color: '#64748b'}}>-</span>
+                <input type="number" value={scores[q as keyof typeof scores].b} onChange={e => setScores({...scores, [q]: {...scores[q as keyof typeof scores], b: e.target.value}})} style={modalInput} placeholder={match.clubB} />
+              </div>
+            ))}
+
+            <div style={{display: 'flex', gap: '10px', marginTop: '20px'}}>
+              <button onClick={() => setIsModalOpen(false)} style={cancelBtn}>Annuler</button>
+              <button onClick={enregistrerScores} style={saveBtn}>Enregistrer</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ---------------------------------- */}
     </div>
   );
 }
 
-// --- STYLES OBJETS (Inchangés) ---
+// --- STYLES OBJETS ---
 const containerStyle = { padding: "40px 20px", maxWidth: "800px", margin: "0 auto", fontFamily: "sans-serif" };
 const backBtn = { background: "none", border: "none", color: "#64748b", cursor: "pointer", fontWeight: "bold" as const, marginBottom: "20px" };
 const matchCard = { display: "flex", justifyContent: "space-around", alignItems: "center", backgroundColor: "#1e293b", color: "white", padding: "40px", borderRadius: "24px", marginBottom: "30px" };
@@ -194,3 +212,11 @@ const tableStyle = { width: "100%", borderCollapse: "collapse" as const };
 const thStyle = { padding: "10px", color: "#64748b", fontSize: "0.8rem", textTransform: "uppercase" as const };
 const tdStyle = { padding: "15px 10px", textAlign: "center" as const, borderBottom: "1px solid #f1f5f9" };
 const actionBtn = { width: "100%", padding: "18px", backgroundColor: "#F97316", color: "white", border: "none", borderRadius: "15px", fontWeight: "bold" as const, cursor: "pointer", fontSize: "1.1rem" };
+
+// Styles Modale
+const modalOverlay = { position: 'fixed' as const, top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 };
+const modalContent = { backgroundColor: 'white', padding: '30px', borderRadius: '20px', width: '90%', maxWidth: '400px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' };
+const modalRow = { display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '15px' };
+const modalInput = { padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', width: '80px', textAlign: 'center' as const };
+const cancelBtn = { flex: 1, padding: '12px', backgroundColor: '#e2e8f0', border: 'none', borderRadius: '8px', fontWeight: 'bold' as const, cursor: 'pointer' };
+const saveBtn = { flex: 1, padding: '12px', backgroundColor: '#F97316', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold' as const, cursor: 'pointer' };
