@@ -29,7 +29,6 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
     try {
       const { data: comp } = await supabase.from('competitions').select('*').eq('id', compId).single();
       
-      // --- IMPORTANT: Charger logo_url pour les clubs ---
       const { data: listeClubs } = await supabase.from('equipes_clubs').select('*, logo_url').order('nom');
       
       if (comp) {
@@ -57,7 +56,6 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
     
     competition.equipes_engagees.forEach((eq: any) => {
       const key = `${eq.clubNom}-${eq.nom}`;
-      // On s'assure de conserver logoUrl et logoColor ici
       stats[key] = { ...eq, m: 0, v: 0, d: 0, ptsPlus: 0, ptsMoins: 0, points: 0 };
     });
 
@@ -107,7 +105,7 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
       nom: selectedEquipe.nom,
       clubNom: club.nom,
       logoColor: club.logoColor,
-      logoUrl: club.logo_url // --- AJOUT ICI ---
+      logoUrl: club.logo_url
     };
 
     const nouvelles = [...(competition.equipes_engagees || []), nouvelleEntree];
@@ -118,13 +116,6 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
       setSelectedEquipe(null);
       setSelectedClubId('');
     }
-  };
-
-  const retirerEquipe = async (id: string) => {
-    if (!confirm("Retirer cette équipe ?")) return;
-    const filtrees = competition.equipes_engagees.filter((e: any) => e.equipeId !== id);
-    await supabase.from('competitions').update({ equipes_engagees: filtrees }).eq('id', compId);
-    setCompetition({ ...competition, equipes_engagees: filtrees });
   };
 
   if (loading) return <div style={loadingOverlay}>🏀 Chargement...</div>;
@@ -201,16 +192,7 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
               <button onClick={ajouterEquipeACompete} style={addBtn}>Engager</button>
             </div>
           )}
-          <div style={infoBox}>
-            <h3>Inscriptions</h3>
-            {competition.equipes_engagees?.map((eq: any) => (
-              <div key={eq.equipeId} style={equipeTag}>
-                {eq.logoUrl ? <img src={eq.logoUrl} style={miniLogoStyle} /> : <div style={{...miniLogoPlaceholderStyle, backgroundColor: eq.logoColor}}></div>}
-                <span style={{flex: 1}}>{eq.nom}</span>
-                {isAdmin && <button onClick={() => retirerEquipe(eq.equipeId)} style={removeBtn}>×</button>}
-              </div>
-            ))}
-          </div>
+          {/* --- PARTIE INSCRIPTIONS SUPPRIMÉE --- */}
         </div>
       </div>
 
@@ -252,8 +234,3 @@ const cloturerBtnStyle = { padding: '10px', backgroundColor: '#dc2626', color: '
 const adminCard = { backgroundColor: '#1e293b', color: 'white', padding: '15px', borderRadius: '16px' };
 const selectStyle = { width: '100%', padding: '8px', borderRadius: '8px', backgroundColor: '#334155', color: 'white', border: 'none' };
 const addBtn = { width: '100%', marginTop: '10px', padding: '10px', backgroundColor: '#ea580c', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' };
-const infoBox = { backgroundColor: 'white', padding: '15px', borderRadius: '16px', border: '1px solid #e2e8f0' };
-const equipeTag = { display: 'flex', alignItems: 'center', gap: '8px', padding: '8px', backgroundColor: '#f1f5f9', borderRadius: '8px', marginBottom: '5px' };
-const removeBtn = { background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: '50%', cursor: 'pointer' };
-const miniLogoStyle = { width: '16px', height: '16px', borderRadius: '50%' };
-const miniLogoPlaceholderStyle = { width: '16px', height: '16px', borderRadius: '50%' };
