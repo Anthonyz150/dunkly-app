@@ -80,23 +80,28 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
     setIsModalOpen(true);
   };
 
-  // --- FONCTION POUR ENREGISTRER LES SCORES DEPUIS LA MODALE ---
+  // --- FONCTION POUR ENREGISTRER LES SCORES DEPUIS LA MODALE (ÉTAPE 2) ---
   const enregistrerScores = async () => {
+    // Calcul des totaux
     const totalA = Number(scores.q1.a) + Number(scores.q2.a) + Number(scores.q3.a) + Number(scores.q4.a);
     const totalB = Number(scores.q1.b) + Number(scores.q2.b) + Number(scores.q3.b) + Number(scores.q4.b);
 
+    // Envoi à Supabase
     const { error } = await supabase
       .from("matchs")
       .update({
         scoreA: totalA,
         scoreB: totalB,
-        status: "termine",
+        status: "termine", // Met à jour le statut du match
         config: { ...match.config, scores_quart_temps: scores }
       })
       .eq("id", matchId);
 
     if (!error) {
       setIsModalOpen(false);
+      // Optionnel : recharger localement si nécessaire, 
+      // mais le realtime va rafraîchir le composant.
+      chargerMatch(); 
     } else {
       alert("Erreur : " + error.message);
     }
