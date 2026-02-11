@@ -11,10 +11,11 @@ export default function TousLesResultatsPage() {
   useEffect(() => {
     const chargerMatchs = async () => {
       setLoading(true);
+      // --- MODIF: Sélection des colonnes logo_urlA/B ---
       const { data, error } = await supabase
         .from('matchs')
         .select('*')
-        .eq('status', 'termine') // Seulement les matchs finis
+        .eq('status', 'termine')
         .order('date', { ascending: false });
       
       if (!error) setMatchs(data || []);
@@ -23,18 +24,59 @@ export default function TousLesResultatsPage() {
     chargerMatchs();
   }, []);
 
-  if (loading) return <div>Chargement...</div>;
+  // Formatage date simple
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'short'
+    });
+  };
+
+  if (loading) return <div style={containerStyle}>Chargement des résultats...</div>;
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>Tous les résultats</h1>
-      <div style={{ display: 'grid', gap: '15px' }}>
+    <div style={containerStyle}>
+      <h1 style={titleStyle}>🛡️ Tous les résultats</h1>
+      
+      <div style={gridStyle}>
+        {matchs.length === 0 && <p style={{color: '#94a3b8'}}>Aucun résultat disponible.</p>}
+        
         {matchs.map((m) => (
-          <Link href={`/matchs/resultats/${m.id}`} key={m.id} style={{ textDecoration: 'none', color: 'black' }}>
-            <div style={{ border: '1px solid #ccc', padding: '15px', borderRadius: '8px' }}>
-              <strong>{m.competition}</strong> - {m.date}
-              <br />
-              {m.clubA} {m.scoreA} - {m.scoreB} {m.clubB}
+          <Link href={`/matchs/detail/${m.id}`} key={m.id} style={{ textDecoration: 'none' }}>
+            <div style={cardStyle}>
+              {/* Header card: Compétition et Date */}
+              <div style={cardHeaderStyle}>
+                <span style={competitionStyle}>{m.competition}</span>
+                <span style={dateStyle}>{formatDate(m.date)}</span>
+              </div>
+              
+              {/* Corps card: Logos et Scores */}
+              <div style={matchRowStyle}>
+                {/* Équipe A */}
+                <div style={teamStyle}>
+                  {m.logo_urlA ? (
+                    <img src={m.logo_urlA} alt={m.clubA} style={logoStyle} />
+                  ) : (
+                    <div style={logoPlaceholderStyle}>{m.clubA[0]}</div>
+                  )}
+                  <span style={clubNameStyle}>{m.clubA}</span>
+                </div>
+                
+                {/* Score */}
+                <div style={scoreStyle}>
+                  {m.scoreA} - {m.scoreB}
+                </div>
+                
+                {/* Équipe B */}
+                <div style={{...teamStyle, flexDirection: 'row-reverse'}}>
+                  {m.logo_urlB ? (
+                    <img src={m.logo_urlB} alt={m.clubB} style={logoStyle} />
+                  ) : (
+                    <div style={logoPlaceholderStyle}>{m.clubB[0]}</div>
+                  )}
+                  <span style={clubNameStyle}>{m.clubB}</span>
+                </div>
+              </div>
             </div>
           </Link>
         ))}
@@ -42,3 +84,30 @@ export default function TousLesResultatsPage() {
     </div>
   );
 }
+
+// --- NOUVEAUX STYLES (Sombre et moderne) ---
+const containerStyle = { padding: '20px', maxWidth: '800px', margin: '0 auto', fontFamily: 'sans-serif', color: 'white', minHeight: '100vh', backgroundColor: '#0f172a' };
+const titleStyle = { fontWeight: '900', marginBottom: '30px', color: 'white' };
+const gridStyle = { display: 'flex', flexDirection: 'column' as const, gap: '15px' };
+
+const cardStyle = { 
+  border: '1px solid #334155', 
+  padding: '20px', 
+  borderRadius: '16px', 
+  backgroundColor: '#1e293b',
+  transition: 'transform 0.1s, box-shadow 0.1s',
+  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+};
+
+const cardHeaderStyle = { display: 'flex', justifyContent: 'space-between', marginBottom: '15px', fontSize: '0.85rem' };
+const competitionStyle = { color: '#F97316', fontWeight: 'bold' as const, textTransform: 'uppercase' as const };
+const dateStyle = { color: '#94a3b8' };
+
+const matchRowStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' };
+const teamStyle = { display: 'flex', alignItems: 'center', gap: '10px', flex: 1 };
+const clubNameStyle = { fontWeight: 'bold' as const, fontSize: '1.1rem' };
+
+const logoStyle = { width: '40px', height: '40px', borderRadius: '50%', objectFit: 'contain' as const, backgroundColor: 'white', padding: '2px' };
+const logoPlaceholderStyle = { width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' as const, flexShrink: 0 };
+
+const scoreStyle = { fontSize: '1.8rem', fontWeight: '900', color: '#f59e0b', minWidth: '80px', textAlign: 'center' as const };
