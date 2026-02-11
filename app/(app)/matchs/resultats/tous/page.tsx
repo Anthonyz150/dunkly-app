@@ -7,17 +7,27 @@ import Link from "next/link";
 export default function TousLesResultatsPage() {
   const [matchs, setMatchs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const chargerMatchs = async () => {
       setLoading(true);
-      // --- MODIF: Jointure pour logo de comp et retrait filtre statut ---
-      const { data, error } = await supabase
+      setError(null);
+
+      // --- MODIFICATION ICI : Syntaxe de jointure externe sécurisée ---
+      // !left permet de récupérer les matchs même sans logo de compétition
+      const { data, error: supabaseError } = await supabase
         .from('matchs')
         .select('*, competitions!left(logo_url)')
         .order('date', { ascending: false });
       
-      if (!error) setMatchs(data || []);
+      if (supabaseError) {
+        console.error("Erreur Supabase:", supabaseError);
+        setError("Impossible de charger les résultats.");
+      } else {
+        console.log("Données reçues :", data);
+        setMatchs(data || []);
+      }
       setLoading(false);
     };
     chargerMatchs();
@@ -25,6 +35,7 @@ export default function TousLesResultatsPage() {
 
   // Formatage date simple
   const formatDate = (dateString: string) => {
+    if (!dateString) return "Date inconnue";
     return new Date(dateString).toLocaleDateString('fr-FR', {
         day: 'numeric',
         month: 'short'
@@ -32,6 +43,7 @@ export default function TousLesResultatsPage() {
   };
 
   if (loading) return <div style={containerStyle}>Chargement des résultats...</div>;
+  if (error) return <div style={containerStyle}>Erreur : {error}</div>;
 
   return (
     <div style={containerStyle}>
@@ -50,7 +62,7 @@ export default function TousLesResultatsPage() {
                     {m.competitions?.logo_url && (
                         <img src={m.competitions.logo_url} alt={m.competition} style={{width: '24px', height: '24px', objectFit: 'contain'}} />
                     )}
-                    <span style={competitionStyle}>{m.competition}</span>
+                    <span style={competitionStyle}>{m.competition || 'Compétition inconnue'}</span>
                 </div>
                 <span style={dateStyle}>{formatDate(m.date)}</span>
               </div>
@@ -62,7 +74,7 @@ export default function TousLesResultatsPage() {
                   {m.logo_urlA ? (
                     <img src={m.logo_urlA} alt={m.clubA} style={logoStyle} />
                   ) : (
-                    <div style={logoPlaceholderStyle}>{m.clubA[0]}</div>
+                    <div style={logoPlaceholderStyle}>{m.clubA ? m.clubA[0] : '?'}</div>
                   )}
                   <span style={clubNameStyle}>{m.clubA}</span>
                 </div>
@@ -77,7 +89,7 @@ export default function TousLesResultatsPage() {
                   {m.logo_urlB ? (
                     <img src={m.logo_urlB} alt={m.clubB} style={logoStyle} />
                   ) : (
-                    <div style={logoPlaceholderStyle}>{m.clubB[0]}</div>
+                    <div style={logoPlaceholderStyle}>{m.clubB ? m.clubB[0] : '?'}</div>
                   )}
                   <span style={clubNameStyle}>{m.clubB}</span>
                 </div>
