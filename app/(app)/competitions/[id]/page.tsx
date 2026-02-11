@@ -29,6 +29,7 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
     try {
       const { data: comp } = await supabase.from('competitions').select('*').eq('id', compId).single();
       
+      // Récupérer tous les clubs pour avoir leurs logos à jour
       const { data: listeClubs } = await supabase.from('equipes_clubs').select('*, logo_url').order('nom');
       
       if (comp) {
@@ -54,9 +55,17 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
     
     const stats: Record<string, any> = {};
     
+    // Créer une map pour trouver rapidement le logo d'un club actuel
+    const clubLogos = new Map(clubs.map(c => [c.nom, c.logo_url]));
+
     competition.equipes_engagees.forEach((eq: any) => {
       const key = `${eq.clubNom}-${eq.nom}`;
-      stats[key] = { ...eq, m: 0, v: 0, d: 0, ptsPlus: 0, ptsMoins: 0, points: 0 };
+      stats[key] = { 
+        ...eq,
+        // --- CORRECTION LOGO: On force l'utilisation du logo actuel du club ---
+        logoUrl: clubLogos.get(eq.clubNom) || eq.logoUrl,
+        m: 0, v: 0, d: 0, ptsPlus: 0, ptsMoins: 0, points: 0 
+      };
     });
 
     matchsTermines.forEach(m => {
