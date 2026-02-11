@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+// Import Image de next/image pour optimiser l'affichage
+import Image from "next/image"; 
 
 interface MatchProps {
-  id: string; // Ajout de l'ID pour le lien
+  id: string;
   clubA: string;
   clubB: string;
   equipeA: string;
@@ -12,11 +14,17 @@ interface MatchProps {
   scoreB: number;
   status: 'a-venir' | 'en-cours' | 'termine';
   arbitrePrincipal?: string;
+  // --- AJOUT DES URLS DE LOGO ---
+  logo_urlA?: string;
+  logo_urlB?: string;
+  // ------------------------------
 }
 
-export default function MatchCard({ id, clubA, clubB, equipeA, equipeB, scoreA, scoreB, status, arbitrePrincipal }: MatchProps) {
+export default function MatchCard({ 
+  id, clubA, clubB, equipeA, equipeB, scoreA, scoreB, status, arbitrePrincipal,
+  logo_urlA, logo_urlB // --- AJOUT ICI ---
+}: MatchProps) {
   
-  // Petit badge de statut dynamique
   const getStatusBadge = () => {
     switch (status) {
       case 'en-cours': return <span style={badgeLive}>• LIVE</span>;
@@ -34,18 +42,36 @@ export default function MatchCard({ id, clubA, clubB, equipeA, equipeB, scoreA, 
         </div>
 
         <div style={scoreRow}>
+          {/* CLUB A */}
           <div style={teamBlock}>
-            <span style={clubName}>{clubA}</span>
-            <span style={teamLevel}>{equipeA}</span>
+            {/* --- MODIF: AFFICHAGE LOGO A --- */}
+            {logo_urlA ? (
+              <img src={logo_urlA} alt={clubA} style={logoStyle} />
+            ) : (
+              <div style={{...logoPlaceholder, marginRight: '10px'}}>{clubA[0]}</div>
+            )}
+            <div>
+              <span style={clubName}>{clubA}</span>
+              <span style={teamLevel}>{equipeA}</span>
+            </div>
           </div>
 
           <div style={scoreBlock}>
             <span style={scoreText}>{scoreA} - {scoreB}</span>
           </div>
 
-          <div style={{ ...teamBlock, textAlign: 'right' }}>
-            <span style={clubName}>{clubB}</span>
-            <span style={teamLevel}>{equipeB}</span>
+          {/* CLUB B */}
+          <div style={{ ...teamBlock, textAlign: 'right', flexDirection: 'row-reverse' }}>
+            {/* --- MODIF: AFFICHAGE LOGO B --- */}
+            {logo_urlB ? (
+              <img src={logo_urlB} alt={clubB} style={logoStyle} />
+            ) : (
+              <div style={{...logoPlaceholder, marginLeft: '10px'}}>{clubB[0]}</div>
+            )}
+            <div>
+              <span style={clubName}>{clubB}</span>
+              <span style={teamLevel}>{equipeB}</span>
+            </div>
           </div>
         </div>
 
@@ -59,12 +85,12 @@ export default function MatchCard({ id, clubA, clubB, equipeA, equipeB, scoreA, 
   );
 }
 
-// --- STYLES ---
+// --- STYLES MODIFIÉS ---
 const cardStyle = {
   borderRadius: '16px',
   padding: '20px',
   margin: '10px 0',
-  background: '#1e293b', // Un bleu nuit plus moderne que le noir pur
+  background: '#1e293b',
   color: 'white',
   transition: 'transform 0.2s',
   cursor: 'pointer',
@@ -73,16 +99,22 @@ const cardStyle = {
 };
 
 const scoreRow = { display: 'flex', justifyContent: 'space-between', alignItems: 'center' };
-const teamBlock = { flex: 1, display: 'flex', flexDirection: 'column' as const };
-const clubName = { fontSize: '1.1rem', fontWeight: '800' };
-const teamLevel = { fontSize: '0.8rem', color: '#94a3b8' };
+// Ajout de flex pour aligner logo et texte
+const teamBlock = { flex: 1, display: 'flex', alignItems: 'center' }; 
+const clubName = { fontSize: '1.1rem', fontWeight: '800', display: 'block' };
+const teamLevel = { fontSize: '0.8rem', color: '#94a3b8', display: 'block' };
+
+// Style pour les logos
+const logoStyle = { width: '40px', height: '40px', borderRadius: '50%', objectFit: 'contain' as const, backgroundColor: 'white', padding: '2px' };
+const logoPlaceholder = { width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' as const };
 
 const scoreBlock = { 
   flex: 0.5, 
   textAlign: 'center' as const, 
   backgroundColor: '#0f172a', 
   padding: '10px', 
-  borderRadius: '10px' 
+  borderRadius: '10px',
+  margin: '0 15px'
 };
 const scoreText = { fontSize: '1.5rem', fontWeight: '900', color: '#f59e0b' };
 
