@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase"; 
 import Link from "next/link";
 
-// --- 1. DÉFINITION DE L'INTERFACE ---
+// --- 1. DÉFINITION DE L'INTERFACE AVEC LOGOS ---
 interface Match {
   id: string;
   competition: string;
@@ -17,6 +17,8 @@ interface Match {
   scoreB: number;
   lieu: string;
   status: 'en-cours' | 'termine' | 'a-venir';
+  logo_urlA?: string; // --- AJOUT ---
+  logo_urlB?: string; // --- AJOUT ---
 }
 
 export default function ResultatsPage() {
@@ -37,6 +39,7 @@ export default function ResultatsPage() {
 
   const chargerTousLesMatchs = async () => {
     setLoading(true);
+    // --- MODIF: On récupère bien les colonnes de logos ---
     const { data, error } = await supabase
       .from('matchs')
       .select('*')
@@ -60,7 +63,7 @@ export default function ResultatsPage() {
       if (!acc[compet]) acc[compet] = [];
       acc[compet].push(match);
       return acc;
-    }, {} as Record<string, Match[]>); // TYPAGE EXPLICITE ICI
+    }, {} as Record<string, Match[]>);
 
   }, [matchs, searchTerm]);
 
@@ -111,17 +114,36 @@ export default function ResultatsPage() {
                       {m.status === 'en-cours' && <span className="live-tag">DIRECT</span>}
                     </div>
                     <div className="main-score-row">
+                      
+                      {/* --- EQUIPE A AVEC LOGO --- */}
                       <div className="team-info home">
-                        <span className="team-name">{m.clubA}</span>
+                        <div style={{display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'flex-end'}}>
+                            <span className="team-name">{m.clubA}</span>
+                            {m.logo_urlA ? (
+                                <img src={m.logo_urlA} alt={m.clubA} style={logoStyle} />
+                            ) : (
+                                <div style={logoPlaceholderStyle}>{m.clubA[0]}</div>
+                            )}
+                        </div>
                         <span className="team-cat">{m.equipeA}</span>
                       </div>
+                      
                       <div className="score-badge">
                         <span className="score-num">{m.scoreA ?? 0}</span>
                         <span className="score-sep">-</span>
                         <span className="score-num">{m.scoreB ?? 0}</span>
                       </div>
+                      
+                      {/* --- EQUIPE B AVEC LOGO --- */}
                       <div className="team-info away">
-                        <span className="team-name">{m.clubB}</span>
+                        <div style={{display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'flex-start'}}>
+                            {m.logo_urlB ? (
+                                <img src={m.logo_urlB} alt={m.clubB} style={logoStyle} />
+                            ) : (
+                                <div style={logoPlaceholderStyle}>{m.clubB[0]}</div>
+                            )}
+                            <span className="team-name">{m.clubB}</span>
+                        </div>
                         <span className="team-cat">{m.equipeB}</span>
                       </div>
                     </div>
@@ -151,7 +173,7 @@ export default function ResultatsPage() {
         .compet-section { margin-bottom: 40px; }
         .compet-title { font-size: 1.3rem; font-weight: 800; color: #1e293b; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #f1f5f9; }
         
-        .matchs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
+        .matchs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 20px; }
         .match-card-link { text-decoration: none; color: inherit; }
         .match-card { background: white; border-radius: 16px; display: flex; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border: 1px solid #f1f5f9; transition: transform 0.2s; height: 100%; }
         .match-card:hover { transform: translateY(-3px); }
@@ -162,7 +184,7 @@ export default function ResultatsPage() {
         .card-top { display: flex; justify-content: space-between; margin-bottom: 10px; }
         .date { font-size: 0.75rem; color: #94a3b8; font-weight: 600; }
         .main-score-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 5px 0; }
-        .team-info { display: flex; flex-direction: column; width: 35%; }
+        .team-info { display: flex; flex-direction: column; width: 40%; }
         .home { text-align: right; }
         .team-name { font-size: 0.9rem; font-weight: 800; color: #1e293b; text-transform: uppercase; }
         .team-cat { font-size: 0.7rem; color: #94a3b8; font-weight: 600; }
@@ -172,7 +194,7 @@ export default function ResultatsPage() {
         .card-bottom { margin-top: 10px; padding-top: 10px; border-top: 1px solid #f1f5f9; font-size: 0.75rem; color: #64748b; font-weight: 600; }
         .live-tag { color: #22c55e; font-weight: 800; animation: pulse 2s infinite; font-size: 0.7rem; }
         
-        .empty-state { text-align: center; padding: 40px; color: #64748b; background: white; borderRadius: 16px; border: 2px dashed #e2e8f0; }
+        .empty-state { text-align: center; padding: 40px; color: #64748b; background: white; border-radius: 16px; border: 2px dashed #e2e8f0; }
         
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
@@ -180,4 +202,7 @@ export default function ResultatsPage() {
     </div>
   );
 }
-const inputStyle = { padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' };
+
+// --- STYLES COMPLÉMENTAIRES POUR LES LOGOS ---
+const logoStyle = { width: '35px', height: '35px', borderRadius: '50%', objectFit: 'contain' as const, backgroundColor: 'white', border: '1px solid #f1f5f9' };
+const logoPlaceholderStyle = { width: '35px', height: '35px', borderRadius: '50%', backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' as const, fontSize: '1rem', color: '#64748b' };
