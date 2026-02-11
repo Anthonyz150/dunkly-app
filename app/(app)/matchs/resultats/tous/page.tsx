@@ -14,18 +14,19 @@ export default function TousLesResultatsPage() {
       setLoading(true);
       setError(null);
 
-      // --- MODIFICATION ICI : Syntaxe de jointure externe sécurisée ---
-      // !left permet de récupérer les matchs même sans logo de compétition
+      // --- CORRECTION ICI : Requête sécurisée ---
+      // On sélectionne * pour la table matchs, et uniquement logo_url pour la jointure
       const { data, error: supabaseError } = await supabase
         .from('matchs')
-        .select('*, competitions!left(logo_url)')
+        .select('*, competitions!left(logo_url)')                
         .order('date', { ascending: false });
       
       if (supabaseError) {
         console.error("Erreur Supabase:", supabaseError);
-        setError("Impossible de charger les résultats.");
+        setError(`Erreur: ${supabaseError.message}`);
       } else {
-        console.log("Données reçues :", data);
+        // Log pour vérifier les données dans la console F12
+        console.log("Données reçues :", data); 
         setMatchs(data || []);
       }
       setLoading(false);
