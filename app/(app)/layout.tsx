@@ -10,22 +10,37 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   const [user, setUser] = useState<any>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null); // --- NOUVEAU ---
   const [menuOpen, setMenuOpen] = useState(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // --- MODIFICATION ICI ---
-    // On ne cherche plus à rediriger vers /login
-    const stored = localStorage.getItem("currentUser");
-    if (stored) {
-      try {
-        setUser(JSON.parse(stored));
-      } catch {
-        localStorage.clear();
+    // --- NOUVEAU : Fonction pour charger/rafraîchir l'utilisateur et l'avatar ---
+    const loadUser = () => {
+      const stored = localStorage.getItem("currentUser");
+      if (stored) {
+        try {
+          const userData = JSON.parse(stored);
+          setUser(userData);
+          // On récupère l'URL de l'avatar stockée
+          setAvatarUrl(userData.avatar_url || null);
+        } catch {
+          localStorage.clear();
+        }
       }
-    }
-    setReady(true);
+      setReady(true);
+    };
+
+    loadUser();
+    
+    // Écouter les changements dans localStorage (ex: mise à jour profil)
+    window.addEventListener('storage', loadUser);
+    
     setMenuOpen(false);
+
+    return () => {
+      window.removeEventListener('storage', loadUser);
+    };
   }, [pathname]);
 
   if (!ready) {
@@ -45,6 +60,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     user?.email?.[0]?.toUpperCase() ||
     "U";
 
+  // --- NOUVEAU : Composant Avatar réutilisable ---
+  const AvatarDisplay = ({ size = "36px" }: { size?: string }) => (
+    avatarUrl ? (
+      <img src={avatarUrl} alt="Avatar" style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", border: "2px solid #F97316" }} />
+    ) : (
+      <div style={{ width: size, height: size, borderRadius: "50%", background: "#f97316", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: size === "80px" ? "2rem" : "1rem" }}>
+        {initial}
+      </div>
+    )
+  );
+  // ------------------------------------------------
+
   return (
     <html lang="fr">
       <body>
@@ -54,7 +81,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <header className="mobile-header">
             <button onClick={() => setMenuOpen(true)} className="burger">☰</button>
             <span className="logo">🏀 DUNKLY</span>
-            <Link href="/profil" className="avatar">{initial}</Link>
+            <Link href="/profil">
+              <AvatarDisplay /> {/* --- MODIFIÉ --- */}
+            </Link>
           </header>
 
           {menuOpen && <div className="overlay" onClick={() => setMenuOpen(false)} />}
@@ -62,6 +91,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {/* SIDEBAR */}
           <aside className={`sidebar ${menuOpen ? "open" : ""}`}>
             <h2 className="brand">🏀 DUNKLY</h2>
+            
+            {/* --- NOUVEAU : Photo et nom dans la sidebar --- */}
+            <div style={{ textAlign: "center", marginBottom: "30px", padding: "10px", background: "#1e293b", borderRadius: "16px" }}>
+              <div style={{display: "flex", justifyContent: "center", marginBottom: "10px"}}>
+                <AvatarDisplay size="80px" />
+              </div>
+              <div style={{ fontWeight: "bold", fontSize: "1.1rem", color: "white" }}>
+                {user?.prenom} {user?.nom}
+              </div>
+              <div style={{ color: "#94a3b8", fontSize: "0.85rem" }}>{user?.username}</div>
+            </div>
+            {/* ----------------------------------------------- */}
 
             <nav>
               <Link href="/">🏠 Accueil</Link>
@@ -71,13 +112,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
               {isAdmin && (
                 <>
-                  <hr />
+                  <hr style={{borderColor: "#334155"}} />
                   <Link href="/membres">👥 Membres</Link>
                   <Link href="/admin/newsletter">📩 Newsletter</Link>
                 </>
               )}
 
-              <hr />
+              <hr style={{borderColor: "#334155"}} />
               <Link href="/profil">👤 Profil</Link>
             </nav>
 
@@ -117,6 +158,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             position: fixed;
             height: 100vh;
             z-index: 1000;
+            display: flex;
+            flex-direction: column;
           }
 
           .sidebar nav a {
@@ -145,6 +188,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             padding: 0;
             text-align: left;
             width: 100%;
+            margin-bottom: 20px;
           }
 
           /* CONTENT */
@@ -194,19 +238,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               background: none;
               border: none;
               cursor: pointer;
-            }
-
-            .avatar {
-              width: 36px;
-              height: 36px;
-              border-radius: 50%;
-              background: #f97316;
-              color: white;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              text-decoration: none;
-              font-weight: bold;
             }
 
             .overlay {
