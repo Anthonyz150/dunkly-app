@@ -28,8 +28,6 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
     setLoading(true);
     try {
       const { data: comp } = await supabase.from('competitions').select('*').eq('id', compId).single();
-      
-      // --- MODIF: On récupère logo_url aussi ---
       const { data: listeClubs } = await supabase.from('equipes_clubs').select('*, logo_url').order('nom');
       
       if (comp) {
@@ -57,7 +55,6 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
     
     competition.equipes_engagees.forEach((eq: any) => {
       const key = `${eq.clubNom}-${eq.nom}`;
-      // On stocke le logoUrl s'il existe dans l'objet équipe engagée
       stats[key] = { ...eq, m: 0, v: 0, d: 0, ptsPlus: 0, ptsMoins: 0, points: 0 };
     });
 
@@ -115,7 +112,7 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
       nom: selectedEquipe.nom,
       clubNom: club.nom,
       logoColor: club.logoColor,
-      logoUrl: club.logo_url // --- AJOUT LOGO URL ---
+      logoUrl: club.logo_url
     };
 
     const nouvelles = [...(competition.equipes_engagees || []), nouvelleEntree];
@@ -150,17 +147,19 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
       </div>
 
       <div className="main-grid-mobile" style={mainGrid}>
+        {/* --- CLASSEMENT REORGANISÉ --- */}
         <div style={statsCard}>
-          <h2 style={cardTitle}>🏆 Classement Officiel</h2>
+          <h2 style={cardTitle}>🏆 Classement</h2>
           <div className="table-container">
             <table style={tableStyle}>
               <thead>
                 <tr style={thRow}>
-                  <th style={thL}>CLUB / ÉQUIPE</th>
+                  <th style={thL}>#</th>
+                  <th style={thL}>CLUB</th>
                   <th style={thC}>M</th>
                   <th style={thC}>V</th>
                   <th style={thC}>D</th>
-                  <th className="hide-mobile" style={thC}>DIFF</th>
+                  <th className="hide-mobile" style={thC}>+/-</th>
                   <th style={thC}>PTS</th>
                 </tr>
               </thead>
@@ -168,28 +167,10 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
                 {classement.map((team: any, index: number) => (
                   <tr key={index} style={trStyle}>
                     <td style={tdL}>
-                      <span style={rankStyle(index)}>{index + 1}</span>
-                      
-                      {/* --- MODIF: Affichage Logo + Texte --- */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        {team.logoUrl ? (
-                          <img src={team.logoUrl} alt={team.clubNom} style={logoTableStyle} />
-                        ) : (
-                          <div style={{...logoPlaceholderTableStyle, backgroundColor: team.logoColor || '#f1f5f9'}}>
-                            {team.clubNom[0]}
-                          </div>
-                        )}
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <span className="team-name-mobile" style={{ fontWeight: '800' }}>
-                            {team.clubNom}
-                          </span>
-                          <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
-                            {team.nom}
-                          </span>
-                        </div>
-                      </div>
-                      {/* ------------------------------------- */}
-                      
+                        <span style={rankStyle(index)}>{index + 1}</span>
+                    </td>
+                    <td style={tdL}>
+                        <span style={{ fontWeight: '800' }}>{team.clubNom}</span>
                     </td>
                     <td style={tdC}>{team.m}</td>
                     <td style={{ ...tdC, color: '#22c55e', fontWeight: 'bold' }}>{team.v}</td>
@@ -239,13 +220,8 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {competition.equipes_engagees?.map((eq: any) => (
                 <div key={eq.equipeId} style={equipeTag}>
-                  {/* --- MODIF: Mini logo dans la liste --- */}
-                  {eq.logoUrl ? (
-                    <img src={eq.logoUrl} alt={eq.clubNom} style={miniLogoStyle} />
-                  ) : (
-                    <div style={{...miniLogoPlaceholderStyle, backgroundColor: eq.logoColor}}></div>
-                  )}
-                  <span style={{ fontSize: '0.85rem', fontWeight: 'bold', flex: 1 }}>{eq.nom}</span>
+                  <div style={{...miniLogoPlaceholderStyle, backgroundColor: eq.logoColor}}></div>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 'bold', flex: 1 }}>{eq.clubNom} - {eq.nom}</span>
                   {isAdmin && <button onClick={() => retirerEquipe(eq.equipeId)} style={removeBtn}>×</button>}
                 </div>
               ))}
@@ -261,7 +237,6 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
           .main-grid-mobile { grid-template-columns: 1fr !important; gap: 20px !important; }
           .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
           .hide-mobile { display: none !important; }
-          .team-name-mobile { font-size: 0.8rem !important; }
           td, th { padding: 10px 5px !important; font-size: 0.75rem !important; }
         }
       `}</style>
@@ -290,13 +265,9 @@ const thRow = { borderBottom: '2px solid #f1f5f9' };
 const thL = { textAlign: 'left' as const, padding: '15px', color: '#64748b', fontSize: '0.7rem', fontWeight: 'bold' as const };
 const thC = { textAlign: 'center' as const, padding: '15px', color: '#64748b', fontSize: '0.7rem', fontWeight: 'bold' as const };
 const trStyle = { borderBottom: '1px solid #f8fafc' };
-const tdL = { padding: '15px', display: 'flex', alignItems: 'center', gap: '15px' };
+const tdL = { padding: '15px', textAlign: 'left' as const };
 const tdC = { padding: '15px', textAlign: 'center' as const };
 const rankStyle = (i: number) => ({ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: i === 0 ? '#FEF3C7' : '#f1f5f9', color: i === 0 ? '#92400E' : '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 'bold' as const });
-
-// Nouveaux styles logos table
-const logoTableStyle = { width: '35px', height: '35px', borderRadius: '50%', objectFit: 'contain' as const, backgroundColor: 'white' };
-const logoPlaceholderTableStyle = { width: '35px', height: '35px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' as const, fontSize: '1rem', color: 'white' };
 
 const actionColumn = { display: 'flex', flexDirection: 'column' as const, gap: '20px' };
 const adminCard = { backgroundColor: '#1e293b', color: 'white', padding: '25px', borderRadius: '24px' };
@@ -308,6 +279,4 @@ const equipeTag = { display: 'flex', alignItems: 'center', gap: '10px', padding:
 const removeBtn = { background: '#fee2e2', color: '#ef4444', border: 'none', width: '22px', height: '22px', borderRadius: '50%', cursor: 'pointer' };
 const emptyText = { textAlign: 'center' as const, padding: '30px', color: '#94a3b8' };
 
-// Nouveaux styles mini logos
-const miniLogoStyle = { width: '20px', height: '20px', borderRadius: '50%', objectFit: 'contain' as const };
 const miniLogoPlaceholderStyle = { width: '20px', height: '20px', borderRadius: '50%' };
