@@ -35,9 +35,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     setMenuOpen(false);
   }, [pathname]);
 
-  if (!ready) {
-    return null;
-  }
+  if (!ready) return null;
 
   const isAdmin =
     user?.role === "admin" ||
@@ -102,7 +100,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <aside className={`sidebar ${menuOpen ? "open" : ""}`}>
           <h2 className="brand">🏀 DUNKLY</h2>
 
-          {/* USER CARD */}
           <div className="user-card">
             <AvatarDisplay size="80px" />
             <div className="username">
@@ -164,7 +161,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         /* SIDEBAR */
         .sidebar {
           width: 260px;
-          background: linear-gradient(180deg, #2563EB 0%, #1E3A8A 100%);
+          background: #1e293b;
           color: white;
           padding: 24px;
           position: fixed;
@@ -172,7 +169,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           display: flex;
           flex-direction: column;
           box-sizing: border-box;
-          box-shadow: 4px 0 25px rgba(0,0,0,0.15);
+          box-shadow: 4px 0 25px rgba(0,0,0,0.25);
           transition: 0.3s ease;
         }
 
@@ -182,7 +179,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         }
 
         .user-card {
-          background: rgba(255,255,255,0.1);
+          background: rgba(255,255,255,0.05);
           padding: 15px;
           border-radius: 16px;
           text-align: center;
@@ -197,28 +194,28 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         .fullname {
           font-size: 0.85rem;
-          opacity: 0.8;
+          opacity: 0.7;
         }
 
         .sidebar nav a {
           display: block;
           padding: 10px 0;
-          color: rgba(255,255,255,0.9);
+          color: #cbd5e1;
           text-decoration: none;
           font-weight: 600;
           transition: 0.2s;
         }
 
         .sidebar nav a:hover {
-          transform: translateX(4px);
           color: white;
+          transform: translateX(4px);
         }
 
         .logout {
           margin-top: auto;
-          background: rgba(0,0,0,0.25);
+          background: rgba(255,255,255,0.08);
           border: none;
-          color: #ffb4b4;
+          color: #fca5a5;
           padding: 10px;
           border-radius: 10px;
           cursor: pointer;
@@ -226,7 +223,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         }
 
         .logout:hover {
-          background: rgba(0,0,0,0.4);
+          background: rgba(255,255,255,0.15);
         }
 
         /* CONTENT */
@@ -244,6 +241,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         @media (max-width: 1024px) {
           .sidebar {
             transform: translateX(-100%);
+            z-index: 1000;
           }
 
           .sidebar.open {
