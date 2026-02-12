@@ -1,5 +1,5 @@
+// app/layout.tsx
 "use client";
-
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -8,7 +8,7 @@ import { Analytics } from "@vercel/analytics/next"
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-
+  
   const [user, setUser] = useState<any>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -159,7 +159,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           /* SIDEBAR */
           .sidebar {
             width: 260px;
-            background: #0f172a;
+            background: #0f172a; /* --- COULEUR CONSERVÉE --- */
             color: white;
             padding: 24px;
             position: fixed;
