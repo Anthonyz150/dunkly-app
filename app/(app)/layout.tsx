@@ -32,7 +32,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     };
 
     loadUser();
-    // Écoute les changements de stockage pour mettre à jour l'avatar instantanément
     window.addEventListener('storage', loadUser);
     setMenuOpen(false);
 
@@ -42,19 +41,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   if (!ready) {
-    // Écran de chargement minimaliste pour éviter le flash de contenu non authentifié
     return (
       <html lang="fr">
+        {/* Couleur de fond pendant le chargement */}
         <body style={{ background: "#0f172a" }} />
       </html>
     );
   }
 
-  // --- CORRECTION: Logique Admin robuste ---
   const isAdmin =
     user?.role === "admin" ||
     user?.email === "anthony.didier.pro@gmail.com";
-  // ----------------------------------------
 
   const initial =
     user?.username?.[0]?.toUpperCase() ||
@@ -106,11 +103,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <button
               className="logout"
               onClick={() => {
-                // --- CORRECTION: Nettoyage complet ---
                 localStorage.clear();
-                // Si tu utilises Supabase cookies, il faudrait aussi appeler la déconnexion supabase ici
                 router.push("/login");
-                // -------------------------------------
               }}
             >
               Déconnexion
@@ -140,9 +134,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <main className="content">{children}</main>
         </div>
 
-        {/* --- CORRECTION: Intégration Vercel Analytics --- */}
         <Analytics />
-        {/* ------------------------------------------------- */}
 
         <style jsx global>{`
           body {
@@ -159,7 +151,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           /* SIDEBAR */
           .sidebar {
             width: 260px;
-            background: #0f172a; /* --- COULEUR CONSERVÉE --- */
+            /* --- CORRECTION: COULEUR BLEU NUIT --- */
+            background: #0f172a; 
+            /* -------------------------------------- */
             color: white;
             padding: 24px;
             position: fixed;
