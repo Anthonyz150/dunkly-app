@@ -239,49 +239,55 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         }
 
         @media (max-width: 1024px) {
-          .sidebar {
-            transform: translateX(-100%);
-            z-index: 1000;
-          }
 
-          .sidebar.open {
-            transform: translateX(0);
-          }
-
-          .content {
-            margin-left: 0;
-            padding-top: 80px;
-          }
-
-          .mobile-header {
-            display: flex;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-            background: white;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 16px;
-            border-bottom: 1px solid #e2e8f0;
-            z-index: 900;
-          }
-
-          .burger {
-            font-size: 24px;
-            background: none;
-            border: none;
-            cursor: pointer;
-          }
-
-          .overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.4);
-            z-index: 800;
-          }
+         .sidebar {
+         position: fixed;
+         top: 0;
+         left: -260px;
+         width: 260px;
+         height: 100vh;
+         z-index: 2000;
+         transition: left 0.3s ease;
         }
+
+         .sidebar.open {
+         left: 0;
+        }
+
+         .content {
+         margin-left: 0;
+         padding-top: 80px;
+        }
+
+         .mobile-header {
+         display: flex;
+         position: fixed;
+         top: 0;
+         left: 0;
+         right: 0;
+         height: 60px;
+         background: white;
+         align-items: center;
+         justify-content: space-between;
+         padding: 0 16px;
+         border-bottom: 1px solid #e2e8f0;
+         z-index: 1500;
+        }
+
+        .burger {
+        font-size: 24px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        }
+
+        .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.4);
+        z-index: 1800;
+        }
+       }
       `}</style>
     </>
   );
