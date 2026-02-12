@@ -149,11 +149,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           }
 
           /* SIDEBAR */
-          .sidebar {
+           .sidebar {
             width: 260px;
-            /* --- CORRECTION: COULEUR BLEU NUIT --- */
-            background: #0f172a; 
-            /* -------------------------------------- */
+            background: #0f172a;
             color: white;
             padding: 24px;
             position: fixed;
@@ -163,6 +161,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             flex-direction: column;
             box-sizing: border-box;
           }
+
+
 
           .sidebar nav a {
             display: block;
