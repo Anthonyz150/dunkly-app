@@ -250,7 +250,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             .overlay {
               position: fixed;
               inset: 0;
-              background: rgba(0,0,0,0.4);
+              background: #0f172a;
               z-index: 900;
             }
           }
