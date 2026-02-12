@@ -8,7 +8,7 @@ import { Analytics } from "@vercel/analytics/next"
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  
+
   const [user, setUser] = useState<any>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -87,9 +87,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {/* SIDEBAR */}
           <aside className={`sidebar ${menuOpen ? "open" : ""}`}>
             <h2 className="brand">🏀 DUNKLY</h2>
-            
+
             <div style={{ textAlign: "center", marginBottom: "20px", padding: "10px", background: "#1e293b", borderRadius: "16px" }}>
-              <div style={{display: "flex", justifyContent: "center", marginBottom: "10px"}}>
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: "10px" }}>
                 <AvatarDisplay size="80px" />
               </div>
               <div style={{ fontWeight: "900", fontSize: "1.2rem", color: "white" }}>
@@ -119,13 +119,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
               {isAdmin && (
                 <>
-                  <hr style={{borderColor: "#334155"}} />
+                  <hr style={{ borderColor: "#334155" }} />
                   <Link href="/membres">👥 Membres</Link>
                   <Link href="/admin/newsletter">📩 Newsletter</Link>
                 </>
               )}
 
-              <hr style={{borderColor: "#334155"}} />
+              <hr style={{ borderColor: "#334155" }} />
               <Link href="/profil">👤 Profil</Link>
             </nav>
           </aside>
@@ -137,124 +137,119 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <Analytics />
 
         <style jsx global>{`
-          body {
-            margin: 0;
-            font-family: system-ui, sans-serif;
-            background: #f8fafc;
-          }
 
-          .app {
-            display: flex;
-            min-height: 100vh;
-          }
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #f8fafc;
+}
 
-          /* SIDEBAR */
-           .sidebar {
-            width: 260px;
-            background: #0f172a;
-            color: white;
-            padding: 24px;
-            position: fixed;
-            height: 100vh;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
-          }
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+/* SIDEBAR */
+.sidebar {
+  width: 260px;
+  background: #0f172a;
+  color: white;
+  padding: 24px;
+  position: fixed;
+  height: 100vh;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
 
+.sidebar nav a {
+  display: block;
+  color: #cbd5f5;
+  text-decoration: none;
+  padding: 10px 0;
+  font-weight: 600;
+}
+.sidebar nav a:hover {
+  color: white;
+}
 
+.brand {
+  margin-bottom: 30px;
+  margin-top: 0;
+}
 
-          .sidebar nav a {
-            display: block;
-            color: #cbd5f5;
-            text-decoration: none;
-            padding: 10px 0;
-            font-weight: 600;
-          }
+.logout {
+  background: #334155;
+  border: none;
+  color: #f87171;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 10px;
+  text-align: center;
+  width: 100%;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+.logout:hover {
+  background: #475569;
+}
 
-          .sidebar nav a:hover {
-            color: white;
-          }
+/* CONTENT */
+.content {
+  margin-left: 260px;
+  padding: 40px;
+  width: 100%;
+}
 
-          .brand {
-            margin-bottom: 30px;
-            margin-top: 0;
-          }
+/* MOBILE */
+.mobile-header {
+  display: none;
+}
 
-          .logout {
-            background: #334155;
-            border: none;
-            color: #f87171;
-            font-weight: bold;
-            cursor: pointer;
-            padding: 10px;
-            text-align: center;
-            width: 100%;
-            border-radius: 8px;
-            margin-bottom: 20px;
-          }
+@media (max-width: 1024px) {
+.sidebar {
+    transform: translateX(-100%);
+    transition: 0.3s;
+  }
 
-          .logout:hover {
-            background: #475569;
-          }
+  .sidebar.open {
+    transform: translateX(0);
+  }
 
-          /* CONTENT */
-          .content {
-            margin-left: 260px;
-            padding: 40px;
-            width: 100%;
-          }
+  .content {
+    margin-left: 0;
+    padding-top: 80px;
+  }
 
-          /* MOBILE */
-          .mobile-header {
-            display: none;
-          }
+  .mobile-header {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 60px;
+    background: white;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    border-bottom: 1px solid #e2e8f0;
+    z-index: 900;
+  }
 
-          @media (max-width: 1024px) {
-            .sidebar {
-              transform: translateX(-100%);
-              transition: 0.3s;
-            }
+  .burger {
+    font-size: 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
 
-            .sidebar.open {
-              transform: translateX(0);
-            }
-
-            .content {
-              margin-left: 0;
-              padding-top: 80px;
-            }
-
-            .mobile-header {
-              display: flex;
-              position: fixed;
-              top: 0;
-              left: 0;
-              right: 0;
-              height: 60px;
-              background: white;
-              align-items: center;
-              justify-content: space-between;
-              padding: 0 16px;
-              border-bottom: 1px solid #e2e8f0;
-              z-index: 900;
-            }
-
-            .burger {
-              font-size: 24px;
-              background: none;
-              border: none;
-              cursor: pointer;
-            }
-
-            .overlay {
-              position: fixed;
-              inset: 0;
-              background: #0f172a;
-              z-index: 900;
-            }
-          }
-        `}</style>
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 900;
+  }
+}
+`}</style>
       </body>
     </html>
   );
