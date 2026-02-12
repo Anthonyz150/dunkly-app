@@ -158,10 +158,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           min-height: 100vh;
         }
 
-        /* SIDEBAR */
+        /* SIDEBAR BLEU NUIT */
         .sidebar {
           width: 260px;
-          background: #1e293b;
+          background: linear-gradient(180deg, #0B1E3D 0%, #09172F 100%) !important;
           color: white;
           padding: 24px;
           position: fixed;
@@ -169,7 +169,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           display: flex;
           flex-direction: column;
           box-sizing: border-box;
-          box-shadow: 4px 0 25px rgba(0,0,0,0.25);
+          box-shadow: 4px 0 30px rgba(0,0,0,0.35);
           transition: 0.3s ease;
         }
 
@@ -179,7 +179,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         }
 
         .user-card {
-          background: rgba(255,255,255,0.05);
+          background: rgba(255,255,255,0.06);
           padding: 15px;
           border-radius: 16px;
           text-align: center;
@@ -200,7 +200,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         .sidebar nav a {
           display: block;
           padding: 10px 0;
-          color: #cbd5e1;
+          color: #c7d2fe;
           text-decoration: none;
           font-weight: 600;
           transition: 0.2s;
@@ -226,7 +226,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           background: rgba(255,255,255,0.15);
         }
 
-        /* CONTENT */
+        /* CONTENU */
         .content {
           margin-left: 260px;
           padding: 40px;
