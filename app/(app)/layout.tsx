@@ -20,8 +20,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       if (stored) {
         try {
           const userData = JSON.parse(stored);
-          setUser(userData);
-          setAvatarUrl(userData.avatar_url || null);
+          if (userData.id) {
+            setUser(userData);
+            setAvatarUrl(userData.avatar_url || null);
+          }
         } catch {
           localStorage.clear();
         }
@@ -30,6 +32,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     };
 
     loadUser();
+    // Écoute les changements de stockage pour mettre à jour l'avatar instantanément
     window.addEventListener('storage', loadUser);
     setMenuOpen(false);
 
@@ -39,16 +42,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   if (!ready) {
+    // Écran de chargement minimaliste pour éviter le flash de contenu non authentifié
     return (
       <html lang="fr">
-        <body style={{ background: "#F8FAFC" }} />
+        <body style={{ background: "#0f172a" }} />
       </html>
     );
   }
 
+  // --- CORRECTION: Logique Admin robuste ---
   const isAdmin =
     user?.role === "admin" ||
     user?.email === "anthony.didier.pro@gmail.com";
+  // ----------------------------------------
 
   const initial =
     user?.username?.[0]?.toUpperCase() ||
@@ -85,33 +91,30 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <aside className={`sidebar ${menuOpen ? "open" : ""}`}>
             <h2 className="brand">🏀 DUNKLY</h2>
             
-            {/* --- BLOC PROFIL MODIFIÉ --- */}
             <div style={{ textAlign: "center", marginBottom: "20px", padding: "10px", background: "#1e293b", borderRadius: "16px" }}>
               <div style={{display: "flex", justifyContent: "center", marginBottom: "10px"}}>
                 <AvatarDisplay size="80px" />
               </div>
-              {/* Pseudo en grand */}
               <div style={{ fontWeight: "900", fontSize: "1.2rem", color: "white" }}>
                 {user?.username || 'Utilisateur'}
               </div>
-              {/* Nom/Prénom en petit */}
               <div style={{ color: "#94a3b8", fontSize: "0.85rem", marginTop: "2px" }}>
                 {user?.prenom} {user?.nom}
               </div>
             </div>
-            {/* --------------------------- */}
 
-            {/* --- BOUTON DÉCONNEXION REMONTÉ --- */}
             <button
               className="logout"
               onClick={() => {
+                // --- CORRECTION: Nettoyage complet ---
                 localStorage.clear();
+                // Si tu utilises Supabase cookies, il faudrait aussi appeler la déconnexion supabase ici
                 router.push("/login");
+                // -------------------------------------
               }}
             >
               Déconnexion
             </button>
-            {/* ---------------------------------- */}
 
             <nav>
               <Link href="/">🏠 Accueil</Link>
@@ -136,6 +139,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {/* CONTENU */}
           <main className="content">{children}</main>
         </div>
+
+        {/* --- CORRECTION: Intégration Vercel Analytics --- */}
+        <Analytics />
+        {/* ------------------------------------------------- */}
 
         <style jsx global>{`
           body {

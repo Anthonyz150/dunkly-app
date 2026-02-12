@@ -1,3 +1,4 @@
+// middleware.ts
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -46,11 +47,18 @@ export async function middleware(req: NextRequest) {
   // getUser() est plus lent mais vérifie la validité réelle du token auprès de Supabase
   const { data: { user } } = await supabase.auth.getUser();
 
-  // OPTIONNEL : Redirection automatique si pas connecté
-  // Si l'utilisateur n'est pas connecté et essaie d'aller sur une page protégée (ex: /profil)
-  if (!user && req.nextUrl.pathname.startsWith('/profil')) {
-    return NextResponse.redirect(new URL('/login', req.url));
+  // --- CORRECTION: Protection étendue des routes ---
+  const protectedPaths = ['/profil', '/membres'];
+  const isProtectedPath = protectedPaths.some(path => req.nextUrl.pathname.startsWith(path));
+
+  // Si l'utilisateur n'est pas connecté et essaie d'accéder à une page protégée
+  if (!user && isProtectedPath) {
+    const redirectUrl = new URL('/login', req.url);
+    // On ajoute l'URL de redirection pour revenir après la connexion
+    redirectUrl.searchParams.set('redirect', req.nextUrl.pathname);
+    return NextResponse.redirect(redirectUrl);
   }
+  // ---------------------------------------------------
 
   return res;
 }

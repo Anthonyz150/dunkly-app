@@ -1,8 +1,9 @@
+// app/login/page.tsx
 "use client";
 
 import { useState, type CSSProperties } from "react";
 import { supabase } from "@/lib/supabase";
-import { useRouter, useSearchParams } from "next/navigation"; // --- MODIFICATION ICI ---
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 
 export default function AuthPage() {
@@ -14,9 +15,8 @@ export default function AuthPage() {
   const [error, setError] = useState("");
 
   const router = useRouter();
-  const searchParams = useSearchParams(); // --- MODIFICATION ICI ---
+  const searchParams = useSearchParams();
 
-  // --- MODIFICATION ICI ---
   // Récupère l'URL de redirection, par défaut vers '/'
   const redirectTo = searchParams.get('redirect') || '/';
 
@@ -33,17 +33,30 @@ export default function AuthPage() {
         });
         if (error) throw error;
 
-        // --- Synchronisation avec ton Dashboard ---
+        // --- CORRECTION ET AMÉLIORATION ---
         if (data?.user) {
-          localStorage.setItem('currentUser', JSON.stringify({
-            id: data.user.id,
-            email: data.user.email,
-            username: data.user.email?.split('@')[0], // Fallback pseudo
-            role: data.user.user_metadata?.role || 'user'
-          }));
-        }
+          // 1. Récupérer le profil complet pour avoir le rôle et l'avatar
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', data.user.id)
+            .single();
 
-        // --- MODIFICATION ICI ---
+          if (profileError) console.error("Erreur profil:", profileError);
+
+          // 2. Stocker les données complètes
+          localStorage.setItem('currentUser', JSON.stringify({
+            ...data.user,
+            ...profile,
+            // Fallback: avatar_url du profil ou metadatas auth
+            avatar_url: profile?.avatar_url || data.user.user_metadata?.avatar_url 
+          }));
+          
+          // 3. Déclencher un événement pour que le layout mette à jour l'UI instantanément
+          window.dispatchEvent(new Event('storage'));
+        }
+        // ----------------------------------
+
         // Redirige vers l'URL stockée dans le paramètre
         window.location.href = redirectTo;
 
@@ -59,12 +72,10 @@ export default function AuthPage() {
         });
         if (error) throw error;
         
-        alert("Inscription réussie ! Vérifiez vos emails ou connectez-vous.");
+        alert("Inscription réussie ! Veuillez confirmer votre email si nécessaire.");
         
-        // --- MODIFICATION ICI ---
         // Après inscription réussie, on redirige vers le login avec le paramètre de redirection
         router.push(`/login?redirect=${encodeURIComponent(redirectTo)}`);
-        
         setLoading(false);
         return;
       }
@@ -76,6 +87,7 @@ export default function AuthPage() {
     }
   };
 
+  // ... (Le rendu JSX reste identique, il est déjà correct)
   return (
     <main style={wrapper}>
       <motion.div
@@ -158,8 +170,8 @@ export default function AuthPage() {
   );
 }
 
-/* Les styles restent identiques à ton fichier original */
-const wrapper: CSSProperties = { position: "fixed", inset: 0, background: "radial-gradient(circle at center, #0f172a, #000)", display: "flex", justifyContent: "center", alignItems: "center" };
+// Les styles restent identiques
+const wrapper: CSSProperties = { position: "fixed", inset: 0, background: "radial-gradient(circle at center, #0f172a, #000)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 9999 };
 const card: CSSProperties = { background: "#020617", padding: "48px", width: "380px", borderRadius: "24px", boxShadow: "0 40px 80px rgba(0,0,0,0.9)", textAlign: "center" };
 const logo: CSSProperties = { background: "#f97316", width: "56px", height: "56px", borderRadius: "50%", display: "flex", justifyContent: "center", alignItems: "center", margin: "0 auto 12px", fontSize: "26px" };
 const title: CSSProperties = { color: "#fff", fontSize: "2.5rem", fontWeight: 900, marginBottom: "20px" };
