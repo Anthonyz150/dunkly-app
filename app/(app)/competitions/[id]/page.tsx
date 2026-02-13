@@ -30,24 +30,24 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
     try {
       const { data: comp } = await supabase.from('competitions').select('*').eq('id', compId).single();
       const { data: listeClubs } = await supabase.from('equipes_clubs').select('*, logo_url').order('nom');
-      
+
       if (comp) {
         // --- REQUÊTE AVEC JOINTURE ---
         const { data: matchs } = await supabase
           .from('matchs')
           .select(`
-            *,
-            journees (
-              nom
-            )
-          `)
-          .eq('competition', comp.nom)
-          .eq('saison', comp.saison)
+    *,
+    journees (
+      nom
+    )
+  `)
+          // .eq('competition', comp.nom) // Commente cette ligne
+          // .eq('saison', comp.saison)   // Commente cette ligne
           .eq('status', 'termine');
-        
+
         // --- INSPECTION DANS LA CONSOLE ---
         console.log("Données matchs reçues (avec journées):", matchs);
-        
+
         setCompetition(comp);
         setMatchsTermines(matchs || []);
         setNewLogoUrl(comp.logo_url || '');
@@ -67,24 +67,24 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
 
     competition.equipes_engagees.forEach((eq: any) => {
       const key = `${eq.clubNom}-${eq.nom}`;
-      stats[key] = { 
+      stats[key] = {
         ...eq,
         logoUrl: clubLogos.get(eq.clubNom) || eq.logoUrl,
-        m: 0, v: 0, d: 0, ptsPlus: 0, ptsMoins: 0, points: 0 
+        m: 0, v: 0, d: 0, ptsPlus: 0, ptsMoins: 0, points: 0
       };
     });
 
     matchsTermines.forEach(m => {
       const keyA = `${m.clubA}-${m.equipeA}`;
       const keyB = `${m.clubB}-${m.equipeB}`;
-      
+
       if (stats[keyA] && stats[keyB]) {
         stats[keyA].m++; stats[keyB].m++;
         stats[keyA].ptsPlus += (Number(m.scoreA) || 0);
         stats[keyA].ptsMoins += (Number(m.scoreB) || 0);
         stats[keyB].ptsPlus += (Number(m.scoreB) || 0);
         stats[keyB].ptsMoins += (Number(m.scoreA) || 0);
-        
+
         if (m.scoreA > m.scoreB) {
           stats[keyA].v++; stats[keyA].points += 2;
           stats[keyB].d++; stats[keyB].points += 1;
@@ -185,7 +185,7 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
                         {team.logoUrl ? (
                           <img src={team.logoUrl} alt={team.clubNom} style={logoTableStyle} />
                         ) : (
-                          <div style={{...logoPlaceholderStyle, backgroundColor: team.logoColor || '#cbd5e1'}}>{team.clubNom[0]}</div>
+                          <div style={{ ...logoPlaceholderStyle, backgroundColor: team.logoColor || '#cbd5e1' }}>{team.clubNom[0]}</div>
                         )}
                         <span style={{ fontWeight: '700', fontSize: '0.9rem' }}>{team.clubNom}</span>
                       </div>
@@ -193,7 +193,7 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
                     <td style={tdC}>{team.m}</td>
                     <td style={{ ...tdC, color: '#16a34a', fontWeight: 'bold' }}>{team.v}</td>
                     <td style={{ ...tdC, color: '#dc2626' }}>{team.d}</td>
-                    <td style={{...tdC, ...hideMobile}} className="hide-mobile">{team.diff > 0 ? `+${team.diff}` : team.diff}</td>
+                    <td style={{ ...tdC, ...hideMobile }} className="hide-mobile">{team.diff > 0 ? `+${team.diff}` : team.diff}</td>
                     <td style={{ ...tdC, fontWeight: '900', color: '#ea580c' }}>{team.points}</td>
                   </tr>
                 ))}
@@ -208,16 +208,16 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
           )}
           {isAdmin && (
             <div style={adminCard}>
-              <h3 style={{marginTop: 0}}>Logo Compétition</h3>
-              <input type="text" value={newLogoUrl} onChange={(e) => setNewLogoUrl(e.target.value)} placeholder="URL du logo" style={{...selectStyle, marginBottom: '10px'}} />
+              <h3 style={{ marginTop: 0 }}>Logo Compétition</h3>
+              <input type="text" value={newLogoUrl} onChange={(e) => setNewLogoUrl(e.target.value)} placeholder="URL du logo" style={{ ...selectStyle, marginBottom: '10px' }} />
               <button onClick={updateCompetLogo} style={addBtn}>Mettre à jour le logo</button>
-              <hr style={{margin: '20px 0', borderColor: '#334155'}}/>
+              <hr style={{ margin: '20px 0', borderColor: '#334155' }} />
               <h3>Engager une équipe</h3>
               <select style={selectStyle} value={selectedClubId} onChange={(e) => setSelectedClubId(e.target.value)}>
                 <option value="">-- Club --</option>
                 {clubs.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
               </select>
-              <select style={{...selectStyle, marginTop: '10px'}} disabled={!selectedClubId} onChange={(e) => setSelectedEquipe(e.target.value ? JSON.parse(e.target.value) : null)}>
+              <select style={{ ...selectStyle, marginTop: '10px' }} disabled={!selectedClubId} onChange={(e) => setSelectedEquipe(e.target.value ? JSON.parse(e.target.value) : null)}>
                 <option value="">-- Équipe --</option>
                 {clubs.find(c => c.id === selectedClubId)?.equipes?.map((eq: any) => <option key={eq.id} value={JSON.stringify(eq)}>{eq.nom}</option>)}
               </select>
