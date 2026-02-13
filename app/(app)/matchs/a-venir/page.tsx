@@ -8,6 +8,8 @@ import { useRouter } from "next/navigation";
 interface EquipeIntern { id: string; nom: string; }
 interface Club { id: string; nom: string; equipes: EquipeIntern[]; logo_url?: string; }
 interface Competition { id: string; nom: string; }
+// --- AJOUT: Interface Journée ---
+interface Journee { id: string; nom: string; competition_id: string; }
 
 interface Match {
   id: string;
@@ -20,10 +22,10 @@ interface Match {
   lieu: string;
   arbitre: string;
   status: string;
-  // --- MODIFICATION: ajout des champs logos ---
   logo_urlA?: string;
   logo_urlB?: string;
-  // --------------------------------------------
+  // --- AJOUT: Champ journee_id ---
+  journee_id?: string;
 }
 
 export default function MatchsAVenirPage() {
@@ -31,6 +33,9 @@ export default function MatchsAVenirPage() {
   const [clubs, setClubs] = useState<Club[]>([]);
   const [arbitres, setArbitres] = useState<any[]>([]);
   const [competitions, setCompetitions] = useState<Competition[]>([]);
+  // --- AJOUT: État pour les journées ---
+  const [journees, setJournees] = useState<Journee[]>([]);
+  
   const [user, setUser] = useState<any>(null);
 
   const [showForm, setShowForm] = useState(false);
@@ -38,6 +43,9 @@ export default function MatchsAVenirPage() {
 
   const [selectedClubA, setSelectedClubA] = useState("");
   const [selectedClubB, setSelectedClubB] = useState("");
+  // --- AJOUT: État pour la journée sélectionnée ---
+  const [selectedJournee, setSelectedJournee] = useState("");
+  
   const [dureePeriode, setDureePeriode] = useState("10");
   const [tmMT1, setTmMT1] = useState("2");
   const [tmMT2, setTmMT2] = useState("3");
@@ -77,10 +85,13 @@ export default function MatchsAVenirPage() {
     const { data: listClubs } = await supabase.from('equipes_clubs').select('*');
     const { data: listArb } = await supabase.from('arbitres').select('*').order('nom', { ascending: true });
     const { data: listComp } = await supabase.from('competitions').select('*');
+    // --- AJOUT: Chargement des journées ---
+    const { data: listJournees } = await supabase.from('journees').select('*');
 
     if (listClubs) setClubs(listClubs);
     if (listArb) setArbitres(listArb);
     if (listComp) setCompetitions(listComp);
+    if (listJournees) setJournees(listJournees);
   };
 
   const toggleArbitre = (nomComplet: string) => {
@@ -95,24 +106,23 @@ export default function MatchsAVenirPage() {
     e.preventDefault();
     if (!isAdmin) return;
 
-    // --- CORRECTION: Récupération des objets clubs pour les logos ---
     const clubAObj = clubs.find(c => c.id === selectedClubA);
     const clubBObj = clubs.find(c => c.id === selectedClubB);
 
     const matchData = {
       clubA: clubAObj?.nom,
-      // --- CORRECTION: Sauvegarde du logo ---
       logo_urlA: clubAObj?.logo_url || null, 
       equipeA: newMatch.equipeA,
       
       clubB: clubBObj?.nom,
-      // --- CORRECTION: Sauvegarde du logo ---
       logo_urlB: clubBObj?.logo_url || null,
       equipeB: newMatch.equipeB,
-      // ----------------------------------------
       
       date: newMatch.date,
       competition: newMatch.competition,
+      // --- AJOUT: Sauvegarde de la journée ---
+      journee_id: selectedJournee || null,
+      
       arbitre: selectedArbitres.join(" / "),
       lieu: newMatch.lieu,
       status: 'a-venir',
@@ -152,6 +162,9 @@ export default function MatchsAVenirPage() {
     const clubBObj = clubs.find(c => c.nom === m.clubB);
     if (clubAObj) setSelectedClubA(clubAObj.id);
     if (clubBObj) setSelectedClubB(clubBObj.id);
+    // --- AJOUT: Chargement journée lors de l'édition ---
+    setSelectedJournee(m.journee_id || "");
+    
     setShowForm(true);
   };
 
@@ -172,6 +185,8 @@ export default function MatchsAVenirPage() {
     setSelectedArbitres([]);
     setSelectedClubA("");
     setSelectedClubB("");
+    // --- AJOUT: Reset journée ---
+    setSelectedJournee("");
   };
 
   const formatteDateParis = (dateString: string) => {
@@ -226,6 +241,24 @@ export default function MatchsAVenirPage() {
               </select>
             </div>
 
+            {/* --- AJOUT: Sélecteur de Journée --- */}
+            <div style={colStyle}>
+              <label style={miniLabel}>JOURNÉE</label>
+              <select value={selectedJournee} onChange={e => setSelectedJournee(e.target.value)} style={inputStyle}>
+                <option value="">Sélectionner une journée...</option>
+                {journees.map(j => <option key={j.id} value={j.id}>{j.nom}</option>)}
+              </select>
+            </div>
+            {/* ------------------------------------------- */}
+
+            <div style={colStyle}>
+              <label style={miniLabel}>COMPÉTITION</label>
+              <select required value={newMatch.competition} onChange={e => setNewMatch({ ...newMatch, competition: e.target.value })} style={inputStyle}>
+                <option value="">Sélectionner...</option>
+                {competitions.map(comp => <option key={comp.id} value={comp.nom}>{comp.nom}</option>)}
+              </select>
+            </div>
+
             <div style={{ ...colStyle, gridColumn: '1 / span 2' }}>
               <label style={miniLabel}>ARBITRES</label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '12px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
@@ -271,14 +304,6 @@ export default function MatchsAVenirPage() {
             </div>
 
             <div style={colStyle}>
-              <label style={miniLabel}>COMPÉTITION</label>
-              <select required value={newMatch.competition} onChange={e => setNewMatch({ ...newMatch, competition: e.target.value })} style={inputStyle}>
-                <option value="">Sélectionner...</option>
-                {competitions.map(comp => <option key={comp.id} value={comp.nom}>{comp.nom}</option>)}
-              </select>
-            </div>
-
-            <div style={colStyle}>
               <label style={miniLabel}>📍 LIEU / GYMNASE</label>
               <input type="text" placeholder="Ex: Gymnase André Carton" value={newMatch.lieu} onChange={e => setNewMatch({ ...newMatch, lieu: e.target.value })} style={inputStyle} />
             </div>
@@ -294,7 +319,6 @@ export default function MatchsAVenirPage() {
           <div key={m.id} style={matchCardStyle}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               
-              {/* Équipe A + LOGO */}
               <div style={{ flex: 1, textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px' }}>
                 <div>
                   <div style={{ fontWeight: '800', fontSize: '1.2rem', color: '#1e293b', textTransform: 'uppercase' }}>{m.clubA}</div>
@@ -305,7 +329,6 @@ export default function MatchsAVenirPage() {
 
               <div style={{ padding: '0 20px', fontWeight: '900', color: '#F97316', fontSize: '1.3rem' }}>VS</div>
               
-              {/* LOGO + Équipe B */}
               <div style={{ flex: 1, textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '10px' }}>
                 {m.logo_urlB && <img src={m.logo_urlB} alt={m.clubB} style={logoStyle} />}
                 <div>

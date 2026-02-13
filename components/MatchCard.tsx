@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-// Import Image de next/image pour optimiser l'affichage
+// --- CORRECTION: Import Image de next/image pour optimiser l'affichage ---
 import Image from "next/image"; 
+// ------------------------------------------------------------------------
 
 interface MatchProps {
   id: string;
@@ -44,9 +45,17 @@ export default function MatchCard({
         <div style={scoreRow}>
           {/* CLUB A */}
           <div style={teamBlock}>
-            {/* --- MODIF: AFFICHAGE LOGO A --- */}
+            {/* --- MODIF: AFFICHAGE LOGO A AVEC NEXT/IMAGE --- */}
             {logo_urlA ? (
-              <img src={logo_urlA} alt={clubA} style={logoStyle} />
+              <div style={logoWrapperStyle}>
+                <Image 
+                  src={logo_urlA} 
+                  alt={clubA} 
+                  fill // Remplit le conteneur parent
+                  style={{ objectFit: 'contain' }}
+                  sizes="40px"
+                />
+              </div>
             ) : (
               <div style={{...logoPlaceholder, marginRight: '10px'}}>{clubA[0]}</div>
             )}
@@ -62,13 +71,21 @@ export default function MatchCard({
 
           {/* CLUB B */}
           <div style={{ ...teamBlock, textAlign: 'right', flexDirection: 'row-reverse' }}>
-            {/* --- MODIF: AFFICHAGE LOGO B --- */}
+            {/* --- MODIF: AFFICHAGE LOGO B AVEC NEXT/IMAGE --- */}
             {logo_urlB ? (
-              <img src={logo_urlB} alt={clubB} style={logoStyle} />
+              <div style={logoWrapperStyle}>
+                <Image 
+                  src={logo_urlB} 
+                  alt={clubB} 
+                  fill // Remplit le conteneur parent
+                  style={{ objectFit: 'contain' }}
+                  sizes="40px"
+                />
+              </div>
             ) : (
               <div style={{...logoPlaceholder, marginLeft: '10px'}}>{clubB[0]}</div>
             )}
-            <div>
+            <div style={{marginRight: '10px'}}>
               <span style={clubName}>{clubB}</span>
               <span style={teamLevel}>{equipeB}</span>
             </div>
@@ -104,8 +121,18 @@ const teamBlock = { flex: 1, display: 'flex', alignItems: 'center' };
 const clubName = { fontSize: '1.1rem', fontWeight: '800', display: 'block' };
 const teamLevel = { fontSize: '0.8rem', color: '#94a3b8', display: 'block' };
 
-// Style pour les logos
-const logoStyle = { width: '40px', height: '40px', borderRadius: '50%', objectFit: 'contain' as const, backgroundColor: 'white', padding: '2px' };
+// Style pour les conteneurs de logos
+const logoWrapperStyle = { 
+  width: '40px', 
+  height: '40px', 
+  position: 'relative' as const, // Nécessaire pour fill de next/image
+  borderRadius: '50%', 
+  backgroundColor: 'white', 
+  padding: '2px',
+  marginRight: '10px',
+  overflow: 'hidden'
+};
+
 const logoPlaceholder = { width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' as const };
 
 const scoreBlock = { 
