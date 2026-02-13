@@ -17,7 +17,6 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
 
   const [selectedClubId, setSelectedClubId] = useState('');
   const [selectedEquipe, setSelectedEquipe] = useState<any>(null);
-  // --- NOUVEL ÉTAT POUR LE LOGO DE COMPET ---
   const [newLogoUrl, setNewLogoUrl] = useState('');
 
   useEffect(() => {
@@ -34,15 +33,21 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
       const { data: listeClubs } = await supabase.from('equipes_clubs').select('*, logo_url').order('nom');
       
       if (comp) {
+        // --- CORRECTION : Jointure pour récupérer le nom de la journée ---
         const { data: matchs } = await supabase
           .from('matchs')
-          .select('*')
+          .select(`
+            *,
+            journees (
+              nom
+            )
+          `)
           .eq('competition', comp.nom)
+          .eq('saison', comp.saison)
           .eq('status', 'termine');
 
         setCompetition(comp);
         setMatchsTermines(matchs || []);
-        // Initialiser le champ du logo avec l'URL actuelle
         setNewLogoUrl(comp.logo_url || '');
       }
       setClubs(listeClubs || []);
@@ -106,7 +111,6 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
     }
   };
 
-  // --- NOUVELLE FONCTION POUR MAJ LOGO ---
   const updateCompetLogo = async () => {
     if (!isAdmin) return;
     const { error } = await supabase.from('competitions').update({ logo_url: newLogoUrl }).eq('id', compId);
@@ -148,13 +152,12 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
       <div style={heroSection}>
         <button onClick={() => router.push('/competitions')} style={backBtn}>← Retour</button>
         
-        {/* --- LOGO EN DESSOUS DU BOUTON RETOUR --- */}
         <div style={{ marginTop: '15px', marginBottom: '15px' }}>
           {competition.logo_url && (
             <img 
               src={competition.logo_url} 
               alt={competition.nom} 
-              style={{ width: '150px', height: '150px', objectFit: 'contain' }} // --- TAILLE AUGMENTÉE ---
+              style={{ width: '150px', height: '150px', objectFit: 'contain' }}
             />
           )}
         </div>
@@ -162,13 +165,14 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
         <h1 style={titleStyle}>{competition.nom}</h1>
         <div style={badgeGrid}>
           <div style={miniBadge}>🏆 {competition.type}</div>
+          <div style={miniBadge}>📅 {competition.saison}</div>
         </div>
       </div>
 
       <div style={mainGrid}>
         <div style={statsCard}>
           <h2 style={cardTitle}>Classement Officiel</h2>
-          <div style={tableContainer}>
+          <div style={tableContainerStyle}>
             <table style={tableStyle}>
               <thead>
                 <tr style={thRow}>
@@ -177,7 +181,7 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
                   <th style={thC}>M</th>
                   <th style={thC}>V</th>
                   <th style={thC}>D</th>
-                  <th style={{...thC, ...hideMobile}}>+/-</th>
+                  <th style={thC} className="hide-mobile">+/-</th>
                   <th style={thC}>PTS</th>
                 </tr>
               </thead>
@@ -198,7 +202,7 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
                     <td style={tdC}>{team.m}</td>
                     <td style={{ ...tdC, color: '#16a34a', fontWeight: 'bold' }}>{team.v}</td>
                     <td style={{ ...tdC, color: '#dc2626' }}>{team.d}</td>
-                    <td style={{...tdC, ...hideMobile}}>{team.diff > 0 ? `+${team.diff}` : team.diff}</td>
+                    <td style={{...tdC, ...hideMobile}} className="hide-mobile">{team.diff > 0 ? `+${team.diff}` : team.diff}</td>
                     <td style={{ ...tdC, fontWeight: '900', color: '#ea580c' }}>{team.points}</td>
                   </tr>
                 ))}
@@ -213,7 +217,6 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
           )}
           {isAdmin && (
             <div style={adminCard}>
-              {/* --- FORMULAIRE MAJ LOGO --- */}
               <h3 style={{marginTop: 0}}>Logo Compétition</h3>
               <input 
                 type="text" 
@@ -243,7 +246,6 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
 
       <style jsx>{`
         @media (max-width: 768px) {
-          .table-container { overflow-x: auto; }
           .hide-mobile { display: none !important; }
         }
       `}</style>
@@ -251,7 +253,7 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
   );
 }
 
-// --- STYLES HARMONISÉS ---
+// --- STYLES OBJETS ---
 const containerStyle = { padding: '20px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'system-ui, sans-serif' };
 const loadingOverlay = { height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: '#ea580c' };
 const heroSection = { textAlign: 'center' as const, marginBottom: '20px' };
@@ -262,7 +264,7 @@ const backBtn = { background: 'none', border: 'none', color: '#ea580c', cursor: 
 const mainGrid = { display: 'grid', gridTemplateColumns: '1fr 300px', gap: '20px' };
 const statsCard = { backgroundColor: 'white', padding: '15px', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' };
 const cardTitle = { fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' };
-const tableContainer = { overflowX: 'auto' as const };
+const tableContainerStyle = { overflowX: 'auto' as const };
 const tableStyle = { width: '100%', borderCollapse: 'collapse' as const, fontSize: '0.85rem' };
 const thRow = { borderBottom: '2px solid #e2e8f0' };
 const thL = { textAlign: 'left' as const, padding: '10px', color: '#64748b' };
