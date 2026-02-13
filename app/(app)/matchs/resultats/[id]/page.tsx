@@ -21,9 +21,13 @@ export default function DetailMatchPage({ params }: { params: Promise<{ id: stri
   const chargerMatch = async () => {
     try {
       setLoading(true);
+      // --- CORRECTION : Requête avec jointure journée ---
       const { data, error } = await supabase
         .from('matchs')
-        .select('*')
+        .select(`
+          *,
+          journees(nom)
+        `)
         .eq('id', matchId)
         .single();
 
@@ -73,14 +77,16 @@ export default function DetailMatchPage({ params }: { params: Promise<{ id: stri
       <button onClick={() => router.back()} style={backBtn}>← Retour</button>
 
       <div style={scoreCard}>
-        <p style={competitionLabel}>{match.competition}</p>
+        {/* --- AFFICHAGE COMPÉTITION + JOURNÉE --- */}
+        <p style={competitionLabel}>
+          {match.competition} - {match.journees?.nom || 'Hors Journée'}
+        </p>
         <p style={dateLabel}>{formatteDateParis(match.date)}</p>
 
         <div className="match-flex-mobile" style={matchFlex}>
           {/* CLUB & EQUIPE DOMICILE */}
           <div style={teamSide}>
             
-            {/* --- MODIF: LOGO DOMICILE --- */}
             {match.logo_urlA ? (
                 <img src={match.logo_urlA} alt={match.clubA} style={logoImageStyle} />
             ) : (
@@ -106,7 +112,6 @@ export default function DetailMatchPage({ params }: { params: Promise<{ id: stri
           {/* CLUB & EQUIPE EXTERIEUR */}
           <div style={teamSide}>
             
-            {/* --- MODIF: LOGO EXTÉRIEUR --- */}
             {match.logo_urlB ? (
                 <img src={match.logo_urlB} alt={match.clubB} style={logoImageStyle} />
             ) : (
@@ -126,7 +131,7 @@ export default function DetailMatchPage({ params }: { params: Promise<{ id: stri
           <h3 style={infoTitle}>📍 Lieu</h3>
           {match.lieu ? (
             <a 
-              href={`https://maps.google.com/?q=${encodeURIComponent(match.lieu)}`}
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(match.lieu)}`}
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: '#F97316', textDecoration: 'none', fontWeight: 'bold', fontSize: '1.1rem' }}
@@ -161,15 +166,14 @@ export default function DetailMatchPage({ params }: { params: Promise<{ id: stri
   );
 }
 
-// --- STYLES MODIFIÉS ---
+// --- STYLES ---
 const containerStyle = { padding: '40px 20px', maxWidth: '900px', margin: '0 auto', fontFamily: 'sans-serif', color: '#1e293b' };
 const backBtn = { background: '#f1f5f9', border: 'none', color: '#64748b', padding: '10px 20px', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold' as const, marginBottom: '30px' };
 const scoreCard = { backgroundColor: 'white', borderRadius: '30px', padding: '50px 30px', boxShadow: '0 10px 40px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9', textAlign: 'center' as const };
-const competitionLabel = { color: '#F97316', fontWeight: 'bold' as const, textTransform: 'uppercase' as const, fontSize: '0.8rem', letterSpacing: '1px', marginBottom: '5px' };
+const competitionLabel = { color: '#F97316', fontWeight: 'bold' as const, textTransform: 'uppercase' as const, fontSize: '0.85rem', letterSpacing: '1px', marginBottom: '5px' };
 const dateLabel = { color: '#94a3b8', fontSize: '0.9rem', marginBottom: '40px', textTransform: 'capitalize' as const };
 const matchFlex = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px' };
 const teamSide = { flex: 1, display: 'flex', flexDirection: 'column' as const, alignItems: 'center' };
-// Ajout style pour l'image
 const logoImageStyle = { width: '90px', height: '90px', borderRadius: '50%', objectFit: 'contain' as const, marginBottom: '15px', border: '1px solid #e2e8f0' };
 const logoCircle = { width: '90px', height: '90px', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: 'bold' as const, marginBottom: '15px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' };
 const teamName = { fontSize: '1.6rem', fontWeight: '900' as const, margin: '0 0 5px 0', textTransform: 'uppercase' as const };

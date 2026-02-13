@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 
 // Interfaces
 interface EquipeIntern { id: string; nom: string; }
-// --- MODIFICATION: ajout logo_url ---
 interface Club { id: string; nom: string; equipes: EquipeIntern[]; logo_url?: string; }
 interface Competition { id: string; nom: string; }
 
@@ -75,7 +74,6 @@ export default function MatchsAVenirPage() {
 
     if (listMatchs) setMatchs(listMatchs);
 
-    // Assurez-vous que votre table "equipes_clubs" contient une colonne "logo_url"
     const { data: listClubs } = await supabase.from('equipes_clubs').select('*');
     const { data: listArb } = await supabase.from('arbitres').select('*').order('nom', { ascending: true });
     const { data: listComp } = await supabase.from('competitions').select('*');
@@ -97,18 +95,18 @@ export default function MatchsAVenirPage() {
     e.preventDefault();
     if (!isAdmin) return;
 
-    // --- MODIFICATION: Récupération des objets clubs ---
+    // --- CORRECTION: Récupération des objets clubs pour les logos ---
     const clubAObj = clubs.find(c => c.id === selectedClubA);
     const clubBObj = clubs.find(c => c.id === selectedClubB);
 
     const matchData = {
       clubA: clubAObj?.nom,
-      // --- MODIFICATION: Sauvegarde du logo ---
+      // --- CORRECTION: Sauvegarde du logo ---
       logo_urlA: clubAObj?.logo_url || null, 
       equipeA: newMatch.equipeA,
       
       clubB: clubBObj?.nom,
-      // --- MODIFICATION: Sauvegarde du logo ---
+      // --- CORRECTION: Sauvegarde du logo ---
       logo_urlB: clubBObj?.logo_url || null,
       equipeB: newMatch.equipeB,
       // ----------------------------------------
@@ -295,16 +293,28 @@ export default function MatchsAVenirPage() {
         {matchs.map((m) => (
           <div key={m.id} style={matchCardStyle}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ flex: 1, textAlign: 'right' }}>
-                <div style={{ fontWeight: '800', fontSize: '1.2rem', color: '#1e293b', textTransform: 'uppercase' }}>{m.clubA}</div>
-                <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 'bold' }}>{m.equipeA}</div>
+              
+              {/* Équipe A + LOGO */}
+              <div style={{ flex: 1, textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px' }}>
+                <div>
+                  <div style={{ fontWeight: '800', fontSize: '1.2rem', color: '#1e293b', textTransform: 'uppercase' }}>{m.clubA}</div>
+                  <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 'bold' }}>{m.equipeA}</div>
+                </div>
+                {m.logo_urlA && <img src={m.logo_urlA} alt={m.clubA} style={logoStyle} />}
               </div>
+
               <div style={{ padding: '0 20px', fontWeight: '900', color: '#F97316', fontSize: '1.3rem' }}>VS</div>
-              <div style={{ flex: 1, textAlign: 'left' }}>
-                <div style={{ fontWeight: '800', fontSize: '1.2rem', color: '#1e293b', textTransform: 'uppercase' }}>{m.clubB}</div>
-                <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 'bold' }}>{m.equipeB}</div>
+              
+              {/* LOGO + Équipe B */}
+              <div style={{ flex: 1, textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '10px' }}>
+                {m.logo_urlB && <img src={m.logo_urlB} alt={m.clubB} style={logoStyle} />}
+                <div>
+                  <div style={{ fontWeight: '800', fontSize: '1.2rem', color: '#1e293b', textTransform: 'uppercase' }}>{m.clubB}</div>
+                  <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 'bold' }}>{m.equipeB}</div>
+                </div>
               </div>
             </div>
+            
             <div style={footerCard}>
               <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
                 <div>📅 {formatteDateParis(m.date)} | {m.competition}</div>
@@ -343,3 +353,4 @@ const startBtnStyle = { backgroundColor: '#1E293B', color: 'white', textDecorati
 const detailsBtnStyle = { backgroundColor: '#F97316', color: 'white', textDecoration: 'none', padding: '10px 18px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 'bold' };
 const iconBtn = { border: 'none', background: 'none', cursor: 'pointer', fontSize: '1.2rem' };
 const editBtnSmall = { border: 'none', background: '#f1f5f9', color: '#64748b', cursor: 'pointer', padding: '8px 12px', borderRadius: '6px', fontWeight: 'bold' as const, fontSize: '0.75rem' };
+const logoStyle = { width: '40px', height: '40px', objectFit: 'contain' as const };

@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 
-// --- 1. DÉFINITION DE L'INTERFACE AVEC LOGOS ---
+// --- 1. DÉFINITION DE L'INTERFACE AVEC LOGOS ET JOURNÉES ---
 interface Match {
   id: string;
   competition: string;
@@ -19,9 +19,13 @@ interface Match {
   status: 'en-cours' | 'termine' | 'a-venir';
   logo_urlA?: string;
   logo_urlB?: string;
-  // --- TYPAGE DE LA JOINTURE ---
+  // --- TYPAGES DES JOINTURES ---
   competitions?: {
     logo_url?: string;
+  } | null;
+  journees?: {
+    id: string;
+    nom: string;
   } | null;
 }
 
@@ -36,7 +40,28 @@ export default function ResultatsPage() {
     if (storedUser) {
       try { setUser(JSON.parse(storedUser)); } catch (e) { console.error(e); }
     }
+    
+    // Charger les données initiales
     chargerTousLesMatchs();
+
+    // --- ACTIVATION DU TEMPS RÉEL (REALTIME) ---
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'matchs' },
+        () => chargerTousLesMatchs() // Recharge si un match change
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'journees' },
+        () => chargerTousLesMatchs() // Recharge si une journée change
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const isAdmin = user?.role?.toLowerCase() === 'admin' || user?.email === 'anthony.didier.pro@gmail.com';
@@ -45,7 +70,8 @@ export default function ResultatsPage() {
     setLoading(true);
     const { data, error } = await supabase
       .from('matchs')
-      .select('*, competitions!left(logo_url)')
+      // --- REQUÊTE AVEC JOINTURES JOURNÉES ET COMPÉTITIONS ---
+      .select('*, competitions!left(logo_url), journees(id, nom)')
       .order('date', { ascending: false });
 
     if (error) {
@@ -56,19 +82,26 @@ export default function ResultatsPage() {
     setLoading(false);
   };
 
+  // --- LOGIQUE DE FILTRAGE ET REGROUPEMENT HIERARCHIQUE ---
   const matchGroupes = useMemo(() => {
     const filtered = matchs.filter(m =>
       m.clubA?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       m.clubB?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      m.competition?.toLowerCase().includes(searchTerm.toLowerCase())
+      m.competition?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      m.journees?.nom?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    // Structure: { "Nom Compét": { "Nom Journée": [Matchs...] } }
     return filtered.reduce((acc, match) => {
       const compet = match.competition || 'Autres';
-      if (!acc[compet]) acc[compet] = [];
-      acc[compet].push(match);
+      const nomJournee = match.journees?.nom || 'Hors Journée';
+
+      if (!acc[compet]) acc[compet] = {};
+      if (!acc[compet][nomJournee]) acc[compet][nomJournee] = [];
+      
+      acc[compet][nomJournee].push(match);
       return acc;
-    }, {} as Record<string, Match[]>);
+    }, {} as Record<string, Record<string, Match[]>>);
 
   }, [matchs, searchTerm]);
 
@@ -76,8 +109,7 @@ export default function ResultatsPage() {
 
   return (
     <div className="page-container">
-
-      {/* --- HEADER MODIFIÉ POUR MOBILE --- */}
+      {/* --- HEADER --- */}
       <header className="dashboard-header">
         <div className="header-top">
           <div className="header-left">
@@ -87,79 +119,94 @@ export default function ResultatsPage() {
 
           {isAdmin && (
             <Link href="/matchs/a-venir" className="btn-admin-mobile">
-              Match à venir
+              + Match à venir
             </Link>
           )}
         </div>
 
         <input
           type="text"
-          placeholder="Rechercher un club ou une compétition..."
+          placeholder="Rechercher club, compétition ou journée..."
           className="search-input"
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </header>
       {/* --------------------------------- */}
 
-      {Object.entries(matchGroupes).map(([compet, matchsSection]) => (
+      {/* --- AFFICHAGE HIERARCHIQUE (Compétition > Journée > Matchs) --- */}
+      {Object.entries(matchGroupes).map(([compet, journees]) => (
         <div key={compet} className="compet-section">
           <h2 className="compet-title" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            {matchsSection[0]?.competitions?.logo_url && (
-              <img src={matchsSection[0].competitions.logo_url} alt={compet} style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
+            {/* Logo compétition optionnel si disponible dans la jointure */}
+            {matchs.find(m => m.competition === compet)?.competitions?.logo_url && (
+              <img src={matchs.find(m => m.competition === compet)!.competitions!.logo_url} alt={compet} style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
             )}
             🏆 {compet}
           </h2>
 
-          <div className="matchs-grid">
-            {matchsSection.map((m: Match) => (
-              <Link href={`/matchs/resultats/${m.id}`} key={m.id} className="match-card-link">
-                <div className="match-card">
-                  <div className={`status-border ${m.status === 'en-cours' ? 'bg-live' : 'bg-finished'}`}></div>
-                  <div className="card-content">
-                    <div className="card-top">
-                      <span className="date">{m.date ? m.date.split('T')[0].split('-').reverse().join('/') : 'NC'}</span>
-                      {m.status === 'en-cours' && <span className="live-tag">DIRECT</span>}
-                    </div>
-                    <div className="main-score-row">
-
-                      <div className="team-info home">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'flex-end' }}>
-                          <span className="team-name">{m.clubA}</span>
-                          {m.logo_urlA ? (
-                            <img src={m.logo_urlA} alt={m.clubA} style={logoStyle} />
-                          ) : (
-                            <div style={logoPlaceholderStyle}>{m.clubA[0]}</div>
-                          )}
+          {/* Boucle sur les journées */}
+          {Object.entries(journees).map(([nomJournee, matchsJournee]) => (
+            <div key={nomJournee} className="journee-section" style={{marginLeft: '15px', marginBottom: '30px'}}>
+              <h3 className="journee-title" style={{color: '#f97316', fontWeight: '800', fontSize: '1.1rem', marginBottom: '15px', paddingLeft: '10px', borderLeft: '3px solid #f97316'}}>
+                {nomJournee}
+              </h3>
+              
+              <div className="matchs-grid">
+                {matchsJournee.map((m: Match) => (
+                  <Link href={`/matchs/resultats/${m.id}`} key={m.id} className="match-card-link">
+                    <div className="match-card">
+                      <div className={`status-border ${m.status === 'en-cours' ? 'bg-live' : 'bg-finished'}`}></div>
+                      <div className="card-content">
+                        <div className="card-top">
+                          <span className="date">{m.date ? m.date.split('T')[0].split('-').reverse().join('/') : 'NC'}</span>
+                          {m.status === 'en-cours' && <span className="live-tag">DIRECT</span>}
                         </div>
-                        <span className="team-cat">{m.equipeA}</span>
-                      </div>
+                        <div className="main-score-row">
+                          
+                          {/* Équipe A */}
+                          <div className="team-info home">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'flex-end' }}>
+                              <span className="team-name">{m.clubA}</span>
+                              {m.logo_urlA ? (
+                                <img src={m.logo_urlA} alt={m.clubA} style={logoStyle} />
+                              ) : (
+                                <div style={logoPlaceholderStyle}>{m.clubA[0]}</div>
+                              )}
+                            </div>
+                            <span className="team-cat">{m.equipeA}</span>
+                          </div>
 
-                      <div className="score-badge">
-                        <span className="score-num">{m.scoreA ?? 0}</span>
-                        <span className="score-sep">-</span>
-                        <span className="score-num">{m.scoreB ?? 0}</span>
-                      </div>
+                          {/* Score */}
+                          <div className="score-badge">
+                            <span className="score-num">{m.scoreA ?? 0}</span>
+                            <span className="score-sep">-</span>
+                            <span className="score-num">{m.scoreB ?? 0}</span>
+                          </div>
 
-                      <div className="team-info away">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'flex-start' }}>
-                          {m.logo_urlB ? (
-                            <img src={m.logo_urlB} alt={m.clubB} style={logoStyle} />
-                          ) : (
-                            <div style={logoPlaceholderStyle}>{m.clubB[0]}</div>
-                          )}
-                          <span className="team-name">{m.clubB}</span>
+                          {/* Équipe B */}
+                          <div className="team-info away">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'flex-start' }}>
+                              {m.logo_urlB ? (
+                                <img src={m.logo_urlB} alt={m.clubB} style={logoStyle} />
+                              ) : (
+                                <div style={logoPlaceholderStyle}>{m.clubB[0]}</div>
+                              )}
+                              <span className="team-name">{m.clubB}</span>
+                            </div>
+                            <span className="team-cat">{m.equipeB}</span>
+                          </div>
                         </div>
-                        <span className="team-cat">{m.equipeB}</span>
+                        
+                        <div className="card-bottom">
+                          <div className="location">📍 {m.lieu || 'Lieu non défini'}</div>
+                        </div>
                       </div>
                     </div>
-                    <div className="card-bottom">
-                      <div className="location">📍 {m.lieu || 'Lieu non défini'}</div>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       ))}
 
@@ -167,37 +214,22 @@ export default function ResultatsPage() {
         <div className="empty-state">Aucun match ne correspond à votre recherche.</div>
       )}
 
+      {/* --- STYLES --- */}
       <style jsx>{`
         .page-container { animation: fadeIn 0.4s ease; padding-bottom: 40px; padding: 20px; }
-        
         .dashboard-header { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
         .header-top { display: flex; justify-content: space-between; align-items: center; gap: 15px; }
-        
-        .dashboard-header h1 { font-size: 1.8rem; font-weight: 800; color: #1e293b; margin: 0; }
+        .dashboard-header h1 { font-size: 1.8rem; font-weight: 800; color: #1a1a1a; margin: 0; }
         .orange-dot { color: #f97316; }
         .subtitle { color: #64748b; font-size: 0.9rem; margin: 5px 0 0; }
-        
         .search-input { padding: 12px 16px; border-radius: 12px; border: 1px solid #e2e8f0; background: white; width: 100%; outline: none; font-size: 0.95rem; box-sizing: border-box; }
         
-        .btn-admin-mobile { 
-          background-color: #0f172a;
-          color: white; 
-          text-decoration: none;
-          padding: 10px 15px; 
-          border-radius: 10px;
-          font-weight: bold; 
-          font-size: 0.85rem;
-          white-space: nowrap;
-          display: inline-block;
-          text-align: center;
-        }
-        }
-        /* ----------------------------- */
+        .btn-admin-mobile { background-color: #0f172a; color: white; text-decoration: none; padding: 10px 15px; border-radius: 10px; font-weight: bold; font-size: 0.85rem; white-space: nowrap; display: inline-block; text-align: center; }
         
         .compet-section { margin-bottom: 40px; }
-        .compet-title { font-size: 1.3rem; font-weight: 800; color: #1e293b; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #f1f5f9; }
+        .compet-title { font-size: 1.4rem; font-weight: 800; color: #1a1a1a; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #f1f5f9; }
         
-        .matchs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 20px; }
+        .matchs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
         .match-card-link { text-decoration: none; color: inherit; }
         .match-card { background: white; border-radius: 16px; display: flex; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border: 1px solid #f1f5f9; transition: transform 0.2s; height: 100%; }
         .match-card:hover { transform: translateY(-3px); }
@@ -210,23 +242,20 @@ export default function ResultatsPage() {
         .main-score-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 5px 0; }
         .team-info { display: flex; flex-direction: column; width: 40%; }
         .home { text-align: right; }
-        .team-name { font-size: 0.9rem; font-weight: 800; color: #1e293b; text-transform: uppercase; }
+        .team-name { font-size: 0.9rem; font-weight: 800; color: #1a1a1a; text-transform: uppercase; }
         .team-cat { font-size: 0.7rem; color: #94a3b8; font-weight: 600; }
         .score-badge { background: #f8fafc; padding: 6px 12px; border-radius: 12px; display: flex; align-items: center; gap: 5px; border: 1px solid #e2e8f0; }
-        .score-num { font-size: 1.2rem; font-weight: 900; color: #1e293b; }
+        .score-num { font-size: 1.2rem; font-weight: 900; color: #1a1a1a; }
         .score-sep { color: #cbd5e1; font-weight: bold; }
         .card-bottom { margin-top: 10px; padding-top: 10px; border-top: 1px solid #f1f5f9; font-size: 0.75rem; color: #64748b; font-weight: 600; }
         .live-tag { color: #22c55e; font-weight: 800; animation: pulse 2s infinite; font-size: 0.7rem; }
-        
         .empty-state { text-align: center; padding: 40px; color: #64748b; background: white; border-radius: 16px; border: 2px dashed #e2e8f0; }
         
-        /* --- MÉDIA QUERY POUR ADAPTER LE HEADER --- */
         @media (max-width: 600px) {
           .header-top { flex-direction: column; align-items: flex-start; }
           .btn-admin-mobile { width: 100%; text-align: center; box-sizing: border-box; }
+          .matchs-grid { grid-template-columns: 1fr; }
         }
-        /* ------------------------------------------- */
-
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
       `}</style>

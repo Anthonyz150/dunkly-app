@@ -43,7 +43,8 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
         },
         (payload) => {
           console.log('Changement reçu en temps réel!', payload);
-          setMatch(payload.new);
+          // Pour le realtime, il faut refaire la requête pour avoir les jointures
+          chargerMatch();
         }
       )
       .subscribe();
@@ -56,7 +57,11 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
   const chargerMatch = async () => {
     const { data, error } = await supabase
       .from("matchs")
-      .select("*")
+      // --- CORRECTION : Ajout de la jointure pour la journée ---
+      .select(`
+        *,
+        journees(nom)
+      `)
       .eq("id", matchId)
       .single();
 
@@ -99,9 +104,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
 
     if (!error) {
       setIsModalOpen(false);
-      // Optionnel : recharger localement si nécessaire, 
-      // mais le realtime va rafraîchir le composant.
-      chargerMatch(); 
+      // chargerMatch est appelé par le realtime update
     } else {
       alert("Erreur : " + error.message);
     }
@@ -131,7 +134,8 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
 
       <div style={infoBox}>
         <p><strong>📍 Lieu :</strong> {match.lieu}</p>
-        <p><strong>🏆 Compétition :</strong> {match.competition}</p>
+        {/* --- CORRECTION : Affichage compétiton et journée --- */}
+        <p><strong>🏆 Compétition :</strong> {match.competition} - {match.journees?.nom || 'Hors Journée'}</p>
         <p><strong>🏁 Arbitre :</strong> {match.arbitre}</p>
         <p><strong>Statut :</strong> {match.status === 'termine' ? '✅ Terminé' : '🕒 À venir'}</p>
       </div>
