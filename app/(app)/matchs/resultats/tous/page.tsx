@@ -18,7 +18,7 @@ interface MatchInterface {
   logo_urlB?: string;
   // Jointures
   competitions?: { logo_url?: string } | null;
-  journees?: { nom: string } | null;
+  journees?: { nom: string } | null; // <-- Le nom de la journée
 }
 
 export default function TousLesResultatsPage() {
@@ -31,7 +31,7 @@ export default function TousLesResultatsPage() {
       setLoading(true);
       setError(null);
 
-      // --- CORRECTION : Requête avec jointures ---
+      // --- CORRECTION : Requête avec jointures explicites ---
       const { data, error: supabaseError } = await supabase
         .from('matchs')
         .select(`
@@ -39,6 +39,8 @@ export default function TousLesResultatsPage() {
           competitions!left(logo_url),
           journees(nom)
         `)
+        // Tri par compétition puis par date
+        .order('competition', { ascending: true })
         .order('date', { ascending: false });
       
       if (supabaseError) {
@@ -65,6 +67,7 @@ export default function TousLesResultatsPage() {
   const matchsGroupes = useMemo(() => {
     return matchs.reduce((acc, match) => {
       const competName = match.competition || 'Autres';
+      // Récupération du nom depuis la jointure
       const journeeName = match.journees?.nom || 'Hors Journée';
 
       if (!acc[competName]) acc[competName] = {};
@@ -91,6 +94,7 @@ export default function TousLesResultatsPage() {
           
           {Object.entries(journees).map(([journeeName, matchsList]) => (
             <div key={journeeName} style={journeeSectionStyle}>
+              {/* Affichage du nom de la journée */}
               <h3 style={journeeTitleStyle}>{journeeName}</h3>
               
               <div style={gridStyle}>
