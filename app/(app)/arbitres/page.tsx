@@ -4,11 +4,17 @@ import { supabase } from '@/lib/supabase'; // Connexion Cloud
 
 export default function ArbitresPage() {
   const [arbitres, setArbitres] = useState<any[]>([]);
+  // --- NOUVEL ÉTAT POUR LA LETTRE SÉLECTIONNÉE ---
+  const [lettreSelectionnee, setLettreSelectionnee] = useState<string | null>(null);
+  
   const [formData, setFormData] = useState({ nom: "", prenom: "" });
   const [user, setUser] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Générer l'alphabet A-Z
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
   useEffect(() => {
     const storedUser = localStorage.getItem('currentUser');
@@ -16,17 +22,24 @@ export default function ArbitresPage() {
     chargerArbitres();
   }, []);
 
-  // --- RÉCUPÉRATION SUPABASE ---
+  // --- RÉCUPÉRATION SUPABASE (Trie par nom par défaut) ---
   const chargerArbitres = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from('arbitres')
       .select('*')
-      .order('nom', { ascending: true });
+      .order('nom', { ascending: true }); // Triage côté base de données
 
     if (!error && data) setArbitres(data);
     setLoading(false);
   };
+
+  // --- FILTRAGE DES ARBITRES ---
+  const arbitresAffiches = lettreSelectionnee
+    ? arbitres.filter((arb) => 
+        arb.nom.toUpperCase().startsWith(lettreSelectionnee.toUpperCase())
+      )
+    : arbitres;
 
   // Vérification Admin
   const isAdmin = 
@@ -89,52 +102,100 @@ export default function ArbitresPage() {
   if (loading) return <div style={{ padding: '30px', fontWeight: 'bold' }}>Chargement des officiels...</div>;
 
   return (
-    <div style={{ padding: '30px', maxWidth: '1200px', fontFamily: 'sans-serif' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
-        <div>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: '900', color: '#1a1a1a', margin: 0 }}>🏁 ARBITRES</h1>
-          <p style={{ color: '#64748b', fontSize: '1.1rem' }}>
-            {isAdmin ? "Gestion du corps arbitral Dunkly." : "Liste des officiels de la compétition."}
-          </p>
-        </div>
-        
-        {isAdmin && (
-          <button onClick={() => setIsModalOpen(true)} style={btnAjouterStyle}>
-            + AJOUTER UN ARBITRE
+    <div style={{ padding: '30px', maxWidth: '1400px', fontFamily: 'sans-serif', display: 'flex', gap: '20px' }}>
+      
+      {/* --- BARRE LATÉRALE ALPHABÉTIQUE --- */}
+      <aside style={{ 
+        position: 'sticky', 
+        top: '30px', 
+        height: 'calc(100vh - 60px)', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: '4px',
+        overflowY: 'auto'
+      }}>
+        <button 
+          onClick={() => setLettreSelectionnee(null)}
+          style={{
+            ...alphabetBtnStyle,
+            backgroundColor: lettreSelectionnee === null ? '#1a1a1a' : '#f1f5f9',
+            color: lettreSelectionnee === null ? 'white' : 'black',
+            fontWeight: 'bold'
+          }}
+        >
+          Tous
+        </button>
+        {alphabet.map((lettre) => (
+          <button 
+            key={lettre} 
+            onClick={() => setLettreSelectionnee(lettre)}
+            style={{
+              ...alphabetBtnStyle,
+              backgroundColor: lettreSelectionnee === lettre ? '#1a1a1a' : '#f1f5f9',
+              color: lettreSelectionnee === lettre ? 'white' : 'black',
+            }}
+          >
+            {lettre}
           </button>
-        )}
-      </header>
+        ))}
+      </aside>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-        {arbitres.map((arb) => (
-          <div key={arb.id} style={cardStyle}>
-            <div style={decorBar}></div>
-            <div style={{ padding: '20px', flex: 1, position: 'relative', display: 'flex', alignItems: 'center', gap: '15px' }}>
-              
-              {isAdmin && (
-                <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', gap: '5px' }}>
-                  <button onClick={() => preparerEdition(arb)} style={editIconStyle}>✏️</button>
-                  <button onClick={() => supprimerArbitre(arb.id)} style={deleteBtnStyle}>×</button>
-                </div>
-              )}
+      {/* --- CONTENU PRINCIPAL --- */}
+      <div style={{ flex: 1 }}>
+        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+          <div>
+            <h1 style={{ fontSize: '2.5rem', fontWeight: '900', color: '#1a1a1a', margin: 0 }}>
+              🏁 ARBITRES {lettreSelectionnee ? `- ${lettreSelectionnee}` : ''}
+            </h1>
+            <p style={{ color: '#64748b', fontSize: '1.1rem' }}>
+              {isAdmin ? "Gestion du corps arbitral Dunkly." : "Liste des officiels de la compétition."}
+            </p>
+          </div>
+          
+          {isAdmin && (
+            <button onClick={() => setIsModalOpen(true)} style={btnAjouterStyle}>
+              + AJOUTER UN ARBITRE
+            </button>
+          )}
+        </header>
 
-              <div style={avatarStyle}>
-                {(arb.nom || "A").charAt(0)}{(arb.prenom || "B").charAt(0)}
-              </div>
-              
-              <div>
-                <div style={{ fontWeight: '800', fontSize: '1.1rem', color: '#1e293b' }}>
-                  {arb.nom} {arb.prenom}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+          {arbitresAffiches.map((arb) => (
+            <div key={arb.id} style={cardStyle}>
+              <div style={decorBar}></div>
+              <div style={{ padding: '20px', flex: 1, position: 'relative', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                
+                {isAdmin && (
+                  <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', gap: '5px' }}>
+                    <button onClick={() => preparerEdition(arb)} style={editIconStyle}>✏️</button>
+                    <button onClick={() => supprimerArbitre(arb.id)} style={deleteBtnStyle}>×</button>
+                  </div>
+                )}
+
+                <div style={avatarStyle}>
+                  {(arb.nom || "A").charAt(0)}{(arb.prenom || "B").charAt(0)}
                 </div>
-                <div style={{ color: '#F97316', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase' }}>
-                  Officiel Dunkly
+                
+                <div>
+                  <div style={{ fontWeight: '800', fontSize: '1.1rem', color: '#1e293b' }}>
+                    {arb.nom} {arb.prenom}
+                  </div>
+                  <div style={{ color: '#F97316', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase' }}>
+                    Officiel Dunkly
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+          {arbitresAffiches.length === 0 && (
+            <p style={{ gridColumn: '1/-1', textAlign: 'center', color: '#64748b', marginTop: '40px' }}>
+              Aucun arbitre trouvé pour la lettre {lettreSelectionnee}.
+            </p>
+          )}
+        </div>
       </div>
 
+      {/* --- MODALE (Inchangée) --- */}
       {isModalOpen && isAdmin && (
         <div style={modalOverlayStyle}>
           <div style={modalContentStyle}>
@@ -174,7 +235,17 @@ export default function ArbitresPage() {
   );
 }
 
-// --- STYLES CONSERVÉS ---
+// --- STYLES MODIFIÉS ET AJOUTÉS ---
+const alphabetBtnStyle = {
+  border: 'none',
+  padding: '8px 12px',
+  borderRadius: '8px',
+  cursor: 'pointer',
+  fontSize: '0.9rem',
+  fontFamily: 'monospace',
+  transition: 'background-color 0.2s'
+};
+
 const btnAjouterStyle = { backgroundColor: '#1a1a1a', color: 'white', border: 'none', padding: '14px 28px', borderRadius: '12px', cursor: 'pointer', fontWeight: '900' as const, fontSize: '0.85rem' };
 const modalOverlayStyle: React.CSSProperties = { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(15, 23, 42, 0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000, backdropFilter: 'blur(4px)' };
 const modalContentStyle: React.CSSProperties = { background: 'white', padding: '40px', borderRadius: '24px', width: '380px' };
