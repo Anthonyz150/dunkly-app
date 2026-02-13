@@ -4,12 +4,32 @@ import { useState, useEffect, use } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
+// --- AJOUT : Interface TypeScript pour le match avec jointures ---
+interface MatchInterface {
+  id: string;
+  clubA: string;
+  equipeA: string;
+  clubB: string;
+  equipeB: string;
+  scoreA: number;
+  scoreB: number;
+  date: string;
+  competition: string;
+  lieu: string;
+  arbitre: string;
+  status: 'termine' | 'a-venir';
+  config?: any;
+  // Jointures
+  journees?: { nom: string } | null;
+}
+
 export default function MatchDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const matchId = resolvedParams.id;
   const router = useRouter();
 
-  const [match, setMatch] = useState<any>(null);
+  // --- CORRECTION : Utilisation de l'interface ---
+  const [match, setMatch] = useState<MatchInterface | null>(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   
@@ -43,7 +63,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
         },
         (payload) => {
           console.log('Changement reçu en temps réel!', payload);
-          // Pour le realtime, il faut refaire la requête pour avoir les jointures
+          // Recharger le match pour avoir les données mises à jour
           chargerMatch();
         }
       )
@@ -55,9 +75,9 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
   }, [matchId]);
 
   const chargerMatch = async () => {
+    // --- CORRECTION : Requête avec jointure pour récupérer le nom de la journée ---
     const { data, error } = await supabase
       .from("matchs")
-      // --- CORRECTION : Ajout de la jointure pour la journée ---
       .select(`
         *,
         journees(nom)
@@ -66,7 +86,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
       .single();
 
     if (data) {
-      setMatch(data);
+      setMatch(data as MatchInterface);
       // Pré-remplir les scores si déjà existants
       if (data.config?.scores_quart_temps) {
         setScores(data.config.scores_quart_temps);
@@ -79,14 +99,16 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
 
   // --- FONCTION POUR OUVRIR LA MODALE ET INITIALISER LES SCORES ---
   const ouvrirModale = () => {
-    if (match.config?.scores_quart_temps) {
+    if (match?.config?.scores_quart_temps) {
       setScores(match.config.scores_quart_temps);
     }
     setIsModalOpen(true);
   };
 
-  // --- FONCTION POUR ENREGISTRER LES SCORES DEPUIS LA MODALE (ÉTAPE 2) ---
+  // --- FONCTION POUR ENREGISTRER LES SCORES (ÉTAPE 2) ---
   const enregistrerScores = async () => {
+    if (!match) return;
+
     // Calcul des totaux
     const totalA = Number(scores.q1.a) + Number(scores.q2.a) + Number(scores.q3.a) + Number(scores.q4.a);
     const totalB = Number(scores.q1.b) + Number(scores.q2.b) + Number(scores.q3.b) + Number(scores.q4.b);
@@ -104,7 +126,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
 
     if (!error) {
       setIsModalOpen(false);
-      // chargerMatch est appelé par le realtime update
+      // Le realtime mettra à jour l'affichage
     } else {
       alert("Erreur : " + error.message);
     }
