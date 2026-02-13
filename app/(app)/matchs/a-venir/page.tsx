@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation";
 interface EquipeIntern { id: string; nom: string; }
 interface Club { id: string; nom: string; equipes: EquipeIntern[]; logo_url?: string; }
 interface Competition { id: string; nom: string; }
-// --- AJOUT: Interface Journée ---
 interface Journee { id: string; nom: string; competition_id: string; }
 
 interface Match {
@@ -24,8 +23,9 @@ interface Match {
   status: string;
   logo_urlA?: string;
   logo_urlB?: string;
-  // --- AJOUT: Champ journee_id ---
   journee_id?: string;
+  // --- CORRECTION: Interface pour la jointure ---
+  journees?: { nom: string } | null;
 }
 
 export default function MatchsAVenirPage() {
@@ -33,7 +33,6 @@ export default function MatchsAVenirPage() {
   const [clubs, setClubs] = useState<Club[]>([]);
   const [arbitres, setArbitres] = useState<any[]>([]);
   const [competitions, setCompetitions] = useState<Competition[]>([]);
-  // --- AJOUT: État pour les journées ---
   const [journees, setJournees] = useState<Journee[]>([]);
   
   const [user, setUser] = useState<any>(null);
@@ -43,7 +42,6 @@ export default function MatchsAVenirPage() {
 
   const [selectedClubA, setSelectedClubA] = useState("");
   const [selectedClubB, setSelectedClubB] = useState("");
-  // --- AJOUT: État pour la journée sélectionnée ---
   const [selectedJournee, setSelectedJournee] = useState("");
   
   const [dureePeriode, setDureePeriode] = useState("10");
@@ -74,9 +72,10 @@ export default function MatchsAVenirPage() {
   );
 
   const chargerDonnees = async () => {
+    // --- CORRECTION: Requête avec jointure ---
     const { data: listMatchs } = await supabase
       .from('matchs')
-      .select('*')
+      .select('*, journees(nom)')
       .eq('status', 'a-venir')
       .order('date', { ascending: true });
 
@@ -85,7 +84,6 @@ export default function MatchsAVenirPage() {
     const { data: listClubs } = await supabase.from('equipes_clubs').select('*');
     const { data: listArb } = await supabase.from('arbitres').select('*').order('nom', { ascending: true });
     const { data: listComp } = await supabase.from('competitions').select('*');
-    // --- AJOUT: Chargement des journées ---
     const { data: listJournees } = await supabase.from('journees').select('*');
 
     if (listClubs) setClubs(listClubs);
@@ -120,7 +118,6 @@ export default function MatchsAVenirPage() {
       
       date: newMatch.date,
       competition: newMatch.competition,
-      // --- AJOUT: Sauvegarde de la journée ---
       journee_id: selectedJournee || null,
       
       arbitre: selectedArbitres.join(" / "),
@@ -162,7 +159,7 @@ export default function MatchsAVenirPage() {
     const clubBObj = clubs.find(c => c.nom === m.clubB);
     if (clubAObj) setSelectedClubA(clubAObj.id);
     if (clubBObj) setSelectedClubB(clubBObj.id);
-    // --- AJOUT: Chargement journée lors de l'édition ---
+    
     setSelectedJournee(m.journee_id || "");
     
     setShowForm(true);
@@ -185,7 +182,6 @@ export default function MatchsAVenirPage() {
     setSelectedArbitres([]);
     setSelectedClubA("");
     setSelectedClubB("");
-    // --- AJOUT: Reset journée ---
     setSelectedJournee("");
   };
 
@@ -241,7 +237,6 @@ export default function MatchsAVenirPage() {
               </select>
             </div>
 
-            {/* --- AJOUT: Sélecteur de Journée --- */}
             <div style={colStyle}>
               <label style={miniLabel}>JOURNÉE</label>
               <select value={selectedJournee} onChange={e => setSelectedJournee(e.target.value)} style={inputStyle}>
@@ -249,7 +244,6 @@ export default function MatchsAVenirPage() {
                 {journees.map(j => <option key={j.id} value={j.id}>{j.nom}</option>)}
               </select>
             </div>
-            {/* ------------------------------------------- */}
 
             <div style={colStyle}>
               <label style={miniLabel}>COMPÉTITION</label>
@@ -340,6 +334,8 @@ export default function MatchsAVenirPage() {
             
             <div style={footerCard}>
               <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                {/* --- CORRECTION: Affichage du nom de la journée --- */}
+                {m.journees && <div style={{fontWeight: 'bold', color: '#F97316', marginBottom: '4px'}}>🏆 {m.journees.nom}</div>}
                 <div>📅 {formatteDateParis(m.date)} | {m.competition}</div>
                 <div style={{ marginTop: 4 }}>🏁 <span style={{ fontWeight: 'bold', color: '#1e293b' }}>{m.arbitre || "Non assigné"}</span></div>
               </div>
