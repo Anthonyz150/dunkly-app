@@ -227,35 +227,35 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
   );
 }
 
-// --- STYLES OBJETS ---
+// --- STYLES OBJETS CORRIGÉS ---
 const containerStyle = { padding: "20px", maxWidth: "800px", margin: "0 auto", fontFamily: "system-ui, sans-serif", backgroundColor: "#f8fafc", minHeight: "100vh" };
-const backBtn = { background: "#e2e8f0", border: "none", color: "#475569", padding: "10px 15px", borderRadius: "8px", cursor: "pointer", fontWeight: "600", marginBottom: "20px" };
+const backBtn = { background: "#e2e8f0", border: "none", color: "#475569", padding: "10px 15px", borderRadius: "8px", cursor: "pointer", fontWeight: "600" as const, marginBottom: "20px" };
 
-const matchCard = { display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#0f172a", color: "white", padding: "30px", borderRadius: "20px", marginBottom: "25px" };
-const teamSection = { textAlign: "center", flex: 1 };
-const teamName = { fontSize: "1.2rem", fontWeight: "bold", marginBottom: "5px" };
+const matchCard = { display: "flex" as const, justifyContent: "space-between" as const, alignItems: "center" as const, backgroundColor: "#0f172a", color: "white", padding: "30px", borderRadius: "20px", marginBottom: "25px" };
+const teamSection = { textAlign: "center" as const, flex: 1 };
+const teamName = { fontSize: "1.2rem", fontWeight: "bold" as const, marginBottom: "5px" };
 const teamEquipe = { fontSize: "0.9rem", color: "#cbd5e1", marginBottom: "15px", textTransform: "uppercase" as const };
-const scoreDisplay = { fontSize: "3rem", fontWeight: "800", color: "#f97316" };
-const vsStyle = { fontSize: "1.5rem", color: "#64748b", fontWeight: "bold" };
+const scoreDisplay = { fontSize: "3rem", fontWeight: "800" as const, color: "#f97316" };
+const vsStyle = { fontSize: "1.5rem", color: "#64748b", fontWeight: "bold" as const };
 
 const infoBox = { backgroundColor: "white", padding: "20px", borderRadius: "16px", border: "1px solid #e2e8f0", marginBottom: "20px" };
-const infoGrid = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "15px" };
+const infoGrid = { display: "grid" as const, gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "15px" };
 const infoText = { margin: 0, color: "#334155" };
-const statusBadge = { padding: "4px 8px", borderRadius: "6px", fontSize: "0.85rem", fontWeight: "600", marginLeft: "10px" };
+const statusBadge = { padding: "4px 8px", borderRadius: "6px", fontSize: "0.85rem", fontWeight: "600" as const, marginLeft: "10px" };
 
 const detailBox = { backgroundColor: "white", padding: "20px", borderRadius: "16px", border: "1px solid #e2e8f0", marginBottom: "25px" };
 const tableStyle = { width: "100%", borderCollapse: "collapse" as const };
 const thStyle = { padding: "10px", color: "#64748b", fontSize: "0.85rem", textTransform: "uppercase" as const, textAlign: "left" as const };
 const tdStyle = { padding: "12px 10px", textAlign: "center" as const };
-const tdStyleBold = { ...tdStyle, fontWeight: "600", textAlign: "left" as const };
+const tdStyleBold = { ...tdStyle, fontWeight: "600" as const, textAlign: "left" as const };
 
-const actionBtn = { width: "100%", padding: "15px", backgroundColor: "#f97316", color: "white", border: "none", borderRadius: "12px", fontWeight: "bold", cursor: "pointer", fontSize: "1rem" };
+const actionBtn = { width: "100%", padding: "15px", backgroundColor: "#f97316", color: "white", border: "none", borderRadius: "12px", fontWeight: "bold" as const, cursor: "pointer", fontSize: "1rem" };
 
-const modalOverlay = { position: "fixed" as const, top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 };
+const modalOverlay = { position: "fixed" as const, top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex" as const, alignItems: "center" as const, justifyContent: "center" as const, zIndex: 1000 };
 const modalContent = { backgroundColor: "white", padding: "25px", borderRadius: "16px", width: "90%", maxWidth: "450px" };
-const modalGrid = { display: "grid", gridTemplateColumns: "40px 1fr 1fr", gap: "10px", alignItems: "center" };
-const modalHeader = { fontWeight: "bold", color: "#475569", textAlign: "center" as const, paddingBottom: "10px" };
-const modalRowLabel = { fontWeight: "bold" };
+const modalGrid = { display: "grid" as const, gridTemplateColumns: "40px 1fr 1fr", gap: "10px", alignItems: "center" as const };
+const modalHeader = { fontWeight: "bold" as const, color: "#475569", textAlign: "center" as const, paddingBottom: "10px" };
+const modalRowLabel = { fontWeight: "bold" as const };
 const modalInput = { padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1", textAlign: "center" as const };
-const cancelBtn = { flex: 1, padding: "12px", backgroundColor: "#e2e8f0", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" };
-const saveBtn = { flex: 1, padding: "12px", backgroundColor: "#0f172a", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" };
+const cancelBtn = { flex: 1, padding: "12px", backgroundColor: "#e2e8f0", border: "none", borderRadius: "8px", fontWeight: "bold" as const, cursor: "pointer" };
+const saveBtn = { flex: 1, padding: "12px", backgroundColor: "#0f172a", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold" as const, cursor: "pointer" };
