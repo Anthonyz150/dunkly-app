@@ -15,6 +15,7 @@
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.94.1",
     "@vercel/analytics": "^1.6.1",
+    "fast-jwt": "^6.1.0",
     "firebase": "^12.9.0",
     "framer-motion": "^12.31.0",
     "google-auth-library": "^10.5.0",
