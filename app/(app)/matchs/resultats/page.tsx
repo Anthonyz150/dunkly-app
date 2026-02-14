@@ -25,7 +25,7 @@ interface Match {
   } | null;
   journees?: {
     id: string;
-    nom: string;
+    nom: string; // <-- Le nom de la journée
   } | null;
 }
 
@@ -50,12 +50,7 @@ export default function ResultatsPage() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'matchs' },
-        () => chargerTousLesMatchs() // Recharge si un match change
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'journees' },
-        () => chargerTousLesMatchs() // Recharge si une journée change
+        () => chargerTousLesMatchs()
       )
       .subscribe();
 
@@ -72,12 +67,13 @@ export default function ResultatsPage() {
       .from('matchs')
       // --- REQUÊTE AVEC JOINTURES JOURNÉES ET COMPÉTITIONS ---
       .select('*, competitions!left(logo_url), journees(id, nom)')
+      // Tri de base : Compétition (ASC), puis Date (DESC)
+      .order('competition', { ascending: true })
       .order('date', { ascending: false });
 
     if (error) {
       console.error("Erreur Supabase:", error);
     } else {
-      console.log("Données chargées:", data); // --- POUR DÉBOGAGE ---
       setMatchs(data || []);
     }
     setLoading(false);
@@ -85,6 +81,7 @@ export default function ResultatsPage() {
 
   // --- LOGIQUE DE FILTRAGE ET REGROUPEMENT HIERARCHIQUE ---
   const matchGroupes = useMemo(() => {
+    // 1. Filtrage par recherche
     const filtered = matchs.filter(m =>
       m.clubA?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       m.clubB?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -92,17 +89,24 @@ export default function ResultatsPage() {
       m.journees?.nom?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // Structure: { "Nom Compét": { "Nom Journée": [Matchs...] } }
+    // 2. Regroupement : Compétition > Journée
+    // Structure: { "Nom Compét": { logo: "url", journees: { "Nom Journée": [Matchs...] } } }
     return filtered.reduce((acc, match) => {
       const compet = match.competition || 'Autres';
       const nomJournee = match.journees?.nom || 'Hors Journée';
+      const competLogo = match.competitions?.logo_url;
 
-      if (!acc[compet]) acc[compet] = {};
-      if (!acc[compet][nomJournee]) acc[compet][nomJournee] = [];
+      if (!acc[compet]) {
+        acc[compet] = { logo: competLogo, journees: {} };
+      }
       
-      acc[compet][nomJournee].push(match);
+      if (!acc[compet].journees[nomJournee]) {
+        acc[compet].journees[nomJournee] = [];
+      }
+      
+      acc[compet].journees[nomJournee].push(match);
       return acc;
-    }, {} as Record<string, Record<string, Match[]>>);
+    }, {} as Record<string, { logo?: string, journees: Record<string, Match[]> }>);
 
   }, [matchs, searchTerm]);
 
@@ -110,7 +114,6 @@ export default function ResultatsPage() {
 
   return (
     <div className="page-container">
-      {/* --- HEADER --- */}
       <header className="dashboard-header">
         <div className="header-top">
           <div className="header-left">
@@ -132,16 +135,15 @@ export default function ResultatsPage() {
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </header>
-      {/* --------------------------------- */}
 
-      {/* --- AFFICHAGE HIERARCHIQUE (Compétition > Journée > Matchs) --- */}
-      {Object.entries(matchGroupes).map(([compet, journees]) => (
+      {/* --- AFFICHAGE HIERARCHIQUE --- */}
+      {Object.entries(matchGroupes).map(([compet, competData]) => (
         <div key={compet} className="compet-section">
+          {/* TITRE COMPÉTITION */}
           <h2 className="compet-title" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            {/* Logo compétition sécurisé */}
-            {matchs.find(m => m.competition === compet)?.competitions?.logo_url && (
+            {competData.logo && (
               <img 
-                src={matchs.find(m => m.competition === compet)?.competitions?.logo_url || ''} 
+                src={competData.logo} 
                 alt={compet} 
                 style={{ width: '40px', height: '40px', objectFit: 'contain' }} 
               />
@@ -149,13 +151,15 @@ export default function ResultatsPage() {
             🏆 {compet}
           </h2>
 
-          {/* Boucle sur les journées */}
-          {Object.entries(journees).map(([nomJournee, matchsJournee]) => (
+          {/* BOUCLE SUR LES JOURNÉES DE LA COMPÉTITION */}
+          {Object.entries(competData.journees).map(([nomJournee, matchsJournee]) => (
             <div key={nomJournee} className="journee-section" style={{marginLeft: '15px', marginBottom: '30px'}}>
+              {/* TITRE JOURNÉE */}
               <h3 className="journee-title" style={{color: '#f97316', fontWeight: '800', fontSize: '1.1rem', marginBottom: '15px', paddingLeft: '10px', borderLeft: '3px solid #f97316'}}>
                 {nomJournee}
               </h3>
               
+              {/* GRILLE DES MATCHS DE LA JOURNÉE */}
               <div className="matchs-grid">
                 {matchsJournee.map((m: Match) => (
                   <Link href={`/matchs/resultats/${m.id}`} key={m.id} className="match-card-link">
