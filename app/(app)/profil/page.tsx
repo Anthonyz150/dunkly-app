@@ -9,13 +9,16 @@ export default function ProfilPage() {
   const [username, setUsername] = useState('');
   const [prenom, setPrenom] = useState('');
   const [nom, setNom] = useState('');
-  // --- NOUVEAU : État pour l'avatar ---
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  // ------------------------------------
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  
+  // --- NOUVEAU : État pour le bouton Wallet ---
+  const [generatingCard, setGeneratingCard] = useState(false);
+  // ---------------------------------------------
+  
   const router = useRouter();
 
   useEffect(() => {
@@ -33,15 +36,12 @@ export default function ProfilPage() {
       setUsername(storedUser.username || '');
       setPrenom(storedUser.prenom || '');
       setNom(storedUser.nom || '');
-      // --- NOUVEAU : Récupérer l'avatar actuel ---
       setAvatarUrl(storedUser.avatar_url || session.user.user_metadata.avatar_url || null);
-      // ------------------------------------------
       setLoading(false);
     };
     getProfile();
   }, [router]);
 
-  // --- NOUVEAU : Fonction pour uploader l'avatar ---
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       setUploading(true);
@@ -52,20 +52,17 @@ export default function ProfilPage() {
       const file = event.target.files[0];
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}.${fileExt}`;
-      const filePath = `${fileName}`; // On stocke directement à la racine du bucket 'avatars'
+      const filePath = `${fileName}`; 
 
-      // 1. Upload dans Supabase Storage
       let { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      // 2. Récupérer l'URL publique
       const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
       const newAvatarUrl = data.publicUrl;
 
-      // 3. Mettre à jour l'URL dans Supabase Auth (metadata)
       const { error: updateError } = await supabase.auth.updateUser({
         data: { avatar_url: newAvatarUrl },
       });
@@ -76,7 +73,6 @@ export default function ProfilPage() {
       setMessage('✅ Photo de profil mise à jour !');
       setTimeout(() => setMessage(''), 3000);
       
-      // Mettre à jour le localStorage pour refléter le changement
       const currentData = JSON.parse(localStorage.getItem('currentUser') || '{}');
       localStorage.setItem('currentUser', JSON.stringify({ ...currentData, avatar_url: newAvatarUrl }));
       window.dispatchEvent(new Event('storage'));
@@ -87,7 +83,6 @@ export default function ProfilPage() {
       setUploading(false);
     }
   };
-  // --------------------------------------------------
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,6 +112,37 @@ export default function ProfilPage() {
       setMessage('❌ Erreur : ' + error.message);
     }
   };
+
+  // --- NOUVEAU : Fonction pour générer le lien Wallet ---
+  const ajouterACarte = async () => {
+    try {
+        setGeneratingCard(true);
+        setMessage('⏳ Génération de votre carte personnalisée...');
+        
+        // 1. Envoyer les données au backend
+        const response = await fetch('/api/generate-card', {
+            method: 'POST', // 2. Utiliser POST
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ prenom, nom }), // 3. Envoyer les états actuels
+        });
+
+        const data = await response.json();
+
+        if (data.link) {
+            window.open(data.link, '_blank');
+            setMessage('✅ Redirection vers Google Wallet...');
+            setTimeout(() => setMessage(''), 3000);
+        } else {
+            throw new Error(data.error || "Erreur lors de la génération");
+        }
+    } catch (error: any) {
+        setMessage('❌ Erreur Wallet : ' + error.message);
+    } finally {
+        setGeneratingCard(false);
+    }
+};
 
   const confirmerSuppression = async () => {
     try {
@@ -174,7 +200,6 @@ export default function ProfilPage() {
         )}
 
         <form onSubmit={handleSave} className="profile-form">
-          {/* --- NOUVEAU : Zone Avatar --- */}
           <div style={{ textAlign: 'center', marginBottom: '10px' }}>
             <img
               src={avatarUrl || 'https://via.placeholder.com/150?text=Avatar'}
@@ -195,7 +220,6 @@ export default function ProfilPage() {
               />
             </div>
           </div>
-          {/* ------------------------------ */}
 
           <div style={inputGroup}>
             <label style={labelStyle}>Pseudo (Nom d'utilisateur)</label>
@@ -220,6 +244,14 @@ export default function ProfilPage() {
 
           <button type="submit" style={btnSave}>SAUVEGARDER</button>
 
+          {/* --- NOUVEAU : Bouton Google Wallet --- */}
+          <div style={{ marginTop: '20px' }}>
+            <button type="button" onClick={ajouterACarte} style={{ ...btnSave, background: '#4285F4', width: '100%' }} disabled={generatingCard}>
+              {generatingCard ? '⏳ Génération...' : '💳 Ajouter à Google Wallet'}
+            </button>
+          </div>
+          {/* -------------------------------------- */}
+
           <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #F1F5F9' }}>
             <button type="button" onClick={() => setShowDeleteModal(true)} style={btnDelete}>
               SUPPRIMER MON COMPTE
@@ -242,7 +274,6 @@ export default function ProfilPage() {
           `}</style>
         </form>
 
-        {/* MODAL DE CONFIRMATION */}
         {showDeleteModal && (
           <div className="modal-overlay">
             <div className="modal-content">
@@ -279,86 +310,12 @@ export default function ProfilPage() {
   );
 }
 
-// --- STYLES OBJETS (CSS-in-JS avec arrondis modernes) ---
-
-const inputGroup = { 
-  display: 'flex', 
-  flexDirection: 'column' as const, 
-  gap: '8px' 
-};
-
-const labelStyle = { 
-  fontSize: '0.75rem', 
-  fontWeight: '800', 
-  color: '#475569', 
-  textTransform: 'uppercase' as const 
-};
-
-// --- CORRECTION: Arrondi input (16px) ---
-const inputStyle = { 
-  width: '100%', 
-  padding: '16px', // Un peu plus de padding pour le confort
-  borderRadius: '16px', 
-  border: '2px solid #F1F5F9', 
-  fontSize: '1rem', 
-  outline: 'none', 
-  color: '#1E293B',
-  boxSizing: 'border-box' as const
-};
-
-const disabledInput = { 
-  ...inputStyle, 
-  backgroundColor: '#F8FAFC', 
-  color: '#94A3B8', 
-  cursor: 'not-allowed' 
-};
-
-// --- CORRECTION: Arrondi bouton save (16px) ---
-const btnSave = { 
-  background: '#F97316', 
-  color: 'white', 
-  border: 'none', 
-  padding: '16px', 
-  borderRadius: '16px', 
-  cursor: 'pointer', 
-  fontWeight: '900', 
-  fontSize: '0.95rem' 
-};
-
-// --- CORRECTION: Arrondi bouton delete (12px) ---
-const btnDelete = { 
-  background: 'transparent', 
-  color: '#EF4444', 
-  border: '2px solid #FEE2E2', 
-  padding: '12px', 
-  borderRadius: '12px', 
-  cursor: 'pointer', 
-  fontWeight: '800', 
-  fontSize: '0.8rem', 
-  width: '100%' 
-};
-
-// --- STYLES DU MODAL ---
-
-// --- CORRECTION: Arrondi boutons modale (12px) ---
-const btnCancel = { 
-  flex: 1, 
-  padding: '12px', 
-  borderRadius: '12px', 
-  border: '1px solid #E2E8F0', 
-  background: 'white', 
-  fontWeight: '700', 
-  cursor: 'pointer', 
-  color: '#64748B' 
-};
-
-const btnConfirmDelete = { 
-  flex: 1, 
-  padding: '12px', 
-  borderRadius: '12px', 
-  border: 'none', 
-  background: '#EF4444', 
-  color: 'white', 
-  fontWeight: '700', 
-  cursor: 'pointer' 
-};
+// Styles objets inchangés...
+const inputGroup = { display: 'flex', flexDirection: 'column' as const, gap: '8px' };
+const labelStyle = { fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase' as const };
+const inputStyle = { width: '100%', padding: '16px', borderRadius: '16px', border: '2px solid #F1F5F9', fontSize: '1rem', outline: 'none', color: '#1E293B', boxSizing: 'border-box' as const };
+const disabledInput = { ...inputStyle, backgroundColor: '#F8FAFC', color: '#94A3B8', cursor: 'not-allowed' };
+const btnSave = { background: '#F97316', color: 'white', border: 'none', padding: '16px', borderRadius: '16px', cursor: 'pointer', fontWeight: '900', fontSize: '0.95rem' };
+const btnDelete = { background: 'transparent', color: '#EF4444', border: '2px solid #FEE2E2', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontWeight: '800', fontSize: '0.8rem', width: '100%' };
+const btnCancel = { flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid #E2E8F0', background: 'white', fontWeight: '700', cursor: 'pointer', color: '#64748B' };
+const btnConfirmDelete = { flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: '#EF4444', color: 'white', fontWeight: '700', cursor: 'pointer' };

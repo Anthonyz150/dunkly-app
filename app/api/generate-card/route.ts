@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
-import { createSigner } from 'fast-jwt'; // <-- C'est ça qu'il faut utiliser
+import { createSigner } from 'fast-jwt';
 import fs from 'fs';
 import path from 'path';
 
-export async function GET() {
+export async function POST(request: Request) { // 1. Changement pour POST
     try {
+        // 2. Récupérer les données envoyées par le front
+        const body = await request.json();
+        const { prenom, nom } = body;
+
         // --- Récupération des credentials ---
         let credentials;
         if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
@@ -14,13 +18,14 @@ export async function GET() {
             credentials = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
         }
 
-        // --- Définition du Payload du JWT ---
+        // --- Définition du Payload du JWT personnalisé ---
         const payload = {
             iss: credentials.client_email,
             aud: "google",
             typ: "savetowallet",
             payload: {
                 genericObjects: [{
+                    // ID unique basé sur le temps pour éviter les conflits
                     "id": `${credentials.project_id}.user_${Date.now()}`, 
                     "classId": `${credentials.project_id}.dunkly_carte_membre`, 
                     "genericType": "GENERIC_TYPE_UNSPECIFIED",
@@ -33,13 +38,13 @@ export async function GET() {
                     "cardTitle": {
                         "defaultValue": {
                             "language": "fr",
-                            "value": "Carte Dunkly"
+                            "value": `Carte ${prenom} ${nom}` // 3. Nom personnalisé ici
                         }
                     },
                     "header": {
                         "defaultValue": {
                             "language": "fr",
-                            "value": "Membre Dunkly" 
+                            "value": `Membre ${prenom}` // 4. Prénom personnalisé ici
                         }
                     },
                     "barcode": {
