@@ -1,3 +1,4 @@
+// app/profil/page.tsx
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -14,35 +15,27 @@ export default function ProfilPage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  
   const [generatingCard, setGeneratingCard] = useState(false);
   
   const router = useRouter();
 
   useEffect(() => {
+    // 1. Définir une fonction pour récupérer le profil
     const getProfile = async () => {
       setLoading(true);
       
-      // 1. Récupérer la session de manière fiable
+      // Récupérer la session de manière fiable
       const { data: { session }, error } = await supabase.auth.getSession();
       
-      console.log("--- DEBUG SESSION ---");
-      console.log("Session:", session);
-      console.log("Erreur:", error);
-      console.log("---------------------");
-      
       if (error || !session) {
-        console.log("Redirection vers /login : Pas de session valide");
-        // Si erreur de session, on nettoie tout par précaution
-        localStorage.removeItem('currentUser');
+        // Redirection vers /login si pas de session
         router.push('/login');
         return;
       }
 
-      // 2. Si session OK, on récupère les données
       setUser(session.user);
       
-      // Essayer de charger depuis le localStorage, sinon depuis le profil supabasse
+      // Charger depuis localStorage ou metadata
       const storedUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
       
       setUsername(storedUser.username || session.user.user_metadata.username || '');
@@ -53,12 +46,16 @@ export default function ProfilPage() {
       setLoading(false);
     };
 
+    // 2. Initialiser la récupération du profil
     getProfile();
     
-    // 3. Écouter les changements d'auth (si déconnexion ailleurs)
+    // 3. Écouter les changements d'auth (TRÈS IMPORTANT pour éviter la boucle)
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT' || !session) {
+        localStorage.removeItem('currentUser');
         router.push('/login');
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        getProfile(); // Recharger le profil si la session change
       }
     });
 

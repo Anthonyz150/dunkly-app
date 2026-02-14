@@ -16,8 +16,6 @@ export default function AuthPage() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
-
-  // Récupère l'URL de redirection, par défaut vers '/'
   const redirectTo = searchParams.get('redirect') || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -27,14 +25,13 @@ export default function AuthPage() {
 
     try {
       if (mode === "login") {
-        // 1. Connexion Supabase (gère le cookie automatiquement)
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
 
-        // --- CORRECTION : Sauvegarde et Attente ---
+        // --- CORRECTION : Sauvegarde et Pause pour Cookie ---
         if (data?.user) {
           try {
             // Récupérer le profil pour l'UI
@@ -44,7 +41,7 @@ export default function AuthPage() {
               .eq('id', data.user.id)
               .single();
 
-            // Stocker les données pour l'UI
+            // Stocker les données pour l'UI (LocalStorage)
             localStorage.setItem('currentUser', JSON.stringify({
               ...data.user,
               ...profile,
@@ -53,18 +50,17 @@ export default function AuthPage() {
             
             window.dispatchEvent(new Event('storage'));
 
-            // 2. IMPORTANT : Petite pause pour laisser le temps au cookie 
-            // de session de se propager avant la redirection
+            // ⚠️ IMPORTANT : Petite pause pour laisser le temps au cookie 
+            // de session de se propager dans le navigateur avant la redirection
             await new Promise(resolve => setTimeout(resolve, 500));
-
           } catch (pErr) {
             console.error("Erreur de stockage profil:", pErr);
           }
         }
         
-        // 3. Redirection
+        // --- REDIRECTION ---
         router.push(redirectTo);
-        router.refresh();
+        router.refresh(); // Force rafraîchissement côté serveur
 
       } else {
         // --- INSCRIPTION ---
@@ -72,9 +68,7 @@ export default function AuthPage() {
           email,
           password,
           options: {
-            data: {
-              role: 'user',
-            }
+            data: { role: 'user' }
           }
         });
         if (error) throw error;
