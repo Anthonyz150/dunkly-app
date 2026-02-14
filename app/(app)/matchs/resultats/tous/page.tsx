@@ -16,7 +16,7 @@ interface MatchInterface {
   status: 'termine' | 'en-cours' | 'a-venir';
   logo_urlA?: string;
   logo_urlB?: string;
-  // Jointures
+  // Jointures (nom de la table en minuscule dans la réponse SQL)
   competitions?: { logo_url?: string } | null;
   journees?: { nom: string } | null; // <-- Le nom de la journée
 }
@@ -31,14 +31,15 @@ export default function TousLesResultatsPage() {
       setLoading(true);
       setError(null);
 
-      // --- CORRECTION : Requête avec jointures explicites ---
+      // --- REQUÊTE AVEC JOINTURES ---
       const { data, error: supabaseError } = await supabase
         .from('matchs')
         .select(`
           *,
-          competitions!left(logo_url),
+          competitions(logo_url),
           journees(nom)
         `)
+        .eq('status', 'termine')
         // Tri par compétition puis par date
         .order('competition', { ascending: true })
         .order('date', { ascending: false });
@@ -47,6 +48,7 @@ export default function TousLesResultatsPage() {
         console.error("Erreur Supabase:", supabaseError);
         setError(`Erreur: ${supabaseError.message}`);
       } else {
+        console.log("Données reçues:", data);
         setMatchs(data || []);
       }
       setLoading(false);
@@ -67,7 +69,7 @@ export default function TousLesResultatsPage() {
   const matchsGroupes = useMemo(() => {
     return matchs.reduce((acc, match) => {
       const competName = match.competition || 'Autres';
-      // Récupération du nom depuis la jointure
+      // Récupération du nom depuis la jointure avec sécurité ?
       const journeeName = match.journees?.nom || 'Hors Journée';
 
       if (!acc[competName]) acc[competName] = {};
