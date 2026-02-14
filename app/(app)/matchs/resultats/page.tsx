@@ -77,6 +77,7 @@ export default function ResultatsPage() {
     if (error) {
       console.error("Erreur Supabase:", error);
     } else {
+      console.log("Données chargées:", data); // --- POUR DÉBOGAGE ---
       setMatchs(data || []);
     }
     setLoading(false);
@@ -137,9 +138,13 @@ export default function ResultatsPage() {
       {Object.entries(matchGroupes).map(([compet, journees]) => (
         <div key={compet} className="compet-section">
           <h2 className="compet-title" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            {/* Logo compétition optionnel si disponible dans la jointure */}
+            {/* Logo compétition sécurisé */}
             {matchs.find(m => m.competition === compet)?.competitions?.logo_url && (
-              <img src={matchs.find(m => m.competition === compet)!.competitions!.logo_url} alt={compet} style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
+              <img 
+                src={matchs.find(m => m.competition === compet)?.competitions?.logo_url || ''} 
+                alt={compet} 
+                style={{ width: '40px', height: '40px', objectFit: 'contain' }} 
+              />
             )}
             🏆 {compet}
           </h2>
@@ -170,7 +175,7 @@ export default function ResultatsPage() {
                               {m.logo_urlA ? (
                                 <img src={m.logo_urlA} alt={m.clubA} style={logoStyle} />
                               ) : (
-                                <div style={logoPlaceholderStyle}>{m.clubA[0]}</div>
+                                <div style={logoPlaceholderStyle}>{m.clubA?.[0] || '?'}</div>
                               )}
                             </div>
                             <span className="team-cat">{m.equipeA}</span>
@@ -189,7 +194,7 @@ export default function ResultatsPage() {
                               {m.logo_urlB ? (
                                 <img src={m.logo_urlB} alt={m.clubB} style={logoStyle} />
                               ) : (
-                                <div style={logoPlaceholderStyle}>{m.clubB[0]}</div>
+                                <div style={logoPlaceholderStyle}>{m.clubB?.[0] || '?'}</div>
                               )}
                               <span className="team-name">{m.clubB}</span>
                             </div>
