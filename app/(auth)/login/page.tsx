@@ -27,61 +27,60 @@ export default function AuthPage() {
 
     try {
       if (mode === "login") {
+        // 1. Connexion Supabase (gère le cookie automatiquement)
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
 
-        // --- CORRECTION ET AMÉLIORATION DE LA CONNEXION ---
+        // --- CORRECTION : Sauvegarde et Attente ---
         if (data?.user) {
           try {
-            // 1. Récupérer le profil complet pour avoir le rôle et l'avatar
-            const { data: profile, error: profileError } = await supabase
+            // Récupérer le profil pour l'UI
+            const { data: profile } = await supabase
               .from('profiles')
               .select('*')
               .eq('id', data.user.id)
               .single();
 
-            if (profileError) console.error("Erreur profil:", profileError);
-
-            // 2. Stocker les données complètes
+            // Stocker les données pour l'UI
             localStorage.setItem('currentUser', JSON.stringify({
               ...data.user,
               ...profile,
               avatar_url: profile?.avatar_url || data.user.user_metadata?.avatar_url 
             }));
             
-            // 3. Déclencher un événement pour que le layout mette à jour l'UI instantanément
             window.dispatchEvent(new Event('storage'));
+
+            // 2. IMPORTANT : Petite pause pour laisser le temps au cookie 
+            // de session de se propager avant la redirection
+            await new Promise(resolve => setTimeout(resolve, 500));
+
           } catch (pErr) {
-            console.error("Erreur de profil non critique:", pErr);
+            console.error("Erreur de stockage profil:", pErr);
           }
         }
         
-        // --- CORRECTION: Redirection Next.js ---
-        // Utiliser router.push au lieu de window.location.href pour Next.js
+        // 3. Redirection
         router.push(redirectTo);
-        router.refresh(); // Force la mise à jour de la session côté serveur
+        router.refresh();
 
       } else {
+        // --- INSCRIPTION ---
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: {
-              role: 'user', // Rôle par défaut à l'inscription
+              role: 'user',
             }
           }
         });
         if (error) throw error;
         
         alert("Inscription réussie ! Veuillez vérifier votre email pour confirmer.");
-        
-        // Après inscription réussie, on redirige vers le login avec le paramètre de redirection
         router.push(`/login?redirect=${encodeURIComponent(redirectTo)}`);
-        setLoading(false);
-        return;
       }
       
     } catch (err: any) {
@@ -174,124 +173,18 @@ export default function AuthPage() {
   );
 }
 
-// --- STYLES MODIFIÉS (Modernes et Arrondis) ---
-
-// --- CORRECTION: Plein écran ---
-const wrapper: CSSProperties = { 
-  position: "fixed", 
-  inset: 0, 
-  width: "100vw",
-  height: "100vh",
-  background: "radial-gradient(circle at center, #0f172a, #000)", 
-  display: "flex", 
-  justifyContent: "center", 
-  alignItems: "center", 
-  zIndex: 9999 
-};
-
-// --- CORRECTION: Arrondi carte moderne (24px) ---
-const card: CSSProperties = { 
-  background: "#020617", 
-  padding: "48px", 
-  width: "380px", 
-  borderRadius: "24px", 
-  boxShadow: "0 40px 80px rgba(0,0,0,0.9)", 
-  textAlign: "center" 
-};
-
-// --- CORRECTION: Arrondi logo (50% pour cercle) ---
-const logo: CSSProperties = { 
-  background: "#f97316", 
-  width: "56px", 
-  height: "56px", 
-  borderRadius: "50%", 
-  display: "flex", 
-  justifyContent: "center", 
-  alignItems: "center", 
-  margin: "0 auto 12px", 
-  fontSize: "26px" 
-};
-
-const title: CSSProperties = { 
-  color: "#fff", 
-  fontSize: "2.5rem", 
-  fontWeight: 900, 
-  marginBottom: "20px" 
-};
-
-const tabs: CSSProperties = { 
-  display: "flex", 
-  gap: "10px", 
-  marginBottom: "25px" 
-};
-
-// --- CORRECTION: Arrondi onglets (12px) ---
-const tab: CSSProperties = { 
-  flex: 1, 
-  padding: "10px", 
-  background: "transparent", 
-  border: "1px solid #1e293b", 
-  color: "#94a3b8", 
-  borderRadius: "12px", 
-  cursor: "pointer" 
-};
-
-const tabActive: CSSProperties = { 
-  ...tab, 
-  background: "#f97316", 
-  color: "#fff", 
-  border: "none" 
-};
-
-const form: CSSProperties = { 
-  display: "flex", 
-  flexDirection: "column", 
-  gap: "16px" 
-};
-
-// --- CORRECTION: Arrondi input (14px) ---
-const input: CSSProperties = { 
-  padding: "14px", 
-  borderRadius: "14px", 
-  border: "1px solid #1e293b", 
-  background: "#020617", 
-  color: "#fff", 
-  outline: "none" 
-};
-
-// --- CORRECTION: Arrondi bouton (16px) ---
-const button: CSSProperties = { 
-  marginTop: "10px", 
-  padding: "14px", 
-  borderRadius: "16px", 
-  background: "#f97316", 
-  border: "none", 
-  color: "#fff", 
-  fontWeight: 900, 
-  cursor: "pointer" 
-};
-
-const eye: CSSProperties = { 
-  position: "absolute", 
-  right: "12px", 
-  top: "50%", 
-  transform: "translateY(-50%)", 
-  cursor: "pointer" 
-};
-
-const errorStyle: CSSProperties = { 
-  color: "#ff5555", 
-  fontSize: "13px", 
-  marginBottom: "10px" 
-};
-
-const footer: CSSProperties = { 
-  marginTop: "20px", 
-  color: "#94a3b8" 
-};
-
-const link: CSSProperties = { 
-  color: "#fff", 
-  fontWeight: 700, 
-  cursor: "pointer" 
-};
+// --- STYLES (Inchangés) ---
+const wrapper: CSSProperties = { position: "fixed", inset: 0, width: "100vw", height: "100vh", background: "radial-gradient(circle at center, #0f172a, #000)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 9999 };
+const card: CSSProperties = { background: "#020617", padding: "48px", width: "380px", borderRadius: "24px", boxShadow: "0 40px 80px rgba(0,0,0,0.9)", textAlign: "center" };
+const logo: CSSProperties = { background: "#f97316", width: "56px", height: "56px", borderRadius: "50%", display: "flex", justifyContent: "center", alignItems: "center", margin: "0 auto 12px", fontSize: "26px" };
+const title: CSSProperties = { color: "#fff", fontSize: "2.5rem", fontWeight: 900, marginBottom: "20px" };
+const tabs: CSSProperties = { display: "flex", gap: "10px", marginBottom: "25px" };
+const tab: CSSProperties = { flex: 1, padding: "10px", background: "transparent", border: "1px solid #1e293b", color: "#94a3b8", borderRadius: "12px", cursor: "pointer" };
+const tabActive: CSSProperties = { ...tab, background: "#f97316", color: "#fff", border: "none" };
+const form: CSSProperties = { display: "flex", flexDirection: "column", gap: "16px" };
+const input: CSSProperties = { padding: "14px", borderRadius: "14px", border: "1px solid #1e293b", background: "#020617", color: "#fff", outline: "none" };
+const button: CSSProperties = { marginTop: "10px", padding: "14px", borderRadius: "16px", background: "#f97316", border: "none", color: "#fff", fontWeight: 900, cursor: "pointer" };
+const eye: CSSProperties = { position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", cursor: "pointer" };
+const errorStyle: CSSProperties = { color: "#ff5555", fontSize: "13px", marginBottom: "10px" };
+const footer: CSSProperties = { marginTop: "20px", color: "#94a3b8" };
+const link: CSSProperties = { color: "#fff", fontWeight: 700, cursor: "pointer" };
