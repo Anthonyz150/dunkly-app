@@ -147,8 +147,20 @@ export default function TousLesResultatsPage() {
   );
 }
 
-// --- STYLES (Sombre et moderne) ---
-const containerStyle = { padding: '20px', maxWidth: '800px', margin: '0 auto', fontFamily: 'system-ui, sans-serif', color: 'white', minHeight: '100vh', backgroundColor: '#0f172a' };
+// --- STYLES (Sombre, Moderne et Pleine Largeur) ---
+
+// --- CORRECTION: Pleine largeur (width: '100%') ---
+const containerStyle = { 
+  padding: '20px', 
+  width: '100%', 
+  boxSizing: 'border-box' as const, 
+  margin: '0 auto', 
+  fontFamily: 'system-ui, sans-serif', 
+  color: 'white', 
+  minHeight: '100vh', 
+  backgroundColor: '#0f172a' 
+};
+
 const titleStyle = { fontWeight: '900' as const, marginBottom: '30px', color: 'white', textAlign: 'center' as const };
 const competSectionStyle = { marginBottom: '40px' };
 const competTitleStyle = { color: '#F97316', borderBottom: '2px solid #334155', paddingBottom: '10px', marginBottom: '20px', fontSize: '1.5rem', fontWeight: '800' as const };
@@ -156,10 +168,11 @@ const journeeSectionStyle = { marginBottom: '25px', paddingLeft: '10px' };
 const journeeTitleStyle = { color: '#e2e8f0', fontSize: '1.2rem', marginBottom: '15px', fontWeight: '600' as const };
 const gridStyle = { display: 'flex' as const, flexDirection: 'column' as const, gap: '15px' };
 
+// --- CORRECTION: Arrondi carte moderne (24px) ---
 const cardStyle = { 
   border: '1px solid #334155', 
-  padding: '15px', 
-  borderRadius: '12px', 
+  padding: '20px', // Un peu plus de padding pour les gros arrondis
+  borderRadius: '24px', 
   backgroundColor: '#1e293b',
   transition: 'transform 0.1s, box-shadow 0.1s',
   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
@@ -172,7 +185,8 @@ const matchRowStyle = { display: 'flex' as const, justifyContent: 'space-between
 const teamStyle = { display: 'flex' as const, alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 };
 const clubNameStyle = { fontWeight: 'bold' as const, fontSize: '1rem', whiteSpace: 'nowrap' as const, overflow: 'hidden' as const, textOverflow: 'ellipsis' as const };
 
-const logoStyle = { width: '35px', height: '35px', borderRadius: '50%', objectFit: 'contain' as const, backgroundColor: 'white', padding: '2px', flexShrink: 0 };
-const logoPlaceholderStyle = { width: '35px', height: '35px', borderRadius: '50%', backgroundColor: '#334155', display: 'flex' as const, alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' as const, flexShrink: 0 };
+const logoStyle = { width: '40px', height: '40px', borderRadius: '50%', objectFit: 'contain' as const, backgroundColor: 'white', padding: '2px', flexShrink: 0 };
+const logoPlaceholderStyle = { width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#334155', display: 'flex' as const, alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' as const, flexShrink: 0 };
 
-const scoreStyle = { fontSize: '1.5rem', fontWeight: '900' as const, color: '#f59e0b', minWidth: '70px', textAlign: 'center' as const };
+// --- CORRECTION: Arrondi score (12px) ---
+const scoreStyle = { fontSize: '1.5rem', fontWeight: '900' as const, color: '#f59e0b', minWidth: '70px', textAlign: 'center' as const, padding: '4px 8px', borderRadius: '12px', background: 'rgba(0,0,0,0.2)' };

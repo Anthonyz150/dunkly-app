@@ -232,17 +232,23 @@ export default function ResultatsPage() {
     </div>
   );
 }
-// --- STYLES OBJETS (CSS-in-JS avec 'as const') ---
+// --- STYLES OBJETS (CSS-in-JS avec 'as const' et arrondis modernes) ---
 const loadingStyle = { display: 'flex' as const, height: '100vh', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui, sans-serif', backgroundColor: '#f8fafc', color: '#64748b' };
-const pageContainer = { padding: '20px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'system-ui, sans-serif', backgroundColor: '#f8fafc', minHeight: '100vh' };
+
+// --- CORRECTION: Pleine largeur (width: '100%') ---
+const pageContainer = { padding: '20px', width: '100%', boxSizing: 'border-box' as const, fontFamily: 'system-ui, sans-serif', backgroundColor: '#f8fafc', minHeight: '100vh' };
+
 const dashboardHeader = { display: 'flex' as const, flexDirection: 'column' as const, gap: '15px', marginBottom: '30px' };
 const headerTop = { display: 'flex' as const, justifyContent: 'space-between', alignItems: 'center', gap: '15px' };
 const headerLeft = {};
 const headerTitle = { fontSize: '1.8rem', fontWeight: '800' as const, color: '#0f172a', margin: 0 };
 const orangeDot = { color: '#f97316' };
 const subtitle = { color: '#64748b', fontSize: '0.9rem', margin: '5px 0 0' };
-const searchInput = { padding: '12px 16px', borderRadius: '12px', border: '1px solid #e2e8f0', background: 'white', width: '100%', outline: 'none', fontSize: '0.95rem', boxSizing: 'border-box' as const };
-const btnAdminMobile = { backgroundColor: '#0f172a', color: 'white', textDecoration: 'none', padding: '10px 15px', borderRadius: '10px', fontWeight: 'bold' as const, fontSize: '0.85rem', whiteSpace: 'nowrap' as const };
+
+// --- CORRECTION: Arrondi input (16px) ---
+const searchInput = { padding: '12px 16px', borderRadius: '16px', border: '1px solid #e2e8f0', background: 'white', width: '100%', outline: 'none', fontSize: '0.95rem', boxSizing: 'border-box' as const };
+// --- CORRECTION: Arrondi bouton (12px) ---
+const btnAdminMobile = { backgroundColor: '#0f172a', color: 'white', textDecoration: 'none', padding: '10px 15px', borderRadius: '12px', fontWeight: 'bold' as const, fontSize: '0.85rem', whiteSpace: 'nowrap' as const };
 
 const competSection = { marginBottom: '40px' };
 const competTitle = { display: 'flex' as const, alignItems: 'center', gap: '15px', fontSize: '1.4rem', fontWeight: '800' as const, color: '#0f172a', marginBottom: '25px', paddingBottom: '15px', borderBottom: '2px solid #e2e8f0' };
@@ -251,9 +257,13 @@ const competLogoStyle = { width: '40px', height: '40px', objectFit: 'contain' as
 const journeeSection = { marginLeft: '15px', marginBottom: '30px' };
 const journeeTitle = { color: '#f97316', fontWeight: '800' as const, fontSize: '1.1rem', marginBottom: '15px', paddingLeft: '10px', borderLeft: '3px solid #f97316' };
 
+// --- CORRECTION: Grille responsive ---
 const matchsGrid = { display: 'grid' as const, gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '20px' };
 const matchCardLink = { textDecoration: 'none', color: 'inherit' };
-const matchCard = { backgroundColor: 'white', borderRadius: '16px', display: 'flex' as const, overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', border: '1px solid #f1f5f9', transition: 'transform 0.2s', height: '100%' };
+
+// --- CORRECTION: Arrondi carte (20px) ---
+const matchCard = { backgroundColor: 'white', borderRadius: '20px', display: 'flex' as const, overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', border: '1px solid #f1f5f9', transition: 'transform 0.2s', height: '100%' };
+
 const statusBorder = { width: '6px', flexShrink: 0 };
 const cardContent = { flex: 1, padding: '15px', display: 'flex' as const, flexDirection: 'column' as const, justifyContent: 'space-between' as const };
 const cardTop = { display: 'flex' as const, justifyContent: 'space-between', marginBottom: '10px' };
@@ -263,13 +273,17 @@ const teamInfo = { display: 'flex' as const, flexDirection: 'column' as const, w
 const teamFlexRow = { display: 'flex' as const, alignItems: 'center', gap: '10px' };
 const teamNameStyle = { fontSize: '0.9rem', fontWeight: '800' as const, color: '#0f172a', textTransform: 'uppercase' as const };
 const teamCatStyle = { fontSize: '0.7rem', color: '#94a3b8', fontWeight: '600' as const };
+
+// --- CORRECTION: Arrondi score (12px) ---
 const scoreBadge = { background: '#f8fafc', padding: '6px 12px', borderRadius: '12px', display: 'flex' as const, alignItems: 'center', gap: '5px', border: '1px solid #e2e8f0' };
+
 const scoreNum = { fontSize: '1.2rem', fontWeight: '900' as const, color: '#0f172a' };
 const scoreSep = { color: '#cbd5e1', fontWeight: 'bold' as const };
 const cardBottom = { marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #f1f5f9', fontSize: '0.75rem', color: '#64748b', fontWeight: '600' as const };
 const locationStyle = {};
 const liveTag = { color: '#22c55e', fontWeight: '800' as const, fontSize: '0.7rem' };
 
-const emptyState = { textAlign: 'center' as const, padding: '40px', color: '#64748b', background: 'white', borderRadius: '16px', border: '2px dashed #e2e8f0' };
+// --- CORRECTION: Arrondi EmptyState (20px) ---
+const emptyState = { textAlign: 'center' as const, padding: '40px', color: '#64748b', background: 'white', borderRadius: '20px', border: '2px dashed #e2e8f0' };
 const logoStyle = { width: '35px', height: '35px', borderRadius: '50%', objectFit: 'contain' as const, backgroundColor: 'white', border: '1px solid #f1f5f9' };
 const logoPlaceholderStyle = { width: '35px', height: '35px', borderRadius: '50%', backgroundColor: '#f1f5f9', display: 'flex' as const, alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' as const, fontSize: '1rem', color: '#64748b' };

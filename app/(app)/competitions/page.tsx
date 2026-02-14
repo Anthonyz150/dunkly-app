@@ -192,30 +192,144 @@ export default function CompetitionsPage() {
   );
 }
 
-const btnNouveauStyle = { backgroundColor: '#F97316', color: 'white', border: 'none', padding: '12px 20px', borderRadius: '10px', cursor: 'pointer', fontWeight: '900' as const, fontSize: '0.8rem' };
-const typeBadgeStyle = (type: string) => ({ display: 'inline-block', width: 'fit-content', padding: '2px 8px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: '800' as const, backgroundColor: type === 'Championnat' ? '#eff6ff' : '#fff7ed', color: type === 'Championnat' ? '#2563eb' : '#ea580c' });
-const modalOverlayStyle: React.CSSProperties = { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(15, 23, 42, 0.9)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 3000 };
+// --- STYLES OBJETS (CSS-in-JS avec arrondis modernes) ---
+
+// --- CORRECTION: Arrondi bouton nouveau (16px) ---
+const btnNouveauStyle = { 
+  backgroundColor: '#F97316', 
+  color: 'white', 
+  border: 'none', 
+  padding: '12px 20px', 
+  borderRadius: '16px', 
+  cursor: 'pointer', 
+  fontWeight: '900' as const, 
+  fontSize: '0.8rem' 
+};
+
+// --- CORRECTION: Arrondi badge type (12px) ---
+const typeBadgeStyle = (type: string) => ({ 
+  display: 'inline-block', 
+  width: 'fit-content', 
+  padding: '4px 10px', 
+  borderRadius: '12px', 
+  fontSize: '0.7rem', 
+  fontWeight: '800' as const, 
+  backgroundColor: type === 'Championnat' ? '#eff6ff' : '#fff7ed', 
+  color: type === 'Championnat' ? '#2563eb' : '#ea580c' 
+});
+
+const modalOverlayStyle: React.CSSProperties = { 
+  position: 'fixed', 
+  top: 0, 
+  left: 0, 
+  width: '100vw', 
+  height: '100vh', 
+  backgroundColor: 'rgba(15, 23, 42, 0.9)', 
+  display: 'flex', 
+  justifyContent: 'center', 
+  alignItems: 'center', 
+  zIndex: 3000 
+};
+
 const inputGroup = { display: 'flex', flexDirection: 'column' as const, gap: '5px' };
 const labelStyle = { fontSize: '0.75rem', fontWeight: '800', color: '#64748b' };
-const inputStyle = { padding: '12px', borderRadius: '10px', border: '2px solid #f1f5f9', outline: 'none', fontSize: '1rem' };
-const confirmBtnStyle = { flex: 2, backgroundColor: '#F97316', color: 'white', border: 'none', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' as const };
-const cancelBtnStyle = { flex: 1, backgroundColor: '#f1f5f9', color: '#64748b', border: 'none', padding: '12px', borderRadius: '10px', cursor: 'pointer' };
-const compCardStyle: React.CSSProperties = { backgroundColor: '#fff', borderRadius: '18px', border: '1px solid #e2e8f0', overflow: 'hidden', display: 'flex', minHeight: '110px', transition: 'transform 0.1s ease', cursor: 'pointer' };
-const decorBar = { width: '6px', backgroundColor: '#F97316' };
-const deleteBtnStyle: React.CSSProperties = { position: 'absolute', top: '10px', right: '10px', background: 'white', border: '1px solid #fee2e2', color: '#ef4444', cursor: 'pointer', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold', zIndex: 10 };
-const emptyStateStyle: React.CSSProperties = { gridColumn: '1/-1', textAlign: 'center', padding: '60px', color: '#94a3b8', backgroundColor: '#f8fafc', borderRadius: '20px', border: '2px dashed #e2e8f0' };
 
-// --- CORRECTION ICI : Positionnement absolu pour le badge ---
+// --- CORRECTION: Arrondi input (12px) ---
+const inputStyle = { 
+  padding: '12px', 
+  borderRadius: '12px', 
+  border: '2px solid #f1f5f9', 
+  outline: 'none', 
+  fontSize: '1rem' 
+};
+
+// --- CORRECTION: Arrondi boutons modale (12px) ---
+const confirmBtnStyle = { 
+  flex: 2, 
+  backgroundColor: '#F97316', 
+  color: 'white', 
+  border: 'none', 
+  padding: '12px', 
+  borderRadius: '12px', 
+  cursor: 'pointer', 
+  fontWeight: 'bold' as const 
+};
+
+const cancelBtnStyle = { 
+  flex: 1, 
+  backgroundColor: '#f1f5f9', 
+  color: '#64748b', 
+  border: 'none', 
+  padding: '12px', 
+  borderRadius: '12px', 
+  cursor: 'pointer' 
+};
+
+// --- CORRECTION: Arrondi carte comp (24px) ---
+const compCardStyle: React.CSSProperties = { 
+  backgroundColor: '#fff', 
+  borderRadius: '24px', 
+  border: '1px solid #e2e8f0', 
+  overflow: 'hidden', 
+  display: 'flex', 
+  minHeight: '110px', 
+  transition: 'transform 0.1s ease', 
+  cursor: 'pointer' 
+};
+
+const decorBar = { width: '6px', backgroundColor: '#F97316' };
+
+const deleteBtnStyle: React.CSSProperties = { 
+  position: 'absolute', 
+  top: '10px', 
+  right: '10px', 
+  background: 'white', 
+  border: '1px solid #fee2e2', 
+  color: '#ef4444', 
+  cursor: 'pointer', 
+  width: '30px', 
+  height: '30px', 
+  borderRadius: '50%', // Cercle parfait
+  display: 'flex', 
+  justifyContent: 'center', 
+  alignItems: 'center', 
+  fontWeight: 'bold', 
+  zIndex: 10 
+};
+
+// --- CORRECTION: Arrondi empty state (24px) ---
+const emptyStateStyle: React.CSSProperties = { 
+  gridColumn: '1/-1', 
+  textAlign: 'center', 
+  padding: '60px', 
+  color: '#94a3b8', 
+  backgroundColor: '#f8fafc', 
+  borderRadius: '24px', 
+  border: '2px dashed #e2e8f0' 
+};
+
+// --- CORRECTION: Arrondi badge fermé (12px) ---
 const closedBadgeMiniStyle: React.CSSProperties = {
   position: 'absolute',
   top: '10px',
-  right: '40px', // Decalè pour ne pas chevaucher le bouton supprimer
+  right: '48px', // Ajusté pour le bouton supprimer
   backgroundColor: '#fee2e2',
   color: '#ef4444',
-  padding: '4px 8px',
+  padding: '4px 10px',
   borderRadius: '12px',
-  fontSize: '0.7rem',
+  fontSize: '0.75rem',
   fontWeight: 'bold',
   zIndex: 10
 };
-const logoPlaceholderStyle = { width: '60px', height: '60px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' };
+
+// --- CORRECTION: Arrondi logo placeholder (12px) ---
+const logoPlaceholderStyle = { 
+  width: '60px', 
+  height: '60px', 
+  borderRadius: '12px', 
+  display: 'flex', 
+  alignItems: 'center', 
+  justifyContent: 'center', 
+  fontSize: '1.5rem', 
+  backgroundColor: '#e2e8f0' 
+};

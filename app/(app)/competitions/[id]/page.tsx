@@ -238,31 +238,61 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
   );
 }
 
-// --- STYLES OBJETS ---
-const containerStyle = { padding: '20px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'system-ui, sans-serif' };
+// --- STYLES OBJETS (CSS-in-JS pour competition/[id]) ---
+
+// --- CORRECTION: Pleine largeur (width: '100%') ---
+const containerStyle = { 
+  padding: '24px', 
+  width: '100%', 
+  boxSizing: 'border-box' as const, 
+  margin: '0 auto', 
+  fontFamily: 'system-ui, -apple-system, sans-serif' 
+};
+
 const loadingOverlay = { height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: '#ea580c' };
-const heroSection = { textAlign: 'center' as const, marginBottom: '20px' };
-const titleStyle = { fontSize: '1.8rem', fontWeight: '800' };
-const badgeGrid = { display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '10px' };
-const miniBadge = { backgroundColor: '#e2e8f0', padding: '5px 10px', borderRadius: '15px', fontSize: '0.75rem' };
-const backBtn = { background: 'none', border: 'none', color: '#ea580c', cursor: 'pointer', fontWeight: 'bold' };
-const mainGrid = { display: 'grid', gridTemplateColumns: '1fr 300px', gap: '20px' };
-const statsCard = { backgroundColor: 'white', padding: '15px', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' };
-const cardTitle = { fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' };
+
+const heroSection = { textAlign: 'center' as const, marginBottom: '30px' };
+const titleStyle = { fontSize: '2.5rem', fontWeight: '800', color: '#0f172a' };
+
+const badgeGrid = { display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '15px' };
+
+// --- CORRECTION: Arrondi badge (20px) ---
+const miniBadge = { backgroundColor: '#e2e8f0', padding: '6px 12px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '600' };
+
+const backBtn = { background: 'none', border: 'none', color: '#ea580c', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' };
+
+// --- CORRECTION: Grille responsive ---
+const mainGrid = { display: 'grid', gridTemplateColumns: '1fr 300px', gap: '24px' };
+
+// --- CORRECTION: Arrondi carte principale (24px) ---
+const statsCard = { backgroundColor: 'white', padding: '24px', borderRadius: '24px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' };
+
+const cardTitle = { fontSize: '1.25rem', fontWeight: '700', marginBottom: '20px', color: '#0f172a' };
 const tableContainerStyle = { overflowX: 'auto' as const };
-const tableStyle = { width: '100%', borderCollapse: 'collapse' as const, fontSize: '0.85rem' };
+const tableStyle = { width: '100%', borderCollapse: 'collapse' as const, fontSize: '0.9rem' };
 const thRow = { borderBottom: '2px solid #e2e8f0' };
-const thL = { textAlign: 'left' as const, padding: '10px', color: '#64748b' };
-const thC = { textAlign: 'center' as const, padding: '10px', color: '#64748b' };
+const thL = { textAlign: 'left' as const, padding: '12px', color: '#64748b' };
+const thC = { textAlign: 'center' as const, padding: '12px', color: '#64748b' };
 const trStyle = { borderBottom: '1px solid #f1f5f9' };
-const tdL = { padding: '10px', textAlign: 'left' as const };
-const tdC = { padding: '10px', textAlign: 'center' as const };
-const rankStyle = (i: number) => ({ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: i < 3 ? '#fef3c7' : '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 'bold' as const });
-const logoTableStyle = { width: '24px', height: '24px', borderRadius: '50%', objectFit: 'contain' as const };
-const logoPlaceholderStyle = { width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: 'white' };
+const tdL = { padding: '12px', textAlign: 'left' as const };
+const tdC = { padding: '12px', textAlign: 'center' as const };
+
+// --- CORRECTION: Arrondi rang (50% pour cercle) ---
+const rankStyle = (i: number) => ({ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: i < 3 ? '#fef3c7' : '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 'bold' as const });
+
+// --- CORRECTION: Arrondi logo table (50%) ---
+const logoTableStyle = { width: '28px', height: '28px', borderRadius: '50%', objectFit: 'contain' as const };
+const logoPlaceholderStyle = { width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: 'white', backgroundColor: '#94a3b8' };
+
 const hideMobile = { '@media (max-width: 768px)': { display: 'none' } };
 const actionColumn = { display: 'flex', flexDirection: 'column' as const, gap: '15px' };
-const cloturerBtnStyle = { padding: '10px', backgroundColor: '#dc2626', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' };
-const adminCard = { backgroundColor: '#1e293b', color: 'white', padding: '15px', borderRadius: '16px' };
-const selectStyle = { width: '100%', padding: '8px', borderRadius: '8px', backgroundColor: '#334155', color: 'white', border: 'none' };
-const addBtn = { width: '100%', marginTop: '10px', padding: '10px', backgroundColor: '#ea580c', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' };
+
+// --- CORRECTION: Arrondi bouton action (12px) ---
+const cloturerBtnStyle = { padding: '12px', backgroundColor: '#dc2626', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold' };
+
+// --- CORRECTION: Arrondi carte admin (24px) ---
+const adminCard = { backgroundColor: '#1e293b', color: 'white', padding: '24px', borderRadius: '24px' };
+
+// --- CORRECTION: Arrondi sélecteur (12px) ---
+const selectStyle = { width: '100%', padding: '10px', borderRadius: '12px', backgroundColor: '#334155', color: 'white', border: 'none' };
+const addBtn = { width: '100%', marginTop: '15px', padding: '12px', backgroundColor: '#ea580c', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold' };

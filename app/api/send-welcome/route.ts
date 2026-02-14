@@ -35,7 +35,7 @@ export async function POST(req: Request) {
             Ton compte a bien été créé. Bienvenue dans la communauté ! Prêt à marquer des paniers ?
           </p>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="https://votre-site.com" style="background-color: #F97316; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold;">Accéder à mon espace</a>
+            <a href="https://dunkly-app.vercel.app" style="background-color: #F97316; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold;">Accéder à mon espace</a>
           </div>
           <hr style="border: none; border-top: 1px solid #eee;" />
           <p style="font-size: 12px; color: #94a3b8; text-align: center;">

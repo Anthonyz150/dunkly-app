@@ -151,19 +151,70 @@ export default function MembresPage() {
   );
 }
 
-// Styles inchangés mais stabilisés
-const tableCard = { backgroundColor: 'white', borderRadius: '24px', padding: '20px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)', border: '1px solid #F1F5F9' };
-const thStyle = { padding: '15px', color: '#64748B', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase' as const };
-const tdStyle = { padding: '15px', fontSize: '0.9rem', color: '#1E293B' };
-const searchStyle = { padding: '12px 20px', borderRadius: '14px', border: '2px solid #E2E8F0', width: '300px', outline: 'none', fontSize: '0.9rem' };
-const deleteBtn = { backgroundColor: '#FEE2E2', color: '#B91C1C', border: 'none', padding: '8px 14px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' as const, transition: '0.2s' };
-const btnDisabled = { ...deleteBtn, opacity: 0.3, cursor: 'not-allowed', backgroundColor: '#F1F5F9', color: '#94A3B8' };
+// --- STYLES OBJETS (CSS-in-JS avec arrondis modernes) ---
+
+// --- CORRECTION: Arrondi carte tableau (24px) ---
+const tableCard = { 
+  backgroundColor: 'white', 
+  borderRadius: '24px', 
+  padding: '24px', // Plus de padding pour les grands arrondis
+  boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)', 
+  border: '1px solid #F1F5F9' 
+};
+
+const thStyle = { 
+  padding: '16px', 
+  color: '#64748B', 
+  fontSize: '0.75rem', 
+  fontWeight: 'bold', 
+  textTransform: 'uppercase' as const,
+  textAlign: 'left' as const
+};
+
+const tdStyle = { 
+  padding: '16px', 
+  fontSize: '0.9rem', 
+  color: '#1E293B',
+  borderBottom: '1px solid #F1F5F9'
+};
+
+// --- CORRECTION: Arrondi recherche (14px) ---
+const searchStyle = { 
+  padding: '12px 20px', 
+  borderRadius: '14px', 
+  border: '2px solid #E2E8F0', 
+  width: '300px', 
+  outline: 'none', 
+  fontSize: '0.9rem' 
+};
+
+// --- CORRECTION: Arrondi bouton delete (12px) ---
+const deleteBtn = { 
+  backgroundColor: '#FEE2E2', 
+  color: '#B91C1C', 
+  border: 'none', 
+  padding: '10px 16px', 
+  borderRadius: '12px', 
+  cursor: 'pointer', 
+  fontWeight: 'bold' as const, 
+  transition: '0.2s' 
+};
+
+const btnDisabled = { 
+  ...deleteBtn, 
+  opacity: 0.3, 
+  cursor: 'not-allowed', 
+  backgroundColor: '#F1F5F9', 
+  color: '#94A3B8' 
+};
+
+// --- CORRECTION: Arrondi badge rôle (12px) ---
 const roleBadge = (isAdmin: boolean) => ({
   backgroundColor: isAdmin ? '#FFF7ED' : '#F1F5F9',
   color: isAdmin ? '#C2410C' : '#475569',
   padding: '6px 12px',
-  borderRadius: '10px',
+  borderRadius: '12px',
   fontSize: '0.7rem',
-  fontWeight: '900' as const,
+  fontWeight: '800' as const,
   border: isAdmin ? '1px solid #FFEDD5' : '1px solid #E2E8F0'
 });

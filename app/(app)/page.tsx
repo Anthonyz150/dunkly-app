@@ -225,13 +225,150 @@ export default function Dashboard() {
   );
 }
 
-// --- Styles additionnels pour les logos ---
-const titleSectionStyle = { fontSize: '0.75rem', fontWeight: '700', marginBottom: '20px', textTransform: 'uppercase' as const, letterSpacing: '1px' };
+// --- STYLES DE LA PAGE D'ACCUEIL (Sombre, Moderne et Pleine Largeur) ---
 
-const btnAdminStyle = { 
-  backgroundColor: '#1E293B', color: 'white', textDecoration: 'none', 
-  padding: '10px 15px', borderRadius: '12px', fontWeight: '800' as const, fontSize: '0.75rem',
-  display: 'flex', alignItems: 'center', gap: '5px'
+// --- CORRECTION: Pleine largeur (width: '100%') ---
+const containerStyle = { 
+  padding: '24px', 
+  width: '100%', 
+  boxSizing: 'border-box' as const, 
+  margin: '0 auto', 
+  fontFamily: 'system-ui, -apple-system, sans-serif', 
+  color: 'white', 
+  minHeight: '100vh', 
+  backgroundColor: '#0f172a' 
 };
 
-const logoStyle = { width: '45px', height: '45px', borderRadius: '50%', objectFit: 'contain' as const, backgroundColor: 'white', padding: '3px' };
+const titleStyle = { 
+  fontWeight: '900' as const, 
+  fontSize: '2.5rem', 
+  marginBottom: '40px', 
+  color: 'white', 
+  textAlign: 'center' as const 
+};
+
+const competSectionStyle = { marginBottom: '40px' };
+
+const competTitleStyle = { 
+  color: '#F97316', 
+  borderBottom: '2px solid #334155', 
+  paddingBottom: '12px', 
+  marginBottom: '25px', 
+  fontSize: '1.6rem', 
+  fontWeight: '800' as const 
+};
+
+const journeeSectionStyle = { marginBottom: '30px', paddingLeft: '15px' };
+
+const journeeTitleStyle = { 
+  color: '#e2e8f0', 
+  fontSize: '1.3rem', 
+  marginBottom: '18px', 
+  fontWeight: '600' as const 
+};
+
+// --- CORRECTION: Grille responsive ---
+const gridStyle = { 
+  display: 'grid' as const, 
+  gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', 
+  gap: '20px' 
+};
+
+// --- CORRECTION: Arrondi carte moderne (24px) ---
+const cardStyle = { 
+  border: '1px solid #334155', 
+  padding: '22px', 
+  borderRadius: '24px', // Bords très arrondis
+  backgroundColor: '#1e293b',
+  transition: 'transform 0.2s, box-shadow 0.2s',
+  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+};
+
+const cardHeaderStyle = { 
+  display: 'flex' as const, 
+  justifyContent: 'flex-end', 
+  marginBottom: '12px', 
+  fontSize: '0.8rem' 
+};
+
+const dateStyle = { color: '#94a3b8' };
+
+const matchRowStyle = { 
+  display: 'flex' as const, 
+  justifyContent: 'space-between', 
+  alignItems: 'center', 
+  gap: '12px' 
+};
+
+const teamStyle = { 
+  display: 'flex' as const, 
+  alignItems: 'center', 
+  gap: '12px', 
+  flex: 1, 
+  minWidth: 0 
+};
+
+const clubNameStyle = { 
+  fontWeight: 'bold' as const, 
+  fontSize: '1rem', 
+  whiteSpace: 'nowrap' as const, 
+  overflow: 'hidden' as const, 
+  textOverflow: 'ellipsis' as const 
+};
+
+// --- CORRECTION: Arrondi logo (50%) et padding ---
+const logoStyle = { 
+  width: '45px', 
+  height: '45px', 
+  borderRadius: '50%', // Cercle parfait
+  objectFit: 'contain' as const, 
+  backgroundColor: 'white', 
+  padding: '3px', 
+  flexShrink: 0 
+};
+
+const logoPlaceholderStyle = { 
+  width: '45px', 
+  height: '45px', 
+  borderRadius: '50%', 
+  backgroundColor: '#334155', 
+  display: 'flex' as const, 
+  alignItems: 'center', 
+  justifyContent: 'center', 
+  fontWeight: 'bold' as const, 
+  flexShrink: 0 
+};
+
+// --- CORRECTION: Arrondi score (12px) ---
+const scoreStyle = { 
+  fontSize: '1.6rem', 
+  fontWeight: '900' as const, 
+  color: '#f59e0b', 
+  minWidth: '70px', 
+  textAlign: 'center' as const, 
+  padding: '6px 10px', 
+  borderRadius: '12px', 
+  background: 'rgba(0,0,0,0.2)' 
+};
+
+// --- CORRECTION: Styles additionnels arrondis (12px) ---
+const titleSectionStyle = { 
+  fontSize: '0.8rem', 
+  fontWeight: '700', 
+  marginBottom: '20px', 
+  textTransform: 'uppercase' as const, 
+  letterSpacing: '1px' 
+};
+
+const btnAdminStyle = { 
+  backgroundColor: '#1E293B', 
+  color: 'white', 
+  textDecoration: 'none', 
+  padding: '12px 20px', 
+  borderRadius: '12px', 
+  fontWeight: '800' as const, 
+  fontSize: '0.8rem',
+  display: 'flex', 
+  alignItems: 'center', 
+  gap: '6px'
+};

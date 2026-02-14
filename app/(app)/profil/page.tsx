@@ -279,13 +279,86 @@ export default function ProfilPage() {
   );
 }
 
-const inputGroup = { display: 'flex', flexDirection: 'column' as const, gap: '8px' };
-const labelStyle = { fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase' as const };
-const inputStyle = { width: '100%', padding: '14px', borderRadius: '12px', border: '2px solid #F1F5F9', fontSize: '1rem', outline: 'none', color: '#1E293B' };
-const disabledInput = { ...inputStyle, backgroundColor: '#F8FAFC', color: '#94A3B8', cursor: 'not-allowed' };
-const btnSave = { background: '#F97316', color: 'white', border: 'none', padding: '16px', borderRadius: '14px', cursor: 'pointer', fontWeight: '900', fontSize: '0.95rem' };
-const btnDelete = { background: 'transparent', color: '#EF4444', border: '2px solid #FEE2E2', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontWeight: '800', fontSize: '0.8rem', width: '100%' };
+// --- STYLES OBJETS (CSS-in-JS avec arrondis modernes) ---
 
-// STYLES DU MODAL
-const btnCancel = { flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid #E2E8F0', background: 'white', fontWeight: '700', cursor: 'pointer', color: '#64748B' };
-const btnConfirmDelete = { flex: 1, padding: '12px', borderRadius: '10px', border: 'none', background: '#EF4444', color: 'white', fontWeight: '700', cursor: 'pointer' };
+const inputGroup = { 
+  display: 'flex', 
+  flexDirection: 'column' as const, 
+  gap: '8px' 
+};
+
+const labelStyle = { 
+  fontSize: '0.75rem', 
+  fontWeight: '800', 
+  color: '#475569', 
+  textTransform: 'uppercase' as const 
+};
+
+// --- CORRECTION: Arrondi input (16px) ---
+const inputStyle = { 
+  width: '100%', 
+  padding: '16px', // Un peu plus de padding pour le confort
+  borderRadius: '16px', 
+  border: '2px solid #F1F5F9', 
+  fontSize: '1rem', 
+  outline: 'none', 
+  color: '#1E293B',
+  boxSizing: 'border-box' as const
+};
+
+const disabledInput = { 
+  ...inputStyle, 
+  backgroundColor: '#F8FAFC', 
+  color: '#94A3B8', 
+  cursor: 'not-allowed' 
+};
+
+// --- CORRECTION: Arrondi bouton save (16px) ---
+const btnSave = { 
+  background: '#F97316', 
+  color: 'white', 
+  border: 'none', 
+  padding: '16px', 
+  borderRadius: '16px', 
+  cursor: 'pointer', 
+  fontWeight: '900', 
+  fontSize: '0.95rem' 
+};
+
+// --- CORRECTION: Arrondi bouton delete (12px) ---
+const btnDelete = { 
+  background: 'transparent', 
+  color: '#EF4444', 
+  border: '2px solid #FEE2E2', 
+  padding: '12px', 
+  borderRadius: '12px', 
+  cursor: 'pointer', 
+  fontWeight: '800', 
+  fontSize: '0.8rem', 
+  width: '100%' 
+};
+
+// --- STYLES DU MODAL ---
+
+// --- CORRECTION: Arrondi boutons modale (12px) ---
+const btnCancel = { 
+  flex: 1, 
+  padding: '12px', 
+  borderRadius: '12px', 
+  border: '1px solid #E2E8F0', 
+  background: 'white', 
+  fontWeight: '700', 
+  cursor: 'pointer', 
+  color: '#64748B' 
+};
+
+const btnConfirmDelete = { 
+  flex: 1, 
+  padding: '12px', 
+  borderRadius: '12px', 
+  border: 'none', 
+  background: '#EF4444', 
+  color: 'white', 
+  fontWeight: '700', 
+  cursor: 'pointer' 
+};

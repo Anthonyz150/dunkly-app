@@ -235,27 +235,130 @@ export default function ArbitresPage() {
   );
 }
 
-// --- STYLES MODIFIÉS ET AJOUTÉS ---
+// --- STYLES MODIFIÉS ET AJOUTÉS (Modernes et Arrondis) ---
+
+// --- CORRECTION: Arrondi bouton alphabet (10px) ---
 const alphabetBtnStyle = {
   border: 'none',
   padding: '8px 12px',
-  borderRadius: '8px',
+  borderRadius: '10px', 
   cursor: 'pointer',
   fontSize: '0.9rem',
   fontFamily: 'monospace',
   transition: 'background-color 0.2s'
 };
 
-const btnAjouterStyle = { backgroundColor: '#1a1a1a', color: 'white', border: 'none', padding: '14px 28px', borderRadius: '12px', cursor: 'pointer', fontWeight: '900' as const, fontSize: '0.85rem' };
-const modalOverlayStyle: React.CSSProperties = { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(15, 23, 42, 0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000, backdropFilter: 'blur(4px)' };
-const modalContentStyle: React.CSSProperties = { background: 'white', padding: '40px', borderRadius: '24px', width: '380px' };
+// --- CORRECTION: Arrondi bouton ajouter (16px) ---
+const btnAjouterStyle = { 
+  backgroundColor: '#1a1a1a', 
+  color: 'white', 
+  border: 'none', 
+  padding: '14px 28px', 
+  borderRadius: '16px', 
+  cursor: 'pointer', 
+  fontWeight: '900' as const, 
+  fontSize: '0.85rem' 
+};
+
+const modalOverlayStyle: React.CSSProperties = { 
+  position: 'fixed', 
+  top: 0, 
+  left: 0, 
+  width: '100vw', 
+  height: '100vh', 
+  backgroundColor: 'rgba(15, 23, 42, 0.8)', 
+  display: 'flex', 
+  justifyContent: 'center', 
+  alignItems: 'center', 
+  zIndex: 2000, 
+  backdropFilter: 'blur(4px)' 
+};
+
+// --- CORRECTION: Arrondi modale (24px) ---
+const modalContentStyle: React.CSSProperties = { 
+  background: 'white', 
+  padding: '40px', 
+  borderRadius: '24px', 
+  width: '380px' 
+};
+
 const inputGroup = { display: 'flex', flexDirection: 'column' as const, gap: '6px' };
 const labelStyle = { fontSize: '0.75rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' as const };
-const inputStyle = { padding: '12px', borderRadius: '10px', border: '2px solid #f1f5f9', outline: 'none', backgroundColor: '#f8fafc' };
-const confirmBtnStyle = { flex: 2, backgroundColor: '#F97316', color: 'white', border: 'none', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold' as const };
-const cancelBtnStyle = { flex: 1, backgroundColor: '#f1f5f9', color: '#64748b', border: 'none', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold' as const };
-const cardStyle: React.CSSProperties = { backgroundColor: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden', display: 'flex' };
+
+// --- CORRECTION: Arrondi input (12px) ---
+const inputStyle = { 
+  padding: '12px', 
+  borderRadius: '12px', 
+  border: '2px solid #f1f5f9', 
+  outline: 'none', 
+  backgroundColor: '#f8fafc',
+  width: '100%',
+  boxSizing: 'border-box' as const
+};
+
+// --- CORRECTION: Arrondi boutons modale (16px) ---
+const confirmBtnStyle = { 
+  flex: 2, 
+  backgroundColor: '#F97316', 
+  color: 'white', 
+  border: 'none', 
+  padding: '14px', 
+  borderRadius: '16px', 
+  cursor: 'pointer', 
+  fontWeight: 'bold' as const 
+};
+
+const cancelBtnStyle = { 
+  flex: 1, 
+  backgroundColor: '#f1f5f9', 
+  color: '#64748b', 
+  border: 'none', 
+  padding: '14px', 
+  borderRadius: '16px', 
+  cursor: 'pointer', 
+  fontWeight: 'bold' as const 
+};
+
+// --- CORRECTION: Arrondi carte principale (20px) ---
+const cardStyle: React.CSSProperties = { 
+  backgroundColor: '#fff', 
+  borderRadius: '20px', 
+  border: '1px solid #e2e8f0', 
+  overflow: 'hidden', 
+  display: 'flex',
+  width: '100%',
+  boxSizing: 'border-box' as const
+};
+
 const decorBar = { width: '6px', backgroundColor: '#1a1a1a' };
-const avatarStyle = { width: '45px', height: '45px', backgroundColor: '#1a1a1a', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', fontSize: '0.8rem' };
-const deleteBtnStyle: React.CSSProperties = { background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '1.2rem', fontWeight: 'bold' };
-const editIconStyle: React.CSSProperties = { background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem', filter: 'grayscale(1)' };
+
+// --- CORRECTION: Arrondi avatar (50%) ---
+const avatarStyle = { 
+  width: '45px', 
+  height: '45px', 
+  backgroundColor: '#1a1a1a', 
+  color: 'white', 
+  borderRadius: '50%', // Cercle parfait
+  display: 'flex', 
+  alignItems: 'center', 
+  justifyContent: 'center', 
+  fontWeight: '900', 
+  fontSize: '0.8rem' 
+};
+
+const deleteBtnStyle: React.CSSProperties = { 
+  background: 'none', 
+  border: 'none', 
+  color: '#ef4444', 
+  cursor: 'pointer', 
+  fontSize: '1.2rem', 
+  fontWeight: 'bold' 
+};
+
+const editIconStyle: React.CSSProperties = { 
+  background: 'none', 
+  border: 'none', 
+  cursor: 'pointer', 
+  fontSize: '0.9rem', 
+  filter: 'grayscale(1)' 
+};

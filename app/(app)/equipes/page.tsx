@@ -139,25 +139,131 @@ export default function EquipesPage() {
   );
 }
 
-// --- STYLES ---
-const headerStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' };
-const gridStyle = { display: 'flex', flexDirection: 'column' as const, gap: '12px' };
+// --- STYLES (Modernes, Arrondis et Pleine Largeur) ---
+
+const headerStyle = { 
+  display: 'flex', 
+  justifyContent: 'space-between', 
+  alignItems: 'center', 
+  marginBottom: '30px',
+  width: '100%'
+};
+
+const gridStyle = { 
+  display: 'flex', 
+  flexDirection: 'column' as const, 
+  gap: '12px',
+  width: '100%' 
+};
+
+// --- CORRECTION: Arrondi carte moderne (20px) ---
 const cardStyle = { 
   background: 'white', 
   padding: '15px 20px', 
-  borderRadius: '16px', 
+  borderRadius: '20px', 
   border: '1px solid #e2e8f0', 
   transition: 'transform 0.1s',
   boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
 };
-// Ajout style pour l'image
-const logoImageStyle = { width: '45px', height: '45px', borderRadius: '12px', objectFit: 'contain' as const, border: '1px solid #e2e8f0' };
-const logoStyle = { width: '45px', height: '45px', borderRadius: '12px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' as const };
-const badgeCount = { backgroundColor: '#f1f5f9', color: '#64748b', padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold' as const };
-const miniBtnDanger = { background: '#fee2e2', border: 'none', borderRadius: '8px', padding: '8px', cursor: 'pointer' };
-const btnClubStyle = { background: '#1e293b', color: 'white', border: 'none', padding: '12px 20px', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold' as const };
-const overlayStyle: React.CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 };
-const modalStyle: React.CSSProperties = { background: 'white', padding: '25px', borderRadius: '15px', width: '90%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '15px' };
-const inputStyle = { padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', width: '100%' };
-const btnConfirm = { flex: 1, padding: '10px', background: '#F97316', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' as const };
-const btnCancel = { flex: 1, padding: '10px', background: '#f1f5f9', borderRadius: '8px', border: 'none', cursor: 'pointer' };
+
+// --- CORRECTION: Arrondi logo (12px) ---
+const logoImageStyle = { 
+  width: '45px', 
+  height: '45px', 
+  borderRadius: '12px', 
+  objectFit: 'contain' as const, 
+  border: '1px solid #e2e8f0' 
+};
+
+const logoStyle = { 
+  width: '45px', 
+  height: '45px', 
+  borderRadius: '12px', 
+  color: 'white', 
+  display: 'flex', 
+  alignItems: 'center', 
+  justifyContent: 'center', 
+  fontWeight: 'bold' as const 
+};
+
+// --- CORRECTION: Arrondi badge (20px) ---
+const badgeCount = { 
+  backgroundColor: '#f1f5f9', 
+  color: '#64748b', 
+  padding: '4px 10px', 
+  borderRadius: '20px', 
+  fontSize: '0.75rem', 
+  fontWeight: 'bold' as const 
+};
+
+// --- CORRECTION: Arrondi bouton danger (10px) ---
+const miniBtnDanger = { 
+  background: '#fee2e2', 
+  border: 'none', 
+  borderRadius: '10px', 
+  padding: '8px', 
+  cursor: 'pointer' 
+};
+
+// --- CORRECTION: Arrondi bouton club (12px) ---
+const btnClubStyle = { 
+  background: '#1e293b', 
+  color: 'white', 
+  border: 'none', 
+  padding: '12px 20px', 
+  borderRadius: '12px', 
+  cursor: 'pointer', 
+  fontWeight: 'bold' as const 
+};
+
+const overlayStyle: React.CSSProperties = { 
+  position: 'fixed', 
+  inset: 0, 
+  background: 'rgba(0,0,0,0.6)', 
+  display: 'flex', 
+  justifyContent: 'center', 
+  alignItems: 'center', 
+  zIndex: 1000 
+};
+
+// --- CORRECTION: Arrondi modale (24px) ---
+const modalStyle: React.CSSProperties = { 
+  background: 'white', 
+  padding: '25px', 
+  borderRadius: '24px', 
+  width: '90%', 
+  maxWidth: '400px', 
+  display: 'flex', 
+  flexDirection: 'column', 
+  gap: '15px' 
+};
+
+// --- CORRECTION: Arrondi input (12px) ---
+const inputStyle = { 
+  padding: '10px', 
+  borderRadius: '12px', 
+  border: '1px solid #e2e8f0', 
+  width: '100%',
+  boxSizing: 'border-box' as const
+};
+
+// --- CORRECTION: Arrondi bouton confirm/cancel (12px) ---
+const btnConfirm = { 
+  flex: 1, 
+  padding: '10px', 
+  background: '#F97316', 
+  color: 'white', 
+  border: 'none', 
+  borderRadius: '12px', 
+  cursor: 'pointer', 
+  fontWeight: 'bold' as const 
+};
+
+const btnCancel = { 
+  flex: 1, 
+  padding: '10px', 
+  background: '#f1f5f9', 
+  borderRadius: '12px', 
+  border: 'none', 
+  cursor: 'pointer' 
+};

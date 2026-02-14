@@ -188,18 +188,115 @@ export default function DetailClubPage({ params }: { params: Promise<{ id: strin
   );
 }
 
-// --- STYLES MODIFIÉS ---
-const containerStyle = { padding: '40px 20px', maxWidth: '700px', margin: '0 auto', fontFamily: 'sans-serif' };
-const backBtn = { background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontWeight: 'bold' as const, marginBottom: '20px' };
-const headerCard = { display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '40px' };
-// Ajout style pour l'image
-const logoImageStyle = { width: '80px', height: '80px', borderRadius: '20px', objectFit: 'contain' as const, border: '1px solid #e2e8f0' };
-const logoStyle = { width: '80px', height: '80px', borderRadius: '20px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: 'bold' as const };
+// --- STYLES MODIFIÉS (Modernes et Arrondis) ---
+
+// --- CORRECTION: Pleine largeur (width: '100%') ---
+const containerStyle = { 
+  padding: '40px 20px', 
+  width: '100%', 
+  maxWidth: '700px', 
+  boxSizing: 'border-box' as const, 
+  margin: '0 auto', 
+  fontFamily: 'system-ui, -apple-system, sans-serif' 
+};
+
+const backBtn = { 
+  background: 'none', 
+  border: 'none', 
+  color: '#64748b', 
+  cursor: 'pointer', 
+  fontWeight: 'bold' as const, 
+  marginBottom: '20px' 
+};
+
+const headerCard = { 
+  display: 'flex', 
+  alignItems: 'center', 
+  gap: '20px', 
+  marginBottom: '40px' 
+};
+
+// --- CORRECTION: Arrondi logo (20px) ---
+const logoImageStyle = { 
+  width: '80px', 
+  height: '80px', 
+  borderRadius: '20px', 
+  objectFit: 'contain' as const, 
+  border: '1px solid #e2e8f0' 
+};
+
+// --- CORRECTION: Arrondi logo placeholder (20px) ---
+const logoStyle = { 
+  width: '80px', 
+  height: '80px', 
+  borderRadius: '20px', 
+  color: 'white', 
+  display: 'flex', 
+  alignItems: 'center', 
+  justifyContent: 'center', 
+  fontSize: '2.5rem', 
+  fontWeight: 'bold' as const 
+};
+
 const addBox = { display: 'flex', gap: '10px', marginBottom: '30px' };
-const inputStyle = { flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0' };
-const addBtn = { padding: '12px 20px', backgroundColor: '#F97316', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 'bold' as const, cursor: 'pointer' };
-const listContainer = { backgroundColor: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', overflow: 'hidden' };
-const sectionTitle = { fontSize: '1rem', padding: '20px', margin: 0, borderBottom: '1px solid #f1f5f9', color: '#1e293b' };
-const equipeItem = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', borderBottom: '1px solid #f8fafc' };
-const editBtn = { color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' as const };
-const deleteBtn = { color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' as const };
+
+// --- CORRECTION: Arrondi input (12px) ---
+const inputStyle = { 
+  flex: 1, 
+  padding: '12px', 
+  borderRadius: '12px', 
+  border: '1px solid #e2e8f0' 
+};
+
+// --- CORRECTION: Arrondi bouton ajouter (12px) ---
+const addBtn = { 
+  padding: '12px 20px', 
+  backgroundColor: '#F97316', 
+  color: 'white', 
+  border: 'none', 
+  borderRadius: '12px', 
+  fontWeight: 'bold' as const, 
+  cursor: 'pointer' 
+};
+
+// --- CORRECTION: Arrondi conteneur liste (24px) ---
+const listContainer = { 
+  backgroundColor: 'white', 
+  borderRadius: '24px', 
+  border: '1px solid #e2e8f0', 
+  overflow: 'hidden' 
+};
+
+const sectionTitle = { 
+  fontSize: '1.1rem', 
+  padding: '20px', 
+  margin: 0, 
+  borderBottom: '1px solid #f1f5f9', 
+  color: '#1e293b' 
+};
+
+const equipeItem = { 
+  display: 'flex', 
+  justifyContent: 'space-between', 
+  alignItems: 'center', 
+  padding: '15px 20px', 
+  borderBottom: '1px solid #f8fafc' 
+};
+
+const editBtn = { 
+  color: '#3b82f6', 
+  background: 'none', 
+  border: 'none', 
+  cursor: 'pointer', 
+  fontSize: '0.8rem', 
+  fontWeight: 'bold' as const 
+};
+
+const deleteBtn = { 
+  color: '#ef4444', 
+  background: 'none', 
+  border: 'none', 
+  cursor: 'pointer', 
+  fontSize: '0.8rem', 
+  fontWeight: 'bold' as const 
+};

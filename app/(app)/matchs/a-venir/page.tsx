@@ -325,41 +325,180 @@ export default function MatchsAVenirPage() {
   );
 }
 
-// --- STYLES CORRIGÉS (Sombre et moderne avec 'as const') ---
-const pageContainer = { padding: '20px', width: '100%',boxSizing: 'border-box' as const,fontFamily: 'system-ui, sans-serif', backgroundColor: '#0f172a', minHeight: '100vh', color: '#f1f5f9' };
-const headerStyle = { display: 'flex' as const, justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', paddingBottom: '20px', borderBottom: '1px solid #334155' };
-const titleStyle = { fontSize: '2rem', fontWeight: '800' as const, margin: 0, color: 'white' };
-const subtitleStyle = { color: '#94a3b8', fontSize: '0.95rem', margin: '5px 0 0' };
-const addBtnStyle = { backgroundColor: '#F97316', color: 'white', border: 'none', padding: '12px 20px', borderRadius: '10px', fontWeight: 'bold' as const, cursor: 'pointer', fontSize: '0.9rem' };
+// --- STYLES CORRIGÉS (Sombre, Pleine Largeur, Arrondis Modernes) ---
+const pageContainer = { 
+  padding: '24px', 
+  width: '100%',
+  boxSizing: 'border-box' as const,
+  fontFamily: 'system-ui, -apple-system, sans-serif', 
+  backgroundColor: '#0f172a', 
+  minHeight: '100vh', 
+  color: '#f1f5f9' 
+};
 
-const formCardStyle = { marginBottom: '30px', padding: '25px', borderRadius: '16px', backgroundColor: '#1e293b', border: '1px solid #334155', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.3)' };
-const formTitleStyle = { fontSize: '1.25rem', fontWeight: '800' as const, marginBottom: '20px', color: 'white' };
-const inputStyle = { padding: '12px', borderRadius: '8px', border: '1px solid #334155', fontSize: '14px', width: '100%', boxSizing: 'border-box' as const, backgroundColor: '#0f172a', color: 'white' };
-const colStyle = { display: 'flex' as const, flexDirection: 'column' as const, gap: '6px' };
-const miniLabel = { fontSize: '0.65rem', fontWeight: '900' as const, color: '#94a3b8', textTransform: 'uppercase' as const, letterSpacing: '0.5px' };
-const arbitreGridStyle = { display: 'flex' as const, flexWrap: 'wrap' as const, gap: '8px', padding: '12px', background: '#0f172a', borderRadius: '10px', border: '1px solid #334155' };
-const arbitreBtnStyle = { padding: '6px 14px', borderRadius: '20px', border: 'none', fontSize: '0.75rem', fontWeight: 'bold' as const, cursor: 'pointer', transition: '0.2s' };
-const submitBtn = { gridColumn: '1/span 2', backgroundColor: '#F97316', color: 'white', padding: '15px', borderRadius: '10px', cursor: 'pointer', fontWeight: '900' as const, border: 'none', marginTop: '10px', fontSize: '1rem' };
+const headerStyle = { 
+  display: 'flex' as const, 
+  justifyContent: 'space-between', 
+  alignItems: 'center', 
+  marginBottom: '40px', 
+  paddingBottom: '20px', 
+  borderBottom: '1px solid #334155' 
+};
 
-const matchCardStyle = { padding: '20px', border: '1px solid #334155', borderRadius: '16px', background: '#1e293b', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.2)', transition: 'transform 0.2s' };
-const cardMainRow = { display: 'flex' as const, justifyContent: 'space-between', alignItems: 'center', gap: '15px' };
+const titleStyle = { fontSize: '2.5rem', fontWeight: '800' as const, margin: 0, color: 'white' };
+const subtitleStyle = { color: '#94a3b8', fontSize: '1rem', margin: '8px 0 0' };
+
+const addBtnStyle = { 
+  backgroundColor: '#F97316', 
+  color: 'white', 
+  border: 'none', 
+  padding: '14px 28px', 
+  borderRadius: '16px', // Arrondi plus prononcé
+  fontWeight: 'bold' as const, 
+  cursor: 'pointer', 
+  fontSize: '0.95rem',
+  transition: 'background-color 0.2s'
+};
+
+const formCardStyle = { 
+  marginBottom: '40px', 
+  padding: '30px', 
+  borderRadius: '24px', // Arrondi carte
+  backgroundColor: '#1e293b', 
+  border: '1px solid #334155', 
+  boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)' 
+};
+
+const formTitleStyle = { fontSize: '1.5rem', fontWeight: '800' as const, marginBottom: '25px', color: 'white' };
+
+const inputStyle = { 
+  padding: '14px', 
+  borderRadius: '12px', // Arrondi input
+  border: '1px solid #334155', 
+  fontSize: '15px', 
+  width: '100%', 
+  boxSizing: 'border-box' as const, 
+  backgroundColor: '#0f172a', 
+  color: 'white' 
+};
+
+const colStyle = { display: 'flex' as const, flexDirection: 'column' as const, gap: '8px' };
+
+const miniLabel = { fontSize: '0.7rem', fontWeight: '900' as const, color: '#94a3b8', textTransform: 'uppercase' as const, letterSpacing: '1px' };
+
+const arbitreGridStyle = { 
+  display: 'flex' as const, 
+  flexWrap: 'wrap' as const, 
+  gap: '10px', 
+  padding: '16px', 
+  background: '#0f172a', 
+  borderRadius: '16px', // Arrondi grille
+  border: '1px solid #334155' 
+};
+
+const arbitreBtnStyle = { 
+  padding: '8px 16px', 
+  borderRadius: '20px', // Arrondi badge
+  border: 'none', 
+  fontSize: '0.8rem', 
+  fontWeight: 'bold' as const, 
+  cursor: 'pointer', 
+  transition: '0.2s' 
+};
+
+const submitBtn = { 
+  gridColumn: '1/span 2', 
+  backgroundColor: '#F97316', 
+  color: 'white', 
+  padding: '16px', 
+  borderRadius: '16px', // Arrondi bouton
+  cursor: 'pointer', 
+  fontWeight: '900' as const, 
+  border: 'none', 
+  marginTop: '20px', 
+  fontSize: '1.1rem' 
+};
+
+const matchCardStyle = { 
+  padding: '24px', 
+  border: '1px solid #334155', 
+  borderRadius: '24px', // Arrondi carte
+  background: '#1e293b', 
+  boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', 
+  transition: 'transform 0.2s, box-shadow 0.2s' 
+};
+
+const cardMainRow = { display: 'flex' as const, justifyContent: 'space-between', alignItems: 'center', gap: '20px' };
 
 const teamContainerStyle = { flex: 1, display: 'flex' as const, alignItems: 'center', gap: '15px' };
 const teamNameWrapper = { display: 'flex' as const, flexDirection: 'column' as const };
-const clubNameStyle = { fontWeight: '800' as const, fontSize: '1.1rem', color: 'white', textTransform: 'uppercase' as const };
-const teamCatStyle = { fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600' as const };
-const logoStyle = { width: '50px', height: '50px', objectFit: 'contain' as const, flexShrink: 0 };
-const vsStyle = { fontWeight: '900' as const, color: '#F97316', fontSize: '1.2rem', padding: '0 10px' };
+const clubNameStyle = { fontWeight: '800' as const, fontSize: '1.2rem', color: 'white', textTransform: 'uppercase' as const };
+const teamCatStyle = { fontSize: '0.8rem', color: '#94a3b8', fontWeight: '600' as const };
+const logoStyle = { width: '60px', height: '60px', objectFit: 'contain' as const, flexShrink: 0 };
+const vsStyle = { fontWeight: '900' as const, color: '#F97316', fontSize: '1.5rem', padding: '0 10px' };
 
-const footerCard = { marginTop: '20px', paddingTop: '15px', borderTop: '1px solid #334155', display: 'flex' as const, justifyContent: 'space-between', alignItems: 'center', gap: '15px' };
-const footerInfoStyle = { fontSize: '0.85rem', color: '#cbd5e1' };
-const journeeBadgeStyle = { fontWeight: 'bold' as const, color: '#F97316', marginBottom: '5px', fontSize: '0.9rem' };
-const dateLocationStyle = { marginBottom: '4px' };
-const refereeStyle = { marginTop: '5px', fontSize: '0.8rem' };
-const actionButtonsStyle = { display: 'flex' as const, gap: '10px', flexShrink: 0 };
+const footerCard = { 
+  marginTop: '24px', 
+  paddingTop: '20px', 
+  borderTop: '1px solid #334155', 
+  display: 'flex' as const, 
+  justifyContent: 'space-between', 
+  alignItems: 'center', 
+  gap: '15px' 
+};
 
-const startBtnStyle = { backgroundColor: '#F97316', color: 'white', textDecoration: 'none' as const, padding: '10px 18px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 'bold' as const };
-const detailsBtnStyle = { backgroundColor: '#334155', color: 'white', textDecoration: 'none' as const, padding: '10px 18px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 'bold' as const };
-const iconBtn = { border: 'none', background: '#334155', cursor: 'pointer', fontSize: '1.1rem', padding: '10px', borderRadius: '8px', color: 'white' };
-const editBtnSmall = { border: 'none', background: '#334155', color: 'white', cursor: 'pointer', padding: '10px 14px', borderRadius: '8px', fontWeight: 'bold' as const, fontSize: '0.75rem' };
-const emptyState = { textAlign: 'center' as const, padding: '40px', color: '#94a3b8', backgroundColor: '#1e293b', borderRadius: '16px', border: '1px solid #334155' };
+const footerInfoStyle = { fontSize: '0.9rem', color: '#cbd5e1' };
+const journeeBadgeStyle = { fontWeight: 'bold' as const, color: '#F97316', marginBottom: '8px', fontSize: '1rem' };
+const dateLocationStyle = { marginBottom: '6px' };
+const refereeStyle = { marginTop: '8px', fontSize: '0.85rem' };
+const actionButtonsStyle = { display: 'flex' as const, gap: '12px', flexShrink: 0 };
+
+const startBtnStyle = { 
+  backgroundColor: '#F97316', 
+  color: 'white', 
+  textDecoration: 'none' as const, 
+  padding: '12px 24px', 
+  borderRadius: '12px', 
+  fontSize: '0.9rem', 
+  fontWeight: 'bold' as const 
+};
+
+const detailsBtnStyle = { 
+  backgroundColor: '#334155', 
+  color: 'white', 
+  textDecoration: 'none' as const, 
+  padding: '12px 24px', 
+  borderRadius: '12px', 
+  fontSize: '0.9rem', 
+  fontWeight: 'bold' as const 
+};
+
+const iconBtn = { 
+  border: 'none', 
+  background: '#334155', 
+  cursor: 'pointer', 
+  fontSize: '1.2rem', 
+  padding: '12px', 
+  borderRadius: '12px', 
+  color: 'white' 
+};
+
+const editBtnSmall = { 
+  border: 'none', 
+  background: '#334155', 
+  color: 'white', 
+  cursor: 'pointer', 
+  padding: '12px 18px', 
+  borderRadius: '12px', 
+  fontWeight: 'bold' as const, 
+  fontSize: '0.85rem' 
+};
+
+const emptyState = { 
+  textAlign: 'center' as const, 
+  padding: '60px', 
+  color: '#94a3b8', 
+  backgroundColor: '#1e293b', 
+  borderRadius: '24px', 
+  border: '1px solid #334155' 
+};
