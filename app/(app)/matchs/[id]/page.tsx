@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
-// --- AJOUT : Interface TypeScript pour le match avec jointures ---
+// --- INTERFACES TYPESCRIPT ---
 interface MatchInterface {
   id: string;
   clubA: string;
@@ -19,8 +19,12 @@ interface MatchInterface {
   arbitre: string;
   status: 'termine' | 'a-venir';
   config?: any;
-  // Jointures
   journees?: { nom: string } | null;
+}
+
+interface UserInterface {
+  role: string;
+  email: string;
 }
 
 export default function MatchDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -28,12 +32,12 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
   const matchId = resolvedParams.id;
   const router = useRouter();
 
-  // --- CORRECTION : Utilisation de l'interface ---
   const [match, setMatch] = useState<MatchInterface | null>(null);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<UserInterface | null>(null);
+  const [saving, setSaving] = useState(false);
   
-  // --- ÉTATS POUR LA MODALE DE SAISIE ---
+  // États pour la modale
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [scores, setScores] = useState({
     q1: { a: "0", b: "0" },
@@ -41,41 +45,9 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
     q3: { a: "0", b: "0" },
     q4: { a: "0", b: "0" },
   });
-  // --------------------------------------
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem("currentUser");
-    if (storedUser) setUser(JSON.parse(storedUser));
-    
-    // 1. Charger le match initialement
-    chargerMatch();
-
-    // 2. --- SOUSCRIPTION REALTIME ---
-    const channel = supabase
-      .channel('match-detail')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'matchs',
-          filter: `id=eq.${matchId}`,
-        },
-        (payload) => {
-          console.log('Changement reçu en temps réel!', payload);
-          // Recharger le match pour avoir les données mises à jour
-          chargerMatch();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [matchId]);
-
-  const chargerMatch = async () => {
-    // --- CORRECTION : Requête avec jointure pour récupérer le nom de la journée ---
+  // --- FONCTION DE CHARGEMENT ---
+  const chargerMatch = useCallback(async () => {
     const { data, error } = await supabase
       .from("matchs")
       .select(`
@@ -87,17 +59,32 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
 
     if (data) {
       setMatch(data as MatchInterface);
-      // Pré-remplir les scores si déjà existants
       if (data.config?.scores_quart_temps) {
         setScores(data.config.scores_quart_temps);
       }
     }
     setLoading(false);
-  };
+  }, [matchId]);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("currentUser");
+    if (storedUser) setUser(JSON.parse(storedUser));
+    
+    chargerMatch();
+
+    // Souscription Realtime
+    const channel = supabase
+      .channel('match-detail')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'matchs', filter: `id=eq.${matchId}` }, chargerMatch)
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [matchId, chargerMatch]);
 
   const isAdmin = user?.role === "admin" || user?.email === "anthony.didier.pro@gmail.com";
 
-  // --- FONCTION POUR OUVRIR LA MODALE ET INITIALISER LES SCORES ---
   const ouvrirModale = () => {
     if (match?.config?.scores_quart_temps) {
       setScores(match.config.scores_quart_temps);
@@ -105,28 +92,26 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
     setIsModalOpen(true);
   };
 
-  // --- FONCTION POUR ENREGISTRER LES SCORES (ÉTAPE 2) ---
   const enregistrerScores = async () => {
     if (!match) return;
+    setSaving(true);
 
-    // Calcul des totaux
     const totalA = Number(scores.q1.a) + Number(scores.q2.a) + Number(scores.q3.a) + Number(scores.q4.a);
     const totalB = Number(scores.q1.b) + Number(scores.q2.b) + Number(scores.q3.b) + Number(scores.q4.b);
 
-    // Envoi à Supabase
     const { error } = await supabase
       .from("matchs")
       .update({
         scoreA: totalA,
         scoreB: totalB,
-        status: "termine", // Met à jour le statut du match
+        status: "termine",
         config: { ...match.config, scores_quart_temps: scores }
       })
       .eq("id", matchId);
 
+    setSaving(false);
     if (!error) {
       setIsModalOpen(false);
-      // Le realtime mettra à jour l'affichage
     } else {
       alert("Erreur : " + error.message);
     }
@@ -139,115 +124,138 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
     <div style={containerStyle}>
       <button onClick={() => router.back()} style={backBtn}>← Retour</button>
 
-      {/* Affichage Score Final */}
+      {/* --- CARTES DE SCORE --- */}
       <div style={matchCard}>
         <div style={teamSection}>
           <div style={teamName}>{match.clubA}</div>
-          <div style={scoreDisplay}>{match.scoreA || 0}</div>
+          <div style={teamEquipe}>{match.equipeA}</div>
+          <div style={scoreDisplay}>{match.scoreA ?? 0}</div>
         </div>
         
         <div style={vsStyle}>VS</div>
 
         <div style={teamSection}>
-          <div style={scoreDisplay}>{match.scoreB || 0}</div>
           <div style={teamName}>{match.clubB}</div>
+          <div style={teamEquipe}>{match.equipeB}</div>
+          <div style={scoreDisplay}>{match.scoreB ?? 0}</div>
         </div>
       </div>
 
+      {/* --- INFOS MATCH --- */}
       <div style={infoBox}>
-        <p><strong>📍 Lieu :</strong> {match.lieu}</p>
-        {/* --- CORRECTION : Affichage compétiton et journée --- */}
-        <p><strong>🏆 Compétition :</strong> {match.competition} - {match.journees?.nom || 'Hors Journée'}</p>
-        <p><strong>🏁 Arbitre :</strong> {match.arbitre}</p>
-        <p><strong>Statut :</strong> {match.status === 'termine' ? '✅ Terminé' : '🕒 À venir'}</p>
+        <h3 style={{marginTop: 0, color: '#475569'}}>Informations</h3>
+        <div style={infoGrid}>
+          <p style={infoText}><strong>🏆 Compétition :</strong> {match.competition}</p>
+          <p style={infoText}><strong>🗓 Journée :</strong> {match.journees?.nom || 'Hors Journée'}</p>
+          <p style={infoText}><strong>📍 Lieu :</strong> {match.lieu || 'Non renseigné'}</p>
+          <p style={infoText}><strong>🏁 Arbitre :</strong> {match.arbitre || 'Non désigné'}</p>
+          <p style={infoText}>
+            <strong>Statut :</strong> 
+            <span style={{
+              ...statusBadge,
+              backgroundColor: match.status === 'termine' ? '#d1fae5' : '#ffedd5',
+              color: match.status === 'termine' ? '#065f46' : '#9a3412'
+            }}>
+              {match.status === 'termine' ? 'Terminé' : 'À venir'}
+            </span>
+          </p>
+        </div>
       </div>
 
-      {/* Tableau Détails */}
+      {/* --- TABLEAU DES QUARTS-TEMPS --- */}
       {match.config?.scores_quart_temps && (
         <div style={detailBox}>
-          <h3 style={{ marginTop: 0 }}>Détail par Quart-temps</h3>
+          <h3 style={{ marginTop: 0, color: '#475569' }}>Évolution du score</h3>
           <table style={tableStyle}>
             <thead>
-              <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                <th style={thStyle}>Équipe</th>
-                <th style={thStyle}>Q1</th>
-                <th style={thStyle}>Q2</th>
-                <th style={thStyle}>Q3</th>
-                <th style={thStyle}>Q4</th>
+              <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
+                <th style={thStyle}>Quart-temps</th>
+                <th style={thStyle}>{match.clubA}</th>
+                <th style={thStyle}>{match.clubB}</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td style={tdStyle}><b>{match.clubA}</b></td>
-                <td style={tdStyle}>{match.config.scores_quart_temps.q1.a}</td>
-                <td style={tdStyle}>{match.config.scores_quart_temps.q2.a}</td>
-                <td style={tdStyle}>{match.config.scores_quart_temps.q3.a}</td>
-                <td style={tdStyle}>{match.config.scores_quart_temps.q4.a}</td>
-              </tr>
-              <tr>
-                <td style={tdStyle}><b>{match.clubB}</b></td>
-                <td style={tdStyle}>{match.config.scores_quart_temps.q1.b}</td>
-                <td style={tdStyle}>{match.config.scores_quart_temps.q2.b}</td>
-                <td style={tdStyle}>{match.config.scores_quart_temps.q3.b}</td>
-                <td style={tdStyle}>{match.config.scores_quart_temps.q4.b}</td>
-              </tr>
+              {["q1", "q2", "q3", "q4"].map(q => (
+                <tr key={q} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={tdStyleBold}>{q.toUpperCase()}</td>
+                  <td style={tdStyle}>{match.config.scores_quart_temps[q].a}</td>
+                  <td style={tdStyle}>{match.config.scores_quart_temps[q].b}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
       )}
 
+      {/* --- BOUTON ADMIN --- */}
       {isAdmin && (
         <button onClick={ouvrirModale} style={actionBtn}>
-          {match.status === "termine" ? "✏️ Modifier les scores" : "🏁 Renseigner les résultats"}
+          {match.status === "termine" ? "✏️ Modifier le résultat" : "🏁 Renseigner le résultat"}
         </button>
       )}
 
-      {/* --- COMPOSANT MODALE (POP-UP) --- */}
+      {/* --- MODALE DE SAISIE --- */}
       {isModalOpen && (
         <div style={modalOverlay}>
           <div style={modalContent}>
-            <h2 style={{marginTop: 0}}>Saisie des scores</h2>
+            <h3 style={{marginTop: 0, marginBottom: '20px'}}>Saisie des scores</h3>
             
-            {["q1", "q2", "q3", "q4"].map((q, i) => (
-              <div key={q} style={modalRow}>
-                <span style={{fontWeight: 'bold', width: '40px'}}>Q{i+1}</span>
-                <input type="number" value={scores[q as keyof typeof scores].a} onChange={e => setScores({...scores, [q]: {...scores[q as keyof typeof scores], a: e.target.value}})} style={modalInput} placeholder={match.clubA} />
-                <span style={{color: '#64748b'}}>-</span>
-                <input type="number" value={scores[q as keyof typeof scores].b} onChange={e => setScores({...scores, [q]: {...scores[q as keyof typeof scores], b: e.target.value}})} style={modalInput} placeholder={match.clubB} />
-              </div>
-            ))}
+            <div style={modalGrid}>
+              <div style={modalHeader}>QT</div>
+              <div style={modalHeader}>{match.clubA}</div>
+              <div style={modalHeader}>{match.clubB}</div>
+              
+              {["q1", "q2", "q3", "q4"].map((q, i) => (
+                <div key={q} style={{display: 'contents'}}>
+                  <div style={modalRowLabel}>Q{i+1}</div>
+                  <input type="number" min="0" value={scores[q as keyof typeof scores].a} onChange={e => setScores({...scores, [q]: {...scores[q as keyof typeof scores], a: e.target.value}})} style={modalInput} />
+                  <input type="number" min="0" value={scores[q as keyof typeof scores].b} onChange={e => setScores({...scores, [q]: {...scores[q as keyof typeof scores], b: e.target.value}})} style={modalInput} />
+                </div>
+              ))}
+            </div>
 
-            <div style={{display: 'flex', gap: '10px', marginTop: '20px'}}>
-              <button onClick={() => setIsModalOpen(false)} style={cancelBtn}>Annuler</button>
-              <button onClick={enregistrerScores} style={saveBtn}>Enregistrer</button>
+            <div style={{display: 'flex', gap: '15px', marginTop: '30px'}}>
+              <button onClick={() => setIsModalOpen(false)} style={cancelBtn} disabled={saving}>Annuler</button>
+              <button onClick={enregistrerScores} style={saveBtn} disabled={saving}>
+                {saving ? "Enregistrement..." : "Enregistrer"}
+              </button>
             </div>
           </div>
         </div>
       )}
-      {/* ---------------------------------- */}
     </div>
   );
 }
 
 // --- STYLES OBJETS ---
-const containerStyle = { padding: "40px 20px", maxWidth: "800px", margin: "0 auto", fontFamily: "sans-serif" };
-const backBtn = { background: "none", border: "none", color: "#64748b", cursor: "pointer", fontWeight: "bold" as const, marginBottom: "20px" };
-const matchCard = { display: "flex", justifyContent: "space-around", alignItems: "center", backgroundColor: "#1e293b", color: "white", padding: "40px", borderRadius: "24px", marginBottom: "30px" };
-const teamSection = { textAlign: "center" as const, flex: 1 };
-const teamName = { fontSize: "1.2rem", fontWeight: "bold" as const, marginBottom: "10px", opacity: 0.9 };
-const scoreDisplay = { fontSize: "4rem", fontWeight: "900" as const, color: "#F97316" };
-const vsStyle = { fontSize: "1.5rem", color: "#64748b", fontWeight: "bold" as const };
-const infoBox = { backgroundColor: "white", padding: "20px", borderRadius: "20px", border: "1px solid #e2e8f0", marginBottom: "20px", lineHeight: "1.6" };
-const detailBox = { backgroundColor: "#f8fafc", padding: "25px", borderRadius: "20px", border: "1px solid #e2e8f0", marginBottom: "30px" };
-const tableStyle = { width: "100%", borderCollapse: "collapse" as const };
-const thStyle = { padding: "10px", color: "#64748b", fontSize: "0.8rem", textTransform: "uppercase" as const };
-const tdStyle = { padding: "15px 10px", textAlign: "center" as const, borderBottom: "1px solid #f1f5f9" };
-const actionBtn = { width: "100%", padding: "18px", backgroundColor: "#F97316", color: "white", border: "none", borderRadius: "15px", fontWeight: "bold" as const, cursor: "pointer", fontSize: "1.1rem" };
+const containerStyle = { padding: "20px", maxWidth: "800px", margin: "0 auto", fontFamily: "system-ui, sans-serif", backgroundColor: "#f8fafc", minHeight: "100vh" };
+const backBtn = { background: "#e2e8f0", border: "none", color: "#475569", padding: "10px 15px", borderRadius: "8px", cursor: "pointer", fontWeight: "600", marginBottom: "20px" };
 
-// Styles Modale
-const modalOverlay = { position: 'fixed' as const, top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 };
-const modalContent = { backgroundColor: 'white', padding: '30px', borderRadius: '20px', width: '90%', maxWidth: '400px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' };
-const modalRow = { display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '15px' };
-const modalInput = { padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', width: '80px', textAlign: 'center' as const };
-const cancelBtn = { flex: 1, padding: '12px', backgroundColor: '#e2e8f0', border: 'none', borderRadius: '8px', fontWeight: 'bold' as const, cursor: 'pointer' };
-const saveBtn = { flex: 1, padding: '12px', backgroundColor: '#F97316', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold' as const, cursor: 'pointer' };
+const matchCard = { display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#0f172a", color: "white", padding: "30px", borderRadius: "20px", marginBottom: "25px" };
+const teamSection = { textAlign: "center", flex: 1 };
+const teamName = { fontSize: "1.2rem", fontWeight: "bold", marginBottom: "5px" };
+const teamEquipe = { fontSize: "0.9rem", color: "#cbd5e1", marginBottom: "15px", textTransform: "uppercase" as const };
+const scoreDisplay = { fontSize: "3rem", fontWeight: "800", color: "#f97316" };
+const vsStyle = { fontSize: "1.5rem", color: "#64748b", fontWeight: "bold" };
+
+const infoBox = { backgroundColor: "white", padding: "20px", borderRadius: "16px", border: "1px solid #e2e8f0", marginBottom: "20px" };
+const infoGrid = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "15px" };
+const infoText = { margin: 0, color: "#334155" };
+const statusBadge = { padding: "4px 8px", borderRadius: "6px", fontSize: "0.85rem", fontWeight: "600", marginLeft: "10px" };
+
+const detailBox = { backgroundColor: "white", padding: "20px", borderRadius: "16px", border: "1px solid #e2e8f0", marginBottom: "25px" };
+const tableStyle = { width: "100%", borderCollapse: "collapse" as const };
+const thStyle = { padding: "10px", color: "#64748b", fontSize: "0.85rem", textTransform: "uppercase" as const, textAlign: "left" as const };
+const tdStyle = { padding: "12px 10px", textAlign: "center" as const };
+const tdStyleBold = { ...tdStyle, fontWeight: "600", textAlign: "left" as const };
+
+const actionBtn = { width: "100%", padding: "15px", backgroundColor: "#f97316", color: "white", border: "none", borderRadius: "12px", fontWeight: "bold", cursor: "pointer", fontSize: "1rem" };
+
+const modalOverlay = { position: "fixed" as const, top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 };
+const modalContent = { backgroundColor: "white", padding: "25px", borderRadius: "16px", width: "90%", maxWidth: "450px" };
+const modalGrid = { display: "grid", gridTemplateColumns: "40px 1fr 1fr", gap: "10px", alignItems: "center" };
+const modalHeader = { fontWeight: "bold", color: "#475569", textAlign: "center" as const, paddingBottom: "10px" };
+const modalRowLabel = { fontWeight: "bold" };
+const modalInput = { padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1", textAlign: "center" as const };
+const cancelBtn = { flex: 1, padding: "12px", backgroundColor: "#e2e8f0", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" };
+const saveBtn = { flex: 1, padding: "12px", backgroundColor: "#0f172a", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" };
