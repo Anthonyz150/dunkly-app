@@ -20,11 +20,13 @@ export default function ProfilPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // 1. Définir une fonction pour récupérer le profil
     const getProfile = async () => {
       setLoading(true);
       
-      // Récupérer la session de manière fiable
+      // --- LIGNE DE DÉBOGAGE AJOUTÉE ---
+      console.log("DEBUG - Cookie de session actuel:", document.cookie);
+      // ---------------------------------
+      
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error || !session) {
