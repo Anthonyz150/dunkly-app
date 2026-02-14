@@ -326,7 +326,7 @@ export default function MatchsAVenirPage() {
 }
 
 // --- STYLES CORRIGÉS (Sombre et moderne avec 'as const') ---
-const pageContainer = { padding: '20px', maxWidth: '1000px', margin: '0 auto', fontFamily: 'system-ui, sans-serif', backgroundColor: '#0f172a', minHeight: '100vh', color: '#f1f5f9' };
+const pageContainer = { padding: '20px', width: '100%',boxSizing: 'border-box' as const,fontFamily: 'system-ui, sans-serif', backgroundColor: '#0f172a', minHeight: '100vh', color: '#f1f5f9' };
 const headerStyle = { display: 'flex' as const, justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', paddingBottom: '20px', borderBottom: '1px solid #334155' };
 const titleStyle = { fontSize: '2rem', fontWeight: '800' as const, margin: 0, color: 'white' };
 const subtitleStyle = { color: '#94a3b8', fontSize: '0.95rem', margin: '5px 0 0' };
