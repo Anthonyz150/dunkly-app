@@ -33,32 +33,36 @@ export default function AuthPage() {
         });
         if (error) throw error;
 
-        // --- CORRECTION ET AMÉLIORATION ---
+        // --- CORRECTION ET AMÉLIORATION DE LA CONNEXION ---
         if (data?.user) {
-          // 1. Récupérer le profil complet pour avoir le rôle et l'avatar
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', data.user.id)
-            .single();
+          try {
+            // 1. Récupérer le profil complet pour avoir le rôle et l'avatar
+            const { data: profile, error: profileError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', data.user.id)
+              .single();
 
-          if (profileError) console.error("Erreur profil:", profileError);
+            if (profileError) console.error("Erreur profil:", profileError);
 
-          // 2. Stocker les données complètes
-          localStorage.setItem('currentUser', JSON.stringify({
-            ...data.user,
-            ...profile,
-            // Fallback: avatar_url du profil ou metadatas auth
-            avatar_url: profile?.avatar_url || data.user.user_metadata?.avatar_url 
-          }));
-          
-          // 3. Déclencher un événement pour que le layout mette à jour l'UI instantanément
-          window.dispatchEvent(new Event('storage'));
+            // 2. Stocker les données complètes
+            localStorage.setItem('currentUser', JSON.stringify({
+              ...data.user,
+              ...profile,
+              avatar_url: profile?.avatar_url || data.user.user_metadata?.avatar_url 
+            }));
+            
+            // 3. Déclencher un événement pour que le layout mette à jour l'UI instantanément
+            window.dispatchEvent(new Event('storage'));
+          } catch (pErr) {
+            console.error("Erreur de profil non critique:", pErr);
+          }
         }
-        // ----------------------------------
-
-        // Redirige vers l'URL stockée dans le paramètre
-        window.location.href = redirectTo;
+        
+        // --- CORRECTION: Redirection Next.js ---
+        // Utiliser router.push au lieu de window.location.href pour Next.js
+        router.push(redirectTo);
+        router.refresh(); // Force la mise à jour de la session côté serveur
 
       } else {
         const { error } = await supabase.auth.signUp({
@@ -72,7 +76,7 @@ export default function AuthPage() {
         });
         if (error) throw error;
         
-        alert("Inscription réussie ! Veuillez confirmer votre email si nécessaire.");
+        alert("Inscription réussie ! Veuillez vérifier votre email pour confirmer.");
         
         // Après inscription réussie, on redirige vers le login avec le paramètre de redirection
         router.push(`/login?redirect=${encodeURIComponent(redirectTo)}`);
@@ -81,13 +85,13 @@ export default function AuthPage() {
       }
       
     } catch (err: any) {
+      console.error("Login error:", err);
       setError(err.message || "Une erreur est survenue.");
     } finally {
       setLoading(false);
     }
   };
 
-  // ... (Le rendu JSX reste identique, il est déjà correct)
   return (
     <main style={wrapper}>
       <motion.div
