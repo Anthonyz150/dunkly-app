@@ -14,24 +14,28 @@ export default function ProfilPage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  
+
   // --- NOUVEAU : État pour le bouton Wallet ---
   const [generatingCard, setGeneratingCard] = useState(false);
   // ---------------------------------------------
-  
+
   const router = useRouter();
 
   useEffect(() => {
     const getProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
+      const { data: { session }, error } = await supabase.auth.getSession();
+
+      console.log("Session actuelle :", session);
+      console.log("Erreur session :", error);
+
       if (!session) {
+        console.log("Pas de session, redirection vers /login");
         router.push('/login');
         return;
       }
 
       const storedUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-      
+
       setUser(session.user);
       setUsername(storedUser.username || '');
       setPrenom(storedUser.prenom || '');
@@ -52,7 +56,7 @@ export default function ProfilPage() {
       const file = event.target.files[0];
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}.${fileExt}`;
-      const filePath = `${fileName}`; 
+      const filePath = `${fileName}`;
 
       let { error: uploadError } = await supabase.storage
         .from('avatars')
@@ -68,11 +72,11 @@ export default function ProfilPage() {
       });
 
       if (updateError) throw updateError;
-      
+
       setAvatarUrl(newAvatarUrl);
       setMessage('✅ Photo de profil mise à jour !');
       setTimeout(() => setMessage(''), 3000);
-      
+
       const currentData = JSON.parse(localStorage.getItem('currentUser') || '{}');
       localStorage.setItem('currentUser', JSON.stringify({ ...currentData, avatar_url: newAvatarUrl }));
       window.dispatchEvent(new Event('storage'));
@@ -116,33 +120,33 @@ export default function ProfilPage() {
   // --- NOUVEAU : Fonction pour générer le lien Wallet ---
   const ajouterACarte = async () => {
     try {
-        setGeneratingCard(true);
-        setMessage('⏳ Génération de votre carte personnalisée...');
-        
-        // 1. Envoyer les données au backend
-        const response = await fetch('/api/generate-card', {
-            method: 'POST', // 2. Utiliser POST
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ prenom, nom }), // 3. Envoyer les états actuels
-        });
+      setGeneratingCard(true);
+      setMessage('⏳ Génération de votre carte personnalisée...');
 
-        const data = await response.json();
+      // 1. Envoyer les données au backend
+      const response = await fetch('/api/generate-card', {
+        method: 'POST', // 2. Utiliser POST
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prenom, nom }), // 3. Envoyer les états actuels
+      });
 
-        if (data.link) {
-            window.open(data.link, '_blank');
-            setMessage('✅ Redirection vers Google Wallet...');
-            setTimeout(() => setMessage(''), 3000);
-        } else {
-            throw new Error(data.error || "Erreur lors de la génération");
-        }
+      const data = await response.json();
+
+      if (data.link) {
+        window.open(data.link, '_blank');
+        setMessage('✅ Redirection vers Google Wallet...');
+        setTimeout(() => setMessage(''), 3000);
+      } else {
+        throw new Error(data.error || "Erreur lors de la génération");
+      }
     } catch (error: any) {
-        setMessage('❌ Erreur Wallet : ' + error.message);
+      setMessage('❌ Erreur Wallet : ' + error.message);
     } finally {
-        setGeneratingCard(false);
+      setGeneratingCard(false);
     }
-};
+  };
 
   const confirmerSuppression = async () => {
     try {
@@ -166,7 +170,7 @@ export default function ProfilPage() {
   );
 
   return (
-    <div style={{ 
+    <div style={{
       width: '100%',
       minHeight: '100vh',
       backgroundColor: '#F8FAFC',
@@ -177,9 +181,9 @@ export default function ProfilPage() {
       alignItems: 'flex-start',
       paddingTop: '50px'
     }}>
-      <div style={{ 
-        maxWidth: '600px', 
-        width: '100%', 
+      <div style={{
+        maxWidth: '600px',
+        width: '100%',
       }}>
         <header style={{ marginBottom: '30px', textAlign: 'center' }}>
           <h1 style={{ fontSize: '1.8rem', fontWeight: '900', color: '#0F172A', margin: 0 }}>
@@ -189,9 +193,9 @@ export default function ProfilPage() {
         </header>
 
         {message && (
-          <div style={{ 
-            padding: '15px', backgroundColor: message.includes('✅') ? '#DCFCE7' : '#FEE2E2', 
-            color: message.includes('✅') ? '#166534' : '#991B1B', borderRadius: '12px', 
+          <div style={{
+            padding: '15px', backgroundColor: message.includes('✅') ? '#DCFCE7' : '#FEE2E2',
+            color: message.includes('✅') ? '#166534' : '#991B1B', borderRadius: '12px',
             marginBottom: '20px', fontWeight: '700', border: '1px solid',
             textAlign: 'center'
           }}>
