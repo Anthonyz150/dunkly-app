@@ -11,22 +11,40 @@ export default function DetailMatchPage({ params }: { params: Promise<{ id: stri
 
   const [match, setMatch] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isIosDevice, setIsIosDevice] = useState(false);
 
   useEffect(() => {
     if (matchId) {
       chargerMatch();
     }
+    
+    // Détection de l'appareil iOS côté client
+    const checkIOS = () => {
+        return [
+          'iPad Simulator',
+          'iPhone Simulator',
+          'iPod Simulator',
+          'iPad',
+          'iPhone',
+          'iPod'
+        ].includes(navigator.platform)
+        // Support pour les nouveaux iPhone/iPad (iOS 13+)
+        || (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+    };
+    setIsIosDevice(checkIOS());
+
   }, [matchId]);
 
   const chargerMatch = async () => {
     try {
       setLoading(true);
-      // --- REQUÊTE AVEC JOINTURE JOURNÉE ---
+      // --- REQUÊTE AVEC JOINTURES (Journée ET Competition) ---
       const { data, error } = await supabase
         .from('matchs')
         .select(`
           *,
-          journees(nom)
+          journees(nom),
+          competitions(logo_url) 
         `)
         .eq('id', matchId)
         .single();
@@ -82,7 +100,15 @@ export default function DetailMatchPage({ params }: { params: Promise<{ id: stri
       <button onClick={() => router.back()} style={backBtn}>← Retour</button>
 
       <div style={scoreCard}>
-        {/* --- CORRECTION : AFFICHAGE COMPÉTITION + JOURNÉE --- */}
+        {/* --- AFFICHAGE LOGO COMPÉTITION --- */}
+        {match.competitions?.logo_url && (
+            <img 
+              src={match.competitions.logo_url} 
+              alt={match.competition}
+              style={{ width: '60px', height: '60px', objectFit: 'contain', marginBottom: '10px' }}
+            />
+        )}
+        
         <p style={competitionLabel}>
           {match.competition}
         </p>
@@ -146,8 +172,12 @@ export default function DetailMatchPage({ params }: { params: Promise<{ id: stri
         <div style={infoBox}>
           <h3 style={infoTitle}>📍 Lieu</h3>
           {match.lieu ? (
+            // --- LIEN ADAPTÉ SELON L'APPAREIL ---
             <a 
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(match.lieu)}`}
+              href={isIosDevice 
+                ? `maps://maps.apple.com/?q=${encodeURIComponent(match.lieu)}`
+                : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(match.lieu)}`
+              }
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: '#F97316', textDecoration: 'none', fontWeight: 'bold', fontSize: '1.1rem' }}
