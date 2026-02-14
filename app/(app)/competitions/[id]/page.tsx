@@ -15,10 +15,6 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
 
-  const [selectedClubId, setSelectedClubId] = useState('');
-  const [selectedEquipe, setSelectedEquipe] = useState<any>(null);
-  const [newLogoUrl, setNewLogoUrl] = useState('');
-
   useEffect(() => {
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) setUser(JSON.parse(storedUser));
@@ -27,37 +23,43 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
 
   const chargerDonnees = async () => {
     setLoading(true);
+
     try {
-      const { data: comp } = await supabase.from('competitions').select('*').eq('id', compId).single();
-      const { data: listeClubs } = await supabase.from('equipes_clubs').select('*, logo_url').order('nom');
-      
+      const { data: comp } = await supabase
+        .from('competitions')
+        .select('*')
+        .eq('id', compId)
+        .single();
+
+      const { data: listeClubs } = await supabase
+        .from('equipes_clubs')
+        .select('*')
+        .order('nom');
+
       if (comp) {
-        // --- REQUÊTE CORRIGÉE ---
         const { data: matchs, error } = await supabase
           .from('matchs')
           .select(`
             *,
-            journees (
+            journees:journees_id (
+              id,
               nom
             )
           `)
           .eq('competition', comp.nom)
           .eq('saison', comp.saison)
-          .eq('status', 'termine');
-  
-        // --- DÉBOGAGE ---
-        if (error) {
-          console.error("Erreur Supabase:", error);
-        }
-        console.log("Données matchs reçues:", matchs);
-        
+          .eq('status', 'termine')
+          .order('journees_id', { ascending: true });
+
+        if (error) console.error(error);
+
         setCompetition(comp);
         setMatchsTermines(matchs || []);
-        setNewLogoUrl(comp.logo_url || '');
       }
+
       setClubs(listeClubs || []);
-    } catch (error) {
-      console.error("Erreur de chargement:", error);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -65,15 +67,19 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
 
   const calculerClassement = () => {
     if (!competition?.equipes_engagees) return [];
+
     const stats: Record<string, any> = {};
-    const clubLogos = new Map(clubs.map(c => [c.nom, c.logo_url]));
 
     competition.equipes_engagees.forEach((eq: any) => {
       const key = `${eq.clubNom}-${eq.nom}`;
       stats[key] = {
         ...eq,
-        logoUrl: clubLogos.get(eq.clubNom) || eq.logoUrl,
-        m: 0, v: 0, d: 0, ptsPlus: 0, ptsMoins: 0, points: 0
+        m: 0,
+        v: 0,
+        d: 0,
+        ptsPlus: 0,
+        ptsMoins: 0,
+        points: 0
       };
     });
 
@@ -82,18 +88,25 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
       const keyB = `${m.clubB}-${m.equipeB}`;
 
       if (stats[keyA] && stats[keyB]) {
-        stats[keyA].m++; stats[keyB].m++;
-        stats[keyA].ptsPlus += (Number(m.scoreA) || 0);
-        stats[keyA].ptsMoins += (Number(m.scoreB) || 0);
-        stats[keyB].ptsPlus += (Number(m.scoreB) || 0);
-        stats[keyB].ptsMoins += (Number(m.scoreA) || 0);
+        stats[keyA].m++;
+        stats[keyB].m++;
+
+        stats[keyA].ptsPlus += Number(m.scoreA) || 0;
+        stats[keyA].ptsMoins += Number(m.scoreB) || 0;
+
+        stats[keyB].ptsPlus += Number(m.scoreB) || 0;
+        stats[keyB].ptsMoins += Number(m.scoreA) || 0;
 
         if (m.scoreA > m.scoreB) {
-          stats[keyA].v++; stats[keyA].points += 2;
-          stats[keyB].d++; stats[keyB].points += 1;
+          stats[keyA].v++;
+          stats[keyA].points += 2;
+          stats[keyB].d++;
+          stats[keyB].points += 1;
         } else {
-          stats[keyB].v++; stats[keyB].points += 2;
-          stats[keyA].d++; stats[keyA].points += 1;
+          stats[keyB].v++;
+          stats[keyB].points += 2;
+          stats[keyA].d++;
+          stats[keyA].points += 1;
         }
       }
     });
@@ -104,136 +117,92 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
   };
 
   const classement = calculerClassement();
-  const isAdmin = user?.username?.toLowerCase() === 'admin' || user?.email === 'anthony.didier.pro@gmail.com';
 
-  const cloturerCompet = async () => {
-    if (!isAdmin) return;
-    if (confirm("Voulez-vous vraiment clôturer cette compétition ?")) {
-      const { error } = await supabase.from('competitions').update({ statut: 'cloture' }).eq('id', compId);
-      if (!error) setCompetition({ ...competition, statut: 'cloture' });
-    }
-  };
+  const matchsParJournee = matchsTermines.reduce((acc: any, m: any) => {
+    const journee = m.journees?.nom || "Sans journée";
+    if (!acc[journee]) acc[journee] = [];
+    acc[journee].push(m);
+    return acc;
+  }, {});
 
-  const updateCompetLogo = async () => {
-    if (!isAdmin) return;
-    const { error } = await supabase.from('competitions').update({ logo_url: newLogoUrl }).eq('id', compId);
-    if (!error) {
-      setCompetition({ ...competition, logo_url: newLogoUrl });
-      alert("Logo de la compétition mis à jour !");
-    } else {
-      alert("Erreur lors de la mise à jour : " + error.message);
-    }
-  };
-
-  const ajouterEquipeACompete = async () => {
-    if (!selectedEquipe || !selectedClubId || !competition) return;
-    const club = clubs.find(c => c.id === selectedClubId);
-    const nouvelleEntree = {
-      equipeId: selectedEquipe.id,
-      nom: selectedEquipe.nom,
-      clubNom: club.nom,
-      logoColor: club.logoColor,
-      logoUrl: club.logo_url
-    };
-    const nouvelles = [...(competition.equipes_engagees || []), nouvelleEntree];
-    const { error } = await supabase.from('competitions').update({ equipes_engagees: nouvelles }).eq('id', compId);
-    if (!error) {
-      setCompetition({ ...competition, equipes_engagees: nouvelles });
-      setSelectedEquipe(null);
-      setSelectedClubId('');
-    }
-  };
-
-  if (loading) return <div style={loadingOverlay}>🏀 Chargement...</div>;
-  if (!competition) return <div style={loadingOverlay}>Compétition introuvable.</div>;
+  if (loading) return <div>Chargement...</div>;
+  if (!competition) return <div>Compétition introuvable.</div>;
 
   return (
-    <div style={containerStyle}>
-      <div style={heroSection}>
-        <button onClick={() => router.push('/competitions')} style={backBtn}>← Retour</button>
-        <div style={{ marginTop: '15px', marginBottom: '15px' }}>
-          {competition.logo_url && (
-            <img src={competition.logo_url} alt={competition.nom} style={{ width: '150px', height: '150px', objectFit: 'contain' }} />
-          )}
-        </div>
-        <h1 style={titleStyle}>{competition.nom}</h1>
-        <div style={badgeGrid}>
-          <div style={miniBadge}>🏆 {competition.type}</div>
-          <div style={miniBadge}>📅 {competition.saison}</div>
-        </div>
-      </div>
+    <div style={{ padding: '20px' }}>
+      <button onClick={() => router.push('/competitions')}>
+        ← Retour
+      </button>
 
-      <div style={mainGrid}>
-        <div style={statsCard}>
-          <h2 style={cardTitle}>Classement Officiel</h2>
-          <div style={tableContainerStyle}>
-            <table style={tableStyle}>
-              <thead>
-                <tr style={thRow}>
-                  <th style={thL}>#</th>
-                  <th style={thL}>CLUB</th>
-                  <th style={thC}>M</th>
-                  <th style={thC}>V</th>
-                  <th style={thC}>D</th>
-                  <th style={thC} className="hide-mobile">+/-</th>
-                  <th style={thC}>PTS</th>
-                </tr>
-              </thead>
-              <tbody>
-                {classement.map((team: any, index: number) => (
-                  <tr key={index} style={trStyle}>
-                    <td style={tdL}><span style={rankStyle(index)}>{index + 1}</span></td>
-                    <td style={tdL}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        {team.logoUrl ? (
-                          <img src={team.logoUrl} alt={team.clubNom} style={logoTableStyle} />
-                        ) : (
-                          <div style={{ ...logoPlaceholderStyle, backgroundColor: team.logoColor || '#cbd5e1' }}>{team.clubNom[0]}</div>
-                        )}
-                        <span style={{ fontWeight: '700', fontSize: '0.9rem' }}>{team.clubNom}</span>
-                      </div>
-                    </td>
-                    <td style={tdC}>{team.m}</td>
-                    <td style={{ ...tdC, color: '#16a34a', fontWeight: 'bold' }}>{team.v}</td>
-                    <td style={{ ...tdC, color: '#dc2626' }}>{team.d}</td>
-                    <td style={{ ...tdC, ...hideMobile }} className="hide-mobile">{team.diff > 0 ? `+${team.diff}` : team.diff}</td>
-                    <td style={{ ...tdC, fontWeight: '900', color: '#ea580c' }}>{team.points}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+      <h1>{competition.nom}</h1>
 
-        <div style={actionColumn}>
-          {isAdmin && (
-            <button onClick={cloturerCompet} style={cloturerBtnStyle}>🔒 CLÔTURER</button>
-          )}
-          {isAdmin && (
-            <div style={adminCard}>
-              <h3 style={{ marginTop: 0 }}>Logo Compétition</h3>
-              <input type="text" value={newLogoUrl} onChange={(e) => setNewLogoUrl(e.target.value)} placeholder="URL du logo" style={{ ...selectStyle, marginBottom: '10px' }} />
-              <button onClick={updateCompetLogo} style={addBtn}>Mettre à jour le logo</button>
-              <hr style={{ margin: '20px 0', borderColor: '#334155' }} />
-              <h3>Engager une équipe</h3>
-              <select style={selectStyle} value={selectedClubId} onChange={(e) => setSelectedClubId(e.target.value)}>
-                <option value="">-- Club --</option>
-                {clubs.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
-              </select>
-              <select style={{ ...selectStyle, marginTop: '10px' }} disabled={!selectedClubId} onChange={(e) => setSelectedEquipe(e.target.value ? JSON.parse(e.target.value) : null)}>
-                <option value="">-- Équipe --</option>
-                {clubs.find(c => c.id === selectedClubId)?.equipes?.map((eq: any) => <option key={eq.id} value={JSON.stringify(eq)}>{eq.nom}</option>)}
-              </select>
-              <button onClick={ajouterEquipeACompete} style={addBtn}>Engager</button>
+      {/* CLASSEMENT */}
+      <h2>Classement</h2>
+
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Club</th>
+            <th>M</th>
+            <th>V</th>
+            <th>D</th>
+            <th>Diff</th>
+            <th>PTS</th>
+          </tr>
+        </thead>
+        <tbody>
+          {classement.map((team: any, index: number) => (
+            <tr key={index}>
+              <td>{index + 1}</td>
+              <td>{team.clubNom}</td>
+              <td>{team.m}</td>
+              <td>{team.v}</td>
+              <td>{team.d}</td>
+              <td>{team.diff}</td>
+              <td>{team.points}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* MATCHS PAR JOURNÉE */}
+      <h2 style={{ marginTop: '40px' }}>Matchs par Journée</h2>
+
+      {Object.entries(matchsParJournee).length === 0 && (
+        <p>Aucun match terminé.</p>
+      )}
+
+      {Object.entries(matchsParJournee).map(([journee, matchs]: any) => (
+        <div key={journee} style={{ marginBottom: '25px' }}>
+          <h3 style={{
+            background: '#0B1E3D',
+            color: 'white',
+            padding: '8px 15px',
+            borderRadius: '8px'
+          }}>
+            📅 {journee}
+          </h3>
+
+          {matchs.map((m: any) => (
+            <div
+              key={m.id}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                padding: '10px',
+                background: '#f1f5f9',
+                borderRadius: '8px',
+                marginTop: '8px'
+              }}
+            >
+              <span>{m.clubA}</span>
+              <strong>{m.scoreA} - {m.scoreB}</strong>
+              <span>{m.clubB}</span>
             </div>
-          )}
+          ))}
         </div>
-      </div>
-      <style jsx>{`
-        @media (max-width: 768px) {
-          .hide-mobile { display: none !important; }
-        }
-      `}</style>
+      ))}
     </div>
   );
 }
