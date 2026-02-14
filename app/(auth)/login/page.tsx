@@ -16,6 +16,7 @@ export default function AuthPage() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
+  // Récupère l'URL de redirection, par défaut vers '/'
   const redirectTo = searchParams.get('redirect') || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -31,7 +32,6 @@ export default function AuthPage() {
         });
         if (error) throw error;
 
-        // --- CORRECTION : Sauvegarde et Pause pour Cookie ---
         if (data?.user) {
           try {
             // Récupérer le profil pour l'UI
@@ -41,7 +41,7 @@ export default function AuthPage() {
               .eq('id', data.user.id)
               .single();
 
-            // Stocker les données pour l'UI (LocalStorage)
+            // Stocker les données pour l'UI
             localStorage.setItem('currentUser', JSON.stringify({
               ...data.user,
               ...profile,
@@ -51,8 +51,9 @@ export default function AuthPage() {
             window.dispatchEvent(new Event('storage'));
 
             // ⚠️ IMPORTANT : Petite pause pour laisser le temps au cookie 
-            // de session de se propager dans le navigateur avant la redirection
+            // de session de se propager avant la redirection
             await new Promise(resolve => setTimeout(resolve, 500));
+
           } catch (pErr) {
             console.error("Erreur de stockage profil:", pErr);
           }
@@ -60,7 +61,7 @@ export default function AuthPage() {
         
         // --- REDIRECTION ---
         router.push(redirectTo);
-        router.refresh(); // Force rafraîchissement côté serveur
+        router.refresh();
 
       } else {
         // --- INSCRIPTION ---
@@ -68,7 +69,9 @@ export default function AuthPage() {
           email,
           password,
           options: {
-            data: { role: 'user' }
+            data: {
+              role: 'user',
+            }
           }
         });
         if (error) throw error;
@@ -85,6 +88,7 @@ export default function AuthPage() {
     }
   };
 
+  // ... (Reste du composant retourné - JSX)
   return (
     <main style={wrapper}>
       <motion.div
@@ -166,7 +170,6 @@ export default function AuthPage() {
     </main>
   );
 }
-
 // --- STYLES (Inchangés) ---
 const wrapper: CSSProperties = { position: "fixed", inset: 0, width: "100vw", height: "100vh", background: "radial-gradient(circle at center, #0f172a, #000)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 9999 };
 const card: CSSProperties = { background: "#020617", padding: "48px", width: "380px", borderRadius: "24px", boxShadow: "0 40px 80px rgba(0,0,0,0.9)", textAlign: "center" };
