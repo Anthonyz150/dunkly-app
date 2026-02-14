@@ -14,36 +14,57 @@ export default function ProfilPage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-
-  // --- NOUVEAU : État pour le bouton Wallet ---
+  
   const [generatingCard, setGeneratingCard] = useState(false);
-  // ---------------------------------------------
-
+  
   const router = useRouter();
 
   useEffect(() => {
     const getProfile = async () => {
+      setLoading(true);
+      
+      // 1. Récupérer la session de manière fiable
       const { data: { session }, error } = await supabase.auth.getSession();
-
-      console.log("Session actuelle :", session);
-      console.log("Erreur session :", error);
-
-      if (!session) {
-        console.log("Pas de session, redirection vers /login");
+      
+      console.log("--- DEBUG SESSION ---");
+      console.log("Session:", session);
+      console.log("Erreur:", error);
+      console.log("---------------------");
+      
+      if (error || !session) {
+        console.log("Redirection vers /login : Pas de session valide");
+        // Si erreur de session, on nettoie tout par précaution
+        localStorage.removeItem('currentUser');
         router.push('/login');
         return;
       }
 
-      const storedUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-
+      // 2. Si session OK, on récupère les données
       setUser(session.user);
-      setUsername(storedUser.username || '');
-      setPrenom(storedUser.prenom || '');
-      setNom(storedUser.nom || '');
+      
+      // Essayer de charger depuis le localStorage, sinon depuis le profil supabasse
+      const storedUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      
+      setUsername(storedUser.username || session.user.user_metadata.username || '');
+      setPrenom(storedUser.prenom || session.user.user_metadata.prenom || '');
+      setNom(storedUser.nom || session.user.user_metadata.nom || '');
       setAvatarUrl(storedUser.avatar_url || session.user.user_metadata.avatar_url || null);
+      
       setLoading(false);
     };
+
     getProfile();
+    
+    // 3. Écouter les changements d'auth (si déconnexion ailleurs)
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        router.push('/login');
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, [router]);
 
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,7 +77,7 @@ export default function ProfilPage() {
       const file = event.target.files[0];
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}.${fileExt}`;
-      const filePath = `${fileName}`;
+      const filePath = `${fileName}`; 
 
       let { error: uploadError } = await supabase.storage
         .from('avatars')
@@ -72,11 +93,11 @@ export default function ProfilPage() {
       });
 
       if (updateError) throw updateError;
-
+      
       setAvatarUrl(newAvatarUrl);
       setMessage('✅ Photo de profil mise à jour !');
       setTimeout(() => setMessage(''), 3000);
-
+      
       const currentData = JSON.parse(localStorage.getItem('currentUser') || '{}');
       localStorage.setItem('currentUser', JSON.stringify({ ...currentData, avatar_url: newAvatarUrl }));
       window.dispatchEvent(new Event('storage'));
@@ -93,6 +114,7 @@ export default function ProfilPage() {
     setMessage('⏳ Enregistrement...');
 
     try {
+      // Mettre à jour la table profiles
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ username, prenom, nom })
@@ -100,6 +122,7 @@ export default function ProfilPage() {
 
       if (profileError) throw profileError;
 
+      // Mettre à jour les métadonnées auth
       await supabase.auth.updateUser({
         data: { prenom, nom, username }
       });
@@ -117,21 +140,18 @@ export default function ProfilPage() {
     }
   };
 
-  // --- NOUVEAU : Fonction pour générer le lien Wallet ---
   const ajouterACarte = async () => {
     try {
       setGeneratingCard(true);
-      setMessage('⏳ Génération de votre carte personnalisée...');
-
-      // 1. Envoyer les données au backend
+      setMessage('⏳ Génération de votre carte...');
+      
       const response = await fetch('/api/generate-card', {
-        method: 'POST', // 2. Utiliser POST
+        method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+            'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prenom, nom }), // 3. Envoyer les états actuels
+        body: JSON.stringify({ prenom, nom }),
       });
-
       const data = await response.json();
 
       if (data.link) {
@@ -170,7 +190,7 @@ export default function ProfilPage() {
   );
 
   return (
-    <div style={{
+    <div style={{ 
       width: '100%',
       minHeight: '100vh',
       backgroundColor: '#F8FAFC',
@@ -181,9 +201,9 @@ export default function ProfilPage() {
       alignItems: 'flex-start',
       paddingTop: '50px'
     }}>
-      <div style={{
-        maxWidth: '600px',
-        width: '100%',
+      <div style={{ 
+        maxWidth: '600px', 
+        width: '100%', 
       }}>
         <header style={{ marginBottom: '30px', textAlign: 'center' }}>
           <h1 style={{ fontSize: '1.8rem', fontWeight: '900', color: '#0F172A', margin: 0 }}>
@@ -193,9 +213,9 @@ export default function ProfilPage() {
         </header>
 
         {message && (
-          <div style={{
-            padding: '15px', backgroundColor: message.includes('✅') ? '#DCFCE7' : '#FEE2E2',
-            color: message.includes('✅') ? '#166534' : '#991B1B', borderRadius: '12px',
+          <div style={{ 
+            padding: '15px', backgroundColor: message.includes('✅') ? '#DCFCE7' : '#FEE2E2', 
+            color: message.includes('✅') ? '#166534' : '#991B1B', borderRadius: '12px', 
             marginBottom: '20px', fontWeight: '700', border: '1px solid',
             textAlign: 'center'
           }}>
@@ -248,13 +268,11 @@ export default function ProfilPage() {
 
           <button type="submit" style={btnSave}>SAUVEGARDER</button>
 
-          {/* --- NOUVEAU : Bouton Google Wallet --- */}
           <div style={{ marginTop: '20px' }}>
             <button type="button" onClick={ajouterACarte} style={{ ...btnSave, background: '#4285F4', width: '100%' }} disabled={generatingCard}>
               {generatingCard ? '⏳ Génération...' : '💳 Ajouter à Google Wallet'}
             </button>
           </div>
-          {/* -------------------------------------- */}
 
           <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #F1F5F9' }}>
             <button type="button" onClick={() => setShowDeleteModal(true)} style={btnDelete}>
@@ -314,7 +332,6 @@ export default function ProfilPage() {
   );
 }
 
-// Styles objets inchangés...
 const inputGroup = { display: 'flex', flexDirection: 'column' as const, gap: '8px' };
 const labelStyle = { fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase' as const };
 const inputStyle = { width: '100%', padding: '16px', borderRadius: '16px', border: '2px solid #F1F5F9', fontSize: '1rem', outline: 'none', color: '#1E293B', boxSizing: 'border-box' as const };
