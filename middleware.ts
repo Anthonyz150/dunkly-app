@@ -18,18 +18,22 @@ export async function middleware(req: NextRequest) {
           return req.cookies.get(name)?.value;
         },
         set(name: string, value: string, options: CookieOptions) {
+          // --- CORRECTION FORCÉE ICI ---
           req.cookies.set({ name, value, ...options });
           res = NextResponse.next({
             request: { headers: req.headers },
           });
           res.cookies.set({ name, value, ...options });
+          // -----------------------------
         },
         remove(name: string, options: CookieOptions) {
+          // --- CORRECTION FORCÉE ICI ---
           req.cookies.set({ name, value: "", ...options });
           res = NextResponse.next({
             request: { headers: req.headers },
           });
           res.cookies.set({ name, value: "", ...options });
+          // -----------------------------
         },
       },
     }
