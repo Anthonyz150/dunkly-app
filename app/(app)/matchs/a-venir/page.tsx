@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
@@ -84,12 +84,17 @@ export default function MatchsAVenirPage() {
     const { data: listClubs } = await supabase.from('equipes_clubs').select('*');
     const { data: listArb } = await supabase.from('arbitres').select('*').order('nom', { ascending: true });
     const { data: listComp } = await supabase.from('competitions').select('*');
-    const { data: listJournees } = await supabase.from('journees').select('*');
+    // --- CORRECTION: Chargement sécurisé des journées ---
+    const { data: listJournees, error: errorJ } = await supabase.from('journees').select('*');
 
     if (listClubs) setClubs(listClubs);
     if (listArb) setArbitres(listArb);
     if (listComp) setCompetitions(listComp);
-    if (listJournees) setJournees(listJournees);
+    if (listJournees) {
+        setJournees(listJournees);
+    } else if (errorJ) {
+        console.error("Erreur chargement journées:", errorJ);
+    }
   };
 
   const toggleArbitre = (nomComplet: string) => {
@@ -118,7 +123,7 @@ export default function MatchsAVenirPage() {
       
       date: newMatch.date,
       competition: newMatch.competition,
-      journee_id: selectedJournee || null,
+      journee_id: selectedJournee || null, // <--- Correctement assigné
       
       arbitre: selectedArbitres.join(" / "),
       lieu: newMatch.lieu,
@@ -334,7 +339,7 @@ export default function MatchsAVenirPage() {
             
             <div style={footerCard}>
               <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
-                {/* --- CORRECTION: Affichage du nom de la journée --- */}
+                {/* --- Affichage du nom de la journée --- */}
                 {m.journees && <div style={{fontWeight: 'bold', color: '#F97316', marginBottom: '4px'}}>🏆 {m.journees.nom}</div>}
                 <div>📅 {formatteDateParis(m.date)} | {m.competition}</div>
                 <div style={{ marginTop: 4 }}>🏁 <span style={{ fontWeight: 'bold', color: '#1e293b' }}>{m.arbitre || "Non assigné"}</span></div>
