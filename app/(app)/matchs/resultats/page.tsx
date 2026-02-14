@@ -114,20 +114,20 @@ export default function ResultatsPage() {
 
   }, [matchs, searchTerm]);
 
-  if (loading) return <div className="loading-state">Chargement des scores...</div>;
+  if (loading) return <div style={loadingStyle}>🏀 Chargement des scores...</div>;
 
   return (
-    <div className="page-container">
+    <div style={pageContainer}>
       {/* --- HEADER --- */}
-      <header className="dashboard-header">
-        <div className="header-top">
-          <div className="header-left">
-            <h1>RÉSULTATS <span className="orange-dot">.</span></h1>
-            <p className="subtitle">Consultez les derniers scores de la saison.</p>
+      <header style={dashboardHeader}>
+        <div style={headerTop}>
+          <div style={headerLeft}>
+            <h1 style={headerTitle}>RÉSULTATS <span style={orangeDot}>.</span></h1>
+            <p style={subtitle}>Consultez les derniers scores de la saison.</p>
           </div>
 
           {isAdmin && (
-            <Link href="/matchs/a-venir" className="btn-admin-mobile">
+            <Link href="/matchs/a-venir" style={btnAdminMobile}>
               + Match à venir
             </Link>
           )}
@@ -136,21 +136,21 @@ export default function ResultatsPage() {
         <input
           type="text"
           placeholder="Rechercher club, compétition ou journée..."
-          className="search-input"
+          style={searchInput}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </header>
 
       {/* --- AFFICHAGE HIERARCHIQUE (Compétition > Journée > Matchs) --- */}
       {Object.entries(matchGroupes).map(([compet, competData]) => (
-        <div key={compet} className="compet-section">
+        <div key={compet} style={competSection}>
           {/* Titre Compétition avec Logo */}
-          <h2 className="compet-title" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <h2 style={competTitle}>
             {competData.logo && (
               <img 
                 src={competData.logo} 
                 alt={compet} 
-                style={{ width: '40px', height: '40px', objectFit: 'contain' }} 
+                style={competLogoStyle} 
               />
             )}
             🏆 {compet}
@@ -158,60 +158,63 @@ export default function ResultatsPage() {
 
           {/* Boucle sur les journées */}
           {Object.entries(competData.journees).map(([nomJournee, matchsJournee]) => (
-            <div key={nomJournee} className="journee-section" style={{marginLeft: '15px', marginBottom: '30px'}}>
+            <div key={nomJournee} style={journeeSection}>
               {/* Titre Journée */}
-              <h3 className="journee-title" style={{color: '#f97316', fontWeight: '800', fontSize: '1.1rem', marginBottom: '15px', paddingLeft: '10px', borderLeft: '3px solid #f97316'}}>
+              <h3 style={journeeTitle}>
                 {nomJournee}
               </h3>
               
-              <div className="matchs-grid">
+              <div style={matchsGrid}>
                 {matchsJournee.map((m: Match) => (
-                  <Link href={`/matchs/resultats/${m.id}`} key={m.id} className="match-card-link">
-                    <div className="match-card">
-                      <div className={`status-border ${m.status === 'en-cours' ? 'bg-live' : 'bg-finished'}`}></div>
-                      <div className="card-content">
-                        <div className="card-top">
-                          <span className="date">{m.date ? m.date.split('T')[0].split('-').reverse().join('/') : 'NC'}</span>
-                          {m.status === 'en-cours' && <span className="live-tag">DIRECT</span>}
+                  <Link href={`/matchs/resultats/${m.id}`} key={m.id} style={matchCardLink}>
+                    <div style={matchCard}>
+                      <div style={{
+                        ...statusBorder,
+                        backgroundColor: m.status === 'en-cours' ? '#22c55e' : '#f97316'
+                      }}></div>
+                      <div style={cardContent}>
+                        <div style={cardTop}>
+                          <span style={dateStyle}>{m.date ? m.date.split('T')[0].split('-').reverse().join('/') : 'NC'}</span>
+                          {m.status === 'en-cours' && <span style={liveTag}>DIRECT</span>}
                         </div>
-                        <div className="main-score-row">
-                          
+                        
+                        <div style={mainScoreRow}>
                           {/* Équipe A */}
-                          <div className="team-info home">
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'flex-end' }}>
-                              <span className="team-name">{m.clubA}</span>
+                          <div style={{...teamInfo, textAlign: 'right'}}>
+                            <div style={teamFlexRow}>
+                              <span style={teamNameStyle}>{m.clubA}</span>
                               {m.logo_urlA ? (
                                 <img src={m.logo_urlA} alt={m.clubA} style={logoStyle} />
                               ) : (
                                 <div style={logoPlaceholderStyle}>{m.clubA?.[0] || '?'}</div>
                               )}
                             </div>
-                            <span className="team-cat">{m.equipeA}</span>
+                            <span style={teamCatStyle}>{m.equipeA}</span>
                           </div>
 
                           {/* Score */}
-                          <div className="score-badge">
-                            <span className="score-num">{m.scoreA ?? 0}</span>
-                            <span className="score-sep">-</span>
-                            <span className="score-num">{m.scoreB ?? 0}</span>
+                          <div style={scoreBadge}>
+                            <span style={scoreNum}>{m.scoreA ?? 0}</span>
+                            <span style={scoreSep}>-</span>
+                            <span style={scoreNum}>{m.scoreB ?? 0}</span>
                           </div>
 
                           {/* Équipe B */}
-                          <div className="team-info away">
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'flex-start' }}>
+                          <div style={{...teamInfo, textAlign: 'left'}}>
+                            <div style={teamFlexRow}>
                               {m.logo_urlB ? (
                                 <img src={m.logo_urlB} alt={m.clubB} style={logoStyle} />
                               ) : (
                                 <div style={logoPlaceholderStyle}>{m.clubB?.[0] || '?'}</div>
                               )}
-                              <span className="team-name">{m.clubB}</span>
+                              <span style={teamNameStyle}>{m.clubB}</span>
                             </div>
-                            <span className="team-cat">{m.equipeB}</span>
+                            <span style={teamCatStyle}>{m.equipeB}</span>
                           </div>
                         </div>
                         
-                        <div className="card-bottom">
-                          <div className="location">📍 {m.lieu || 'Lieu non défini'}</div>
+                        <div style={cardBottom}>
+                          <div style={locationStyle}>📍 {m.lieu || 'Lieu non défini'}</div>
                         </div>
                       </div>
                     </div>
@@ -224,57 +227,49 @@ export default function ResultatsPage() {
       ))}
 
       {Object.keys(matchGroupes).length === 0 && (
-        <div className="empty-state">Aucun match ne correspond à votre recherche.</div>
+        <div style={emptyState}>Aucun match ne correspond à votre recherche.</div>
       )}
-
-      {/* --- STYLES --- */}
-      <style jsx>{`
-        .page-container { animation: fadeIn 0.4s ease; padding-bottom: 40px; padding: 20px; }
-        .dashboard-header { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
-        .header-top { display: flex; justify-content: space-between; align-items: center; gap: 15px; }
-        .dashboard-header h1 { font-size: 1.8rem; font-weight: 800; color: #1a1a1a; margin: 0; }
-        .orange-dot { color: #f97316; }
-        .subtitle { color: #64748b; font-size: 0.9rem; margin: 5px 0 0; }
-        .search-input { padding: 12px 16px; border-radius: 12px; border: 1px solid #e2e8f0; background: white; width: 100%; outline: none; font-size: 0.95rem; box-sizing: border-box; }
-        
-        .btn-admin-mobile { background-color: #0f172a; color: white; text-decoration: none; padding: 10px 15px; border-radius: 10px; font-weight: bold; font-size: 0.85rem; white-space: nowrap; display: inline-block; text-align: center; }
-        
-        .compet-section { margin-bottom: 40px; }
-        .compet-title { font-size: 1.4rem; font-weight: 800; color: #1a1a1a; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #f1f5f9; }
-        
-        .matchs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
-        .match-card-link { text-decoration: none; color: inherit; }
-        .match-card { background: white; border-radius: 16px; display: flex; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border: 1px solid #f1f5f9; transition: transform 0.2s; height: 100%; }
-        .match-card:hover { transform: translateY(-3px); }
-        .status-border { width: 6px; flex-shrink: 0; }
-        .bg-finished { background: #f97316; }
-        .bg-live { background: #22c55e; }
-        .card-content { flex: 1; padding: 15px; display: flex; flex-direction: column; justify-content: space-between; }
-        .card-top { display: flex; justify-content: space-between; margin-bottom: 10px; }
-        .date { font-size: 0.75rem; color: #94a3b8; font-weight: 600; }
-        .main-score-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 5px 0; }
-        .team-info { display: flex; flex-direction: column; width: 40%; }
-        .home { text-align: right; }
-        .team-name { font-size: 0.9rem; font-weight: 800; color: #1a1a1a; text-transform: uppercase; }
-        .team-cat { font-size: 0.7rem; color: #94a3b8; font-weight: 600; }
-        .score-badge { background: #f8fafc; padding: 6px 12px; border-radius: 12px; display: flex; align-items: center; gap: 5px; border: 1px solid #e2e8f0; }
-        .score-num { font-size: 1.2rem; font-weight: 900; color: #1a1a1a; }
-        .score-sep { color: #cbd5e1; font-weight: bold; }
-        .card-bottom { margin-top: 10px; padding-top: 10px; border-top: 1px solid #f1f5f9; font-size: 0.75rem; color: #64748b; font-weight: 600; }
-        .live-tag { color: #22c55e; font-weight: 800; animation: pulse 2s infinite; font-size: 0.7rem; }
-        .empty-state { text-align: center; padding: 40px; color: #64748b; background: white; border-radius: 16px; border: 2px dashed #e2e8f0; }
-        
-        @media (max-width: 600px) {
-          .header-top { flex-direction: column; align-items: flex-start; }
-          .btn-admin-mobile { width: 100%; text-align: center; box-sizing: border-box; }
-          .matchs-grid { grid-template-columns: 1fr; }
-        }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-      `}</style>
     </div>
   );
 }
+// --- STYLES OBJETS (CSS-in-JS avec 'as const') ---
+const loadingStyle = { display: 'flex' as const, height: '100vh', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui, sans-serif', backgroundColor: '#f8fafc', color: '#64748b' };
+const pageContainer = { padding: '20px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'system-ui, sans-serif', backgroundColor: '#f8fafc', minHeight: '100vh' };
+const dashboardHeader = { display: 'flex' as const, flexDirection: 'column' as const, gap: '15px', marginBottom: '30px' };
+const headerTop = { display: 'flex' as const, justifyContent: 'space-between', alignItems: 'center', gap: '15px' };
+const headerLeft = {};
+const headerTitle = { fontSize: '1.8rem', fontWeight: '800' as const, color: '#0f172a', margin: 0 };
+const orangeDot = { color: '#f97316' };
+const subtitle = { color: '#64748b', fontSize: '0.9rem', margin: '5px 0 0' };
+const searchInput = { padding: '12px 16px', borderRadius: '12px', border: '1px solid #e2e8f0', background: 'white', width: '100%', outline: 'none', fontSize: '0.95rem', boxSizing: 'border-box' as const };
+const btnAdminMobile = { backgroundColor: '#0f172a', color: 'white', textDecoration: 'none', padding: '10px 15px', borderRadius: '10px', fontWeight: 'bold' as const, fontSize: '0.85rem', whiteSpace: 'nowrap' as const };
 
+const competSection = { marginBottom: '40px' };
+const competTitle = { display: 'flex' as const, alignItems: 'center', gap: '15px', fontSize: '1.4rem', fontWeight: '800' as const, color: '#0f172a', marginBottom: '25px', paddingBottom: '15px', borderBottom: '2px solid #e2e8f0' };
+const competLogoStyle = { width: '40px', height: '40px', objectFit: 'contain' as const };
+
+const journeeSection = { marginLeft: '15px', marginBottom: '30px' };
+const journeeTitle = { color: '#f97316', fontWeight: '800' as const, fontSize: '1.1rem', marginBottom: '15px', paddingLeft: '10px', borderLeft: '3px solid #f97316' };
+
+const matchsGrid = { display: 'grid' as const, gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '20px' };
+const matchCardLink = { textDecoration: 'none', color: 'inherit' };
+const matchCard = { backgroundColor: 'white', borderRadius: '16px', display: 'flex' as const, overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', border: '1px solid #f1f5f9', transition: 'transform 0.2s', height: '100%' };
+const statusBorder = { width: '6px', flexShrink: 0 };
+const cardContent = { flex: 1, padding: '15px', display: 'flex' as const, flexDirection: 'column' as const, justifyContent: 'space-between' as const };
+const cardTop = { display: 'flex' as const, justifyContent: 'space-between', marginBottom: '10px' };
+const dateStyle = { fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600' as const };
+const mainScoreRow = { display: 'flex' as const, alignItems: 'center', justifyContent: 'space-between', gap: '10px', margin: '5px 0' };
+const teamInfo = { display: 'flex' as const, flexDirection: 'column' as const, width: '40%' };
+const teamFlexRow = { display: 'flex' as const, alignItems: 'center', gap: '10px' };
+const teamNameStyle = { fontSize: '0.9rem', fontWeight: '800' as const, color: '#0f172a', textTransform: 'uppercase' as const };
+const teamCatStyle = { fontSize: '0.7rem', color: '#94a3b8', fontWeight: '600' as const };
+const scoreBadge = { background: '#f8fafc', padding: '6px 12px', borderRadius: '12px', display: 'flex' as const, alignItems: 'center', gap: '5px', border: '1px solid #e2e8f0' };
+const scoreNum = { fontSize: '1.2rem', fontWeight: '900' as const, color: '#0f172a' };
+const scoreSep = { color: '#cbd5e1', fontWeight: 'bold' as const };
+const cardBottom = { marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #f1f5f9', fontSize: '0.75rem', color: '#64748b', fontWeight: '600' as const };
+const locationStyle = {};
+const liveTag = { color: '#22c55e', fontWeight: '800' as const, fontSize: '0.7rem' };
+
+const emptyState = { textAlign: 'center' as const, padding: '40px', color: '#64748b', background: 'white', borderRadius: '16px', border: '2px dashed #e2e8f0' };
 const logoStyle = { width: '35px', height: '35px', borderRadius: '50%', objectFit: 'contain' as const, backgroundColor: 'white', border: '1px solid #f1f5f9' };
-const logoPlaceholderStyle = { width: '35px', height: '35px', borderRadius: '50%', backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' as const, fontSize: '1rem', color: '#64748b' };
+const logoPlaceholderStyle = { width: '35px', height: '35px', borderRadius: '50%', backgroundColor: '#f1f5f9', display: 'flex' as const, alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' as const, fontSize: '1rem', color: '#64748b' };
