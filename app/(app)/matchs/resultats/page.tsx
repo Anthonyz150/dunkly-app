@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 
-// --- 1. DÉFINITION DE L'INTERFACE AVEC LOGOS ET JOURNÉES ---
+// --- 1. DÉFINITION DE L'INTERFACE AVEC JOINTURES ---
 interface Match {
   id: string;
   competition: string;
@@ -25,7 +25,7 @@ interface Match {
   } | null;
   journees?: {
     id: string;
-    nom: string; // <-- Le nom de la journée
+    nom: string;
   } | null;
 }
 
@@ -41,7 +41,6 @@ export default function ResultatsPage() {
       try { setUser(JSON.parse(storedUser)); } catch (e) { console.error(e); }
     }
     
-    // Charger les données initiales
     chargerTousLesMatchs();
 
     // --- ACTIVATION DU TEMPS RÉEL (REALTIME) ---
@@ -63,11 +62,11 @@ export default function ResultatsPage() {
 
   const chargerTousLesMatchs = async () => {
     setLoading(true);
+    // --- REQUÊTE CORRIGÉE AVEC LEFT JOIN ---
     const { data, error } = await supabase
       .from('matchs')
-      // --- REQUÊTE AVEC JOINTURES JOURNÉES ET COMPÉTITIONS ---
-      .select('*, competitions!left(logo_url), journees(id, nom)')
-      // Tri de base : Compétition (ASC), puis Date (DESC)
+      // !left garantit que le match s'affiche même si la jointure échoue
+      .select('*, competitions!left(logo_url), journees!left(id, nom)')
       .order('competition', { ascending: true })
       .order('date', { ascending: false });
 
@@ -100,6 +99,11 @@ export default function ResultatsPage() {
         acc[compet] = { logo: competLogo, journees: {} };
       }
       
+      // Mise à jour du logo si absent (cas où une entrée est null)
+      if (!acc[compet].logo && competLogo) {
+        acc[compet].logo = competLogo;
+      }
+      
       if (!acc[compet].journees[nomJournee]) {
         acc[compet].journees[nomJournee] = [];
       }
@@ -114,6 +118,7 @@ export default function ResultatsPage() {
 
   return (
     <div className="page-container">
+      {/* --- HEADER --- */}
       <header className="dashboard-header">
         <div className="header-top">
           <div className="header-left">
@@ -136,10 +141,10 @@ export default function ResultatsPage() {
         />
       </header>
 
-      {/* --- AFFICHAGE HIERARCHIQUE --- */}
+      {/* --- AFFICHAGE HIERARCHIQUE (Compétition > Journée > Matchs) --- */}
       {Object.entries(matchGroupes).map(([compet, competData]) => (
         <div key={compet} className="compet-section">
-          {/* TITRE COMPÉTITION */}
+          {/* Titre Compétition avec Logo */}
           <h2 className="compet-title" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             {competData.logo && (
               <img 
@@ -151,15 +156,14 @@ export default function ResultatsPage() {
             🏆 {compet}
           </h2>
 
-          {/* BOUCLE SUR LES JOURNÉES DE LA COMPÉTITION */}
+          {/* Boucle sur les journées */}
           {Object.entries(competData.journees).map(([nomJournee, matchsJournee]) => (
             <div key={nomJournee} className="journee-section" style={{marginLeft: '15px', marginBottom: '30px'}}>
-              {/* TITRE JOURNÉE */}
+              {/* Titre Journée */}
               <h3 className="journee-title" style={{color: '#f97316', fontWeight: '800', fontSize: '1.1rem', marginBottom: '15px', paddingLeft: '10px', borderLeft: '3px solid #f97316'}}>
                 {nomJournee}
               </h3>
               
-              {/* GRILLE DES MATCHS DE LA JOURNÉE */}
               <div className="matchs-grid">
                 {matchsJournee.map((m: Match) => (
                   <Link href={`/matchs/resultats/${m.id}`} key={m.id} className="match-card-link">
