@@ -41,8 +41,8 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
       nom
     )
   `)
-          // .eq('competition', comp.nom) // Commente cette ligne
-          // .eq('saison', comp.saison)   // Commente cette ligne
+          // .eq('competition', comp.nom) // Commentez cette ligne
+          // .eq('saison', comp.saison)   // Commentez cette ligne
           .eq('status', 'termine');
 
         // --- INSPECTION DANS LA CONSOLE ---
