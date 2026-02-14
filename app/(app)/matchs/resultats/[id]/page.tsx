@@ -21,7 +21,7 @@ export default function DetailMatchPage({ params }: { params: Promise<{ id: stri
   const chargerMatch = async () => {
     try {
       setLoading(true);
-      // --- CORRECTION : Requête avec jointure journée ---
+      // --- REQUÊTE AVEC JOINTURE JOURNÉE ---
       const { data, error } = await supabase
         .from('matchs')
         .select(`
@@ -72,6 +72,11 @@ export default function DetailMatchPage({ params }: { params: Promise<{ id: stri
     );
   }
 
+  // --- LOGIQUE D'AFFICHAGE DU VAINQUEUR ---
+  const isFinished = match.status === 'termine';
+  const showWinner = isFinished && match.scoreA !== match.scoreB;
+  const winnerSide = isFinished ? (match.scoreA > match.scoreB ? 'A' : match.scoreA < match.scoreB ? 'B' : null) : null;
+
   return (
     <div style={containerStyle}>
       <button onClick={() => router.back()} style={backBtn}>← Retour</button>
@@ -95,18 +100,25 @@ export default function DetailMatchPage({ params }: { params: Promise<{ id: stri
                 </div>
             )}
             
-            <h2 style={teamName}>{match.clubA}</h2>
+            <h2 style={{...teamName, color: showWinner && winnerSide === 'A' ? '#1e293b' : '#64748b' }}>{match.clubA}</h2>
             <p style={clubSub}>{match.equipeA}</p>
           </div>
 
           {/* SCORE CENTRAL */}
           <div style={scoreInfo}>
             <div className="score-numbers-mobile" style={scoreNumbers}>
-              <span style={match.scoreA >= match.scoreB ? winScore : loseScore}>{match.scoreA ?? 0}</span>
+              <span style={isFinished && match.scoreA > match.scoreB ? winScore : loseScore}>{match.scoreA ?? 0}</span>
               <span style={separator}>-</span>
-              <span style={match.scoreB >= match.scoreA ? winScore : loseScore}>{match.scoreB ?? 0}</span>
+              <span style={isFinished && match.scoreB > match.scoreA ? winScore : loseScore}>{match.scoreB ?? 0}</span>
             </div>
-            <div style={statusBadge}>{match.status === 'termine' ? 'TERMINÉ' : 'À VENIR'}</div>
+            <div style={{
+              ...statusBadge,
+              backgroundColor: isFinished ? '#f1f5f9' : '#fff7ed',
+              color: isFinished ? '#64748b' : '#f97316',
+              border: isFinished ? '1px solid #e2e8f0' : '1px solid #fed7aa'
+            }}>
+              {isFinished ? 'TERMINÉ' : 'À VENIR'}
+            </div>
           </div>
 
           {/* CLUB & EQUIPE EXTERIEUR */}
@@ -120,7 +132,7 @@ export default function DetailMatchPage({ params }: { params: Promise<{ id: stri
                 </div>
             )}
             
-            <h2 style={teamName}>{match.clubB}</h2>
+            <h2 style={{...teamName, color: showWinner && winnerSide === 'B' ? '#1e293b' : '#64748b' }}>{match.clubB}</h2>
             <p style={clubSub}>{match.equipeB}</p>
           </div>
         </div>
@@ -131,7 +143,7 @@ export default function DetailMatchPage({ params }: { params: Promise<{ id: stri
           <h3 style={infoTitle}>📍 Lieu</h3>
           {match.lieu ? (
             <a 
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(match.lieu)}`}
+              href={`https://maps.google.com/?q=${encodeURIComponent(match.lieu)}`}
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: '#F97316', textDecoration: 'none', fontWeight: 'bold', fontSize: '1.1rem' }}
@@ -174,7 +186,7 @@ const competitionLabel = { color: '#F97316', fontWeight: 'bold' as const, textTr
 const dateLabel = { color: '#94a3b8', fontSize: '0.9rem', marginBottom: '40px', textTransform: 'capitalize' as const };
 const matchFlex = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px' };
 const teamSide = { flex: 1, display: 'flex', flexDirection: 'column' as const, alignItems: 'center' };
-const logoImageStyle = { width: '90px', height: '90px', borderRadius: '50%', objectFit: 'contain' as const, marginBottom: '15px', border: '1px solid #e2e8f0' };
+const logoImageStyle = { width: '90px', height: '90px', borderRadius: '50%', objectFit: 'contain' as const, marginBottom: '15px', border: '1px solid #e2e8f0', backgroundColor: 'white' };
 const logoCircle = { width: '90px', height: '90px', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: 'bold' as const, marginBottom: '15px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' };
 const teamName = { fontSize: '1.6rem', fontWeight: '900' as const, margin: '0 0 5px 0', textTransform: 'uppercase' as const };
 const clubSub = { margin: 0, color: '#64748b', fontSize: '1rem', fontWeight: '600' as const };
@@ -183,7 +195,7 @@ const scoreNumbers = { fontSize: '4.5rem', fontWeight: '900' as const, display: 
 const winScore = { color: '#1e293b' };
 const loseScore = { color: '#cbd5e1' };
 const separator = { color: '#f1f5f9' };
-const statusBadge = { display: 'inline-block', marginTop: '20px', padding: '8px 20px', backgroundColor: '#f0fdf4', color: '#16a34a', borderRadius: '30px', fontSize: '0.75rem', fontWeight: 'bold' as const, border: '1px solid #dcfce7' };
+const statusBadge = { display: 'inline-block', marginTop: '20px', padding: '8px 20px', borderRadius: '30px', fontSize: '0.75rem', fontWeight: 'bold' as const };
 const detailsGrid = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '30px' };
 const infoBox = { backgroundColor: 'white', padding: '25px', borderRadius: '24px', border: '1px solid #e2e8f0' };
 const infoTitle = { fontSize: '0.9rem', color: '#94a3b8', marginBottom: '10px', textTransform: 'uppercase' as const };
