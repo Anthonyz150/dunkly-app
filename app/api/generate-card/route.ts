@@ -15,11 +15,18 @@ interface WalletObject {
 
 export async function GET() {
     try {
-        // Chargement direct du fichier JSON depuis la racine
-        const jsonPath = path.resolve(process.cwd(), 'cle-service.json');
-        const credentials = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+        // --- C'EST ICI LE CHANGEMENT POUR LA PROD ---
+        let credentials;
+        if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+            // En production, on utilise la variable d'environnement
+            credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
+        } else {
+            // En local, on utilise le fichier si la variable n'existe pas
+            const jsonPath = path.resolve(process.cwd(), 'cle-service.json');
+            credentials = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+        }
+        // ---------------------------------------------
 
-        // Authentification
         const auth = new JWT({
             email: credentials.client_email,
             key: credentials.private_key,
