@@ -30,24 +30,27 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
     try {
       const { data: comp } = await supabase.from('competitions').select('*').eq('id', compId).single();
       const { data: listeClubs } = await supabase.from('equipes_clubs').select('*, logo_url').order('nom');
-
+      
       if (comp) {
-        // --- REQUÊTE AVEC JOINTURE ---
-        const { data: matchs } = await supabase
+        // --- REQUÊTE CORRIGÉE ---
+        const { data: matchs, error } = await supabase
           .from('matchs')
           .select(`
-    *,
-    journees (
-      nom
-    )
-  `)
-          // .eq('competition', comp.nom) // Commentez cette ligne
-          // .eq('saison', comp.saison)   // Commentez cette ligne
+            *,
+            journees (
+              nom
+            )
+          `)
+          .eq('competition', comp.nom)
+          .eq('saison', comp.saison)
           .eq('status', 'termine');
-
-        // --- INSPECTION DANS LA CONSOLE ---
-        console.log("Données matchs reçues (avec journées):", matchs);
-
+  
+        // --- DÉBOGAGE ---
+        if (error) {
+          console.error("Erreur Supabase:", error);
+        }
+        console.log("Données matchs reçues:", matchs);
+        
         setCompetition(comp);
         setMatchsTermines(matchs || []);
         setNewLogoUrl(comp.logo_url || '');
