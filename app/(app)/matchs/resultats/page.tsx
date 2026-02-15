@@ -35,9 +35,6 @@ export default function ResultatsPage() {
 
 const chargerDonneesInitiales = useCallback(async () => {
   setLoading(true);
-
-  // ... (récupération de l'utilisateur)
-
   // 2. Charger TOUS les matchs depuis Supabase
   const { data, error } = await supabase
     .from("matchs")

@@ -58,7 +58,7 @@ export default function Dashboard() {
 
         // --- CORRECTION REQUÊTES : Jointures et logos ---
         const [competsRes, equipesRes, matchsRes, nextRes, lastRes] = await Promise.all([
-          supabase.from('competitions').select('*', { count: 'exact', head: true }),
+          supabase.from('competition').select('*', { count: 'exact', head: true }),
           supabase.from('equipes_clubs').select('*', { count: 'exact', head: true }),
           supabase.from('matchs').select('*', { count: 'exact', head: true }),
           // Jointure pour le prochain match
