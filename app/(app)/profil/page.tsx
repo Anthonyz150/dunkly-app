@@ -57,8 +57,12 @@ export default function ProfilPage() {
   const btnDeleteStyle: React.CSSProperties = { background: 'transparent', color: '#EF4444', border: '2px solid #FEE2E2', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontWeight: '800', fontSize: '0.8rem', width: '100%' };
   const modalOverlayStyle: React.CSSProperties = { position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' };
   const modalContentStyle: React.CSSProperties = { background: 'white', padding: '25px', borderRadius: '16px', width: '100%', maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto' };
+  const [isAppleDevice, setIsAppleDevice] = useState(false);
 
-  // --- USEEFFECT POUR CHARGER LE PROFIL ---
+  useEffect(() => {
+    setIsAppleDevice(/iPad|iPhone|iPod/.test(navigator.userAgent));
+  }, []);
+
   useEffect(() => {
     const getProfile = async () => {
       setLoading(true);
@@ -223,9 +227,17 @@ export default function ProfilPage() {
           </div>
 
           <button type="submit" style={btnSaveStyle}>SAUVEGARDER</button>
-          <button type="button" onClick={ajouterACarte} style={{ ...btnSaveStyle, background: '#4285F4', width: '100%', marginTop: '20px' }} disabled={generatingCard}>
-            💳 {generatingCard ? '⏳ Génération...' : 'Ajouter à Google Wallet'}
-          </button>
+          {!isAppleDevice && (
+            <button
+              type="button"
+              onClick={ajouterACarte}
+              style={{ ...btnSaveStyle, background: '#4285F4', width: '100%', marginTop: '20px' }}
+              disabled={generatingCard}
+            >
+              💳 {generatingCard ? '⏳ Génération...' : 'Ajouter à Google Wallet'}
+            </button>
+          )}
+
 
           <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #F1F5F9' }}>
             <button type="button" onClick={() => setShowDeleteModal(true)} style={btnDeleteStyle}>SUPPRIMER MON COMPTE</button>
