@@ -9,7 +9,6 @@ export default function DetailMatchPage({ params }: { params: Promise<{ id: stri
   const matchId = resolvedParams?.id;
   const router = useRouter();
 
-  // Typage générique pour le match afin d'éviter 'any'
   const [match, setMatch] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isIosDevice, setIsIosDevice] = useState(false);
@@ -21,6 +20,7 @@ export default function DetailMatchPage({ params }: { params: Promise<{ id: stri
     
     // Détection de l'appareil iOS côté client
     const checkIOS = () => {
+        if (typeof window === 'undefined') return false;
         return [
           'iPad Simulator',
           'iPhone Simulator',
@@ -40,12 +40,13 @@ export default function DetailMatchPage({ params }: { params: Promise<{ id: stri
     try {
       setLoading(true);
       // --- REQUÊTE AVEC JOINTURES (Journée ET Competition) ---
+      // CORRECTION : Sélectionner 'nom' et 'logo_url' de la compétition
       const { data, error } = await supabase
         .from('matchs')
         .select(`
           *,
           journees(nom),
-          competition(logo_url) 
+          competition(logo_url, nom) 
         `)
         .eq('id', matchId)
         .single();
@@ -106,12 +107,13 @@ export default function DetailMatchPage({ params }: { params: Promise<{ id: stri
         {match.competition?.logo_url && (
             <img 
               src={match.competition.logo_url} 
-              alt={match.competition}
+              alt="Logo Competition"
               style={{ width: '60px', height: '60px', objectFit: 'contain', marginBottom: '15px' }}
             />
         )}
         
-        <p style={competitionLabel}>{match.competition}</p>
+        {/* CORRECTION : Affichage du nom de la competition, pas de l'objet */}
+        <p style={competitionLabel}>{match.competition?.nom || 'Championnat'}</p>
         <p style={journeeLabel}>{match.journees?.nom || 'Hors Journée'}</p>
         <p style={dateLabel}>{formatteDateParis(match.date)}</p>
 
@@ -168,7 +170,7 @@ export default function DetailMatchPage({ params }: { params: Promise<{ id: stri
             <a 
               href={isIosDevice 
                 ? `maps://maps.apple.com/?q=${encodeURIComponent(match.lieu)}`
-                : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(match.lieu)}`
+                : `https://maps.google.com/?q=${encodeURIComponent(match.lieu)}`
               }
               target="_blank"
               rel="noopener noreferrer"
