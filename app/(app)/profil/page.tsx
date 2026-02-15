@@ -40,6 +40,7 @@ export default function ProfilPage() {
       }
       setUser(session.user);
       
+      // Charger le profil
       const { data: profile } = await supabase
         .from('profiles')
         .select('username, prenom, nom, avatar_url, favorite_team_id, favorite_championship_id')
@@ -55,6 +56,7 @@ export default function ProfilPage() {
         setSelectedChampionship(profile.favorite_championship_id || '');
       }
 
+      // Charger les listes de favoris
       const [equipesRes, compRes] = await Promise.all([
         supabase.from('equipes_clubs').select('id, nom_equipe'),
         supabase.from('competitions').select('id, nom')
@@ -96,7 +98,12 @@ export default function ProfilPage() {
       const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
       const newAvatarUrl = data.publicUrl;
 
-      const { error: updateError } = await supabase.auth.updateUser({ data: { avatar_url: newAvatarUrl } });
+      // CORRECTION 1: Mettre à jour la table profiles pour avatar_url
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: newAvatarUrl })
+        .eq('id', user.id);
+
       if (updateError) throw updateError;
       
       setAvatarUrl(newAvatarUrl);
@@ -175,6 +182,7 @@ export default function ProfilPage() {
     }
   };
 
+  // Logique pour afficher le nom dans les boutons
   const getSelectedEquipeName = () => {
     const eq = equipes.find(e => e.id === selectedEquipe);
     return eq ? eq.nom_equipe : "Sélectionner une équipe";
@@ -186,8 +194,7 @@ export default function ProfilPage() {
   };
 
   if (loading) return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh', width: '100%' }}>
-      {/* Utilisation du CSS class */}
+    <div className={styles.container} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
       <div className={styles.loadingSpinner}>🏀</div>
     </div>
   );
@@ -208,6 +215,7 @@ export default function ProfilPage() {
 
         <form onSubmit={handleSave} className={styles.profileForm}>
           <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+            {/* AFFICHAGE PHOTO CORRIGÉ */}
             <img src={avatarUrl || 'https://via.placeholder.com/150?text=Avatar'} alt="Avatar" style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', marginBottom: '15px', border: '4px solid white', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
             <div>
               <label htmlFor="avatar-upload" style={{ ...btnSave, padding: '10px 20px', fontSize: '0.8rem', cursor: 'pointer', display: 'inline-block' }}>
@@ -225,6 +233,7 @@ export default function ProfilPage() {
             <div style={inputGroup}><label style={labelStyle}>Nom</label><input type="text" value={nom} onChange={(e) => setNom(e.target.value)} style={inputStyle} required /></div>
           </div>
 
+          {/* CORRECTION 2: Remplacement des champs par des BOUTONS */}
           <div style={{borderTop: '1px solid #F1F5F9', marginTop: '10px', paddingTop: '20px'}}>
             <h3 style={{fontSize: '1rem', fontWeight: '700', color: '#0F172A', marginBottom: '15px'}}>Mes Favoris</h3>
             <div style={inputGroup}>
@@ -264,6 +273,7 @@ export default function ProfilPage() {
           </div>
         )}
 
+        {/* CORRECTION 3: AFFICHAGE DANS LES POPUPS */}
         {showEquipeModal && (
           <div className={styles.modalOverlay} onClick={() => setShowEquipeModal(false)}>
             <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
