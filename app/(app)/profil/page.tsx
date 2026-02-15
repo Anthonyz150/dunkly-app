@@ -406,6 +406,7 @@ export default function ProfilPage() {
           </div>
         )}
 
+        {/* --- CORRECTION SYNTAXE ICI --- */}
         <style jsx>{`
             .modal-overlay {
                 position: fixed; top: 0; left: 0; right: 0; bottom: 0;
