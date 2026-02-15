@@ -17,8 +17,20 @@ export default function ProfilPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [generatingCard, setGeneratingCard] = useState(false);
 
-  const [equipes, setEquipes] = useState<any[]>([]);
-  const [competitions, setCompetitions] = useState<any[]>([]);
+  type Equipe = {
+    id: string;
+    nom_equipe: string;
+    logo_url?: string;
+  };
+
+  const [equipes, setEquipes] = useState<Equipe[]>([]);
+  type Competition = {
+    id: string;
+    nom: string;
+    logo_url?: string;
+  };
+
+  const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [selectedEquipeId, setSelectedEquipeId] = useState("");
   const [selectedChampionshipId, setSelectedChampionshipId] = useState("");
 
@@ -49,8 +61,8 @@ export default function ProfilPage() {
         setPrenom(profile.prenom || '');
         setNom(profile.nom || '');
         setAvatarUrl(profile.avatar_url || null);
-        setSelectedEquipeId(profile.favorite_team_id || '');
-        setSelectedChampionshipId(profile.favorite_championship_id || '');
+        setSelectedEquipeId(profile.favorite_team_id ? String(profile.favorite_team_id) : '');
+        setSelectedChampionshipId(profile.favorite_championship_id ? String(profile.favorite_championship_id) : '');
       }
 
       const [equipesRes, compRes] = await Promise.all([
@@ -64,9 +76,9 @@ export default function ProfilPage() {
       console.log("Equipes:", equipesRes.data);
       console.log("Competitions:", compRes.data);
       console.log("Errors:", equipesRes.error, compRes.error);
-
-      console.log("Equipes:", equipesRes.data);
-      console.log("Erreur equipes:", equipesRes.error);
+      console.log("Equipes DATA:", equipesRes.data);
+      console.log("Equipes ERROR:", equipesRes.error);
+      console.log("Competitions:", competitions);
 
       setLoading(false);
     };
@@ -84,6 +96,25 @@ export default function ProfilPage() {
 
     return () => authListener.subscription.unsubscribe();
   }, [router]);
+
+  useEffect(() => {
+    if (equipes.length > 0 && user) {
+      const loadProfileFavorites = async () => {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('favorite_team_id, favorite_championship_id')
+          .eq('id', user.id)
+          .single();
+
+        if (profile) {
+          setSelectedEquipeId(profile.favorite_team_id ? String(profile.favorite_team_id) : '');
+          setSelectedChampionshipId(profile.favorite_championship_id ? String(profile.favorite_championship_id) : '');
+        }
+      };
+
+      loadProfileFavorites();
+    }
+  }, [equipes, competitions]);
 
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -127,8 +158,8 @@ export default function ProfilPage() {
         .from('profiles')
         .update({
           username, prenom, nom,
-          favorite_team_id: selectedEquipeId || null,
-          favorite_championship_id: selectedChampionshipId || null,
+          favorite_team_id: selectedEquipeId ? selectedEquipeId : null,
+          favorite_championship_id: selectedChampionshipId ? selectedChampionshipId : null,
         })
         .eq('id', user.id);
       if (profileError) throw profileError;
@@ -244,56 +275,52 @@ export default function ProfilPage() {
               <label style={labelStyle}>Club favori</label>
               <button
                 type="button"
+                style={btnStyle}
                 onClick={() => setShowEquipeModal(true)}
-                style={{
-                  ...btnStyle,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px'
-                }}
               >
                 {(() => {
                   const eq = equipes.find(e => String(e.id) === selectedEquipeId);
                   return eq ? (
-                    <>
-                      <img
-                        src={eq.logo_url}
-                        alt={eq.nom_equipe}
-                        style={{ width: '30px', height: '30px', objectFit: 'contain' }}
-                      />
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      {eq.logo_url && (
+                        <img
+                          src={eq.logo_url}
+                          alt={eq.nom_equipe}
+                          style={{ width: '30px', height: '30px', objectFit: 'contain' }}
+                        />
+                      )}
                       {eq.nom_equipe}
-                    </>
-                  ) : "Sélectionner une équipe";
+                    </div>
+                  ) : "Sélectionner un club";
                 })()}
               </button>
+
 
             </div>
             <div style={inputGroupStyle}>
               <label style={labelStyle}>Championnat favori</label>
               <button
                 type="button"
+                style={btnStyle}
                 onClick={() => setShowChampModal(true)}
-                style={{
-                  ...btnStyle,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px'
-                }}
               >
                 {(() => {
-                  const co = competitions.find(c => String(c.id) === selectedEquipeId);
+                  const co = competitions.find(c => String(c.id) === selectedChampionshipId);
                   return co ? (
-                    <>
-                      <img
-                        src={co.logo_url}
-                        alt={co.nom_equipe}
-                        style={{ width: '30px', height: '30px', objectFit: 'contain' }}
-                      />
-                      {co.nom_competition}
-                    </>
-                  ) : "Sélectionner une équipe";
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      {co.logo_url && (
+                        <img
+                          src={co.logo_url}
+                          alt={co.nom}
+                          style={{ width: '30px', height: '30px', objectFit: 'contain' }}
+                        />
+                      )}
+                      {co.nom}
+                    </div>
+                  ) : "Sélectionner un championnat";
                 })()}
               </button>
+
 
             </div>
           </div>
@@ -315,27 +342,22 @@ export default function ProfilPage() {
             <div style={modalContentStyle} onClick={e => e.stopPropagation()}>
               <h2 style={{ marginBottom: '20px' }}>Choisir mon équipe</h2>
               <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                {equipes.map(e => (
+                {equipes.map((e) => (
                   <div
                     key={e.id}
-                    style={{
-                      ...listItemStyle,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      backgroundColor: selectedEquipeId === String(e.id) ? '#F97316' : 'white',
-                      color: selectedEquipeId === String(e.id) ? 'white' : '#1E293B'
-                    }}
-                    onClick={() => {
-                      setSelectedEquipeId(String(e.id));
+                    style={listItemStyle}
+                    onClick={async () => {
+                      const id = String(e.id);
+
+                      setSelectedEquipeId(id);
                       setShowEquipeModal(false);
+
+                      await supabase
+                        .from('profiles')
+                        .update({ favorite_team_id: id })
+                        .eq('id', user.id);
                     }}
                   >
-                    <img
-                      src={e.logo_url}
-                      alt={e.nom_equipe}
-                      style={{ width: '35px', height: '35px', objectFit: 'contain' }}
-                    />
                     {e.nom_equipe}
                   </div>
                 ))}
@@ -348,37 +370,31 @@ export default function ProfilPage() {
             <div style={modalContentStyle} onClick={e => e.stopPropagation()}>
               <h2 style={{ marginBottom: '20px' }}>Choisir mon championnat</h2>
               <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                {competitions.map(c => (
+                {competitions.map((c) => (
                   <div
                     key={c.id}
-                    style={{
-                      ...listItemStyle,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      backgroundColor: selectedChampionshipId === String(c.id) ? '#F97316' : 'white',
-                      color: selectedEquipeId === String(c.id) ? 'white' : '#1E293B'
-                    }}
-                    onClick={() => {
-                      setSelectedChampionshipId(String(c.id));
+                    style={listItemStyle}
+                    onClick={async () => {
+                      const id = String(c.id);
+
+                      setSelectedChampionshipId(id);
                       setShowChampModal(false);
+
+                      await supabase
+                        .from('profiles')
+                        .update({ favorite_championship_id: id })
+                        .eq('id', user.id);
                     }}
                   >
-                    <img
-                      src={c.logo_url}
-                      alt={c.nom_equipe}
-                      style={{ width: '35px', height: '35px', objectFit: 'contain' }}
-                    />
-                    {c.nom_equipe}
+                    {c.nom}
                   </div>
                 ))}
-
               </div>
             </div>
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 }
 
