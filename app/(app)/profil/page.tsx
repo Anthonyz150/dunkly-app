@@ -54,8 +54,8 @@ export default function ProfilPage() {
       }
 
       const [equipesRes, compRes] = await Promise.all([
-        supabase.from('equipes_clubs').select('id, nom_equipe'),
-        supabase.from('competition').select('id, nom')
+        supabase.from('equipes_clubs').select('id, nom_equipe, logo_url'),
+        supabase.from('competition').select('id, nom, logo_url')
       ]);
 
       if (equipesRes.data) setEquipes(equipesRes.data);
@@ -63,7 +63,10 @@ export default function ProfilPage() {
 
       console.log("Equipes:", equipesRes.data);
       console.log("Competitions:", compRes.data);
-      console.log("Errors:", equipesRes.error, compRes.error);      
+      console.log("Errors:", equipesRes.error, compRes.error);
+
+      console.log("Equipes:", equipesRes.data);
+      console.log("Erreur equipes:", equipesRes.error);
 
       setLoading(false);
     };
@@ -176,12 +179,12 @@ export default function ProfilPage() {
   };
 
   const getSelectedEquipeName = () => {
-    const eq = equipes.find(e => String(e.id) === selectedEquipeId);  
+    const eq = equipes.find(e => String(e.id) === selectedEquipeId);
     return eq ? eq.nom_equipe : "Sélectionner une équipe";
   };
 
   const getSelectedChampName = () => {
-    const ch = competitions.find(c => String(c.id) === selectedChampionshipId);  
+    const ch = competitions.find(c => String(c.id) === selectedChampionshipId);
     return ch ? ch.nom : "Sélectionner un championnat";
   };
 
@@ -242,20 +245,56 @@ export default function ProfilPage() {
               <button
                 type="button"
                 onClick={() => setShowEquipeModal(true)}
-                style={btnStyle}
+                style={{
+                  ...btnStyle,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}
               >
-                {getSelectedEquipeName()}
+                {(() => {
+                  const eq = equipes.find(e => String(e.id) === selectedEquipeId);
+                  return eq ? (
+                    <>
+                      <img
+                        src={eq.logo_url}
+                        alt={eq.nom_equipe}
+                        style={{ width: '30px', height: '30px', objectFit: 'contain' }}
+                      />
+                      {eq.nom_equipe}
+                    </>
+                  ) : "Sélectionner une équipe";
+                })()}
               </button>
+
             </div>
             <div style={inputGroupStyle}>
               <label style={labelStyle}>Championnat favori</label>
               <button
                 type="button"
                 onClick={() => setShowChampModal(true)}
-                style={btnStyle}
+                style={{
+                  ...btnStyle,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}
               >
-                {getSelectedChampName()}
+                {(() => {
+                  const co = competitions.find(c => String(c.id) === selectedEquipeId);
+                  return co ? (
+                    <>
+                      <img
+                        src={co.logo_url}
+                        alt={co.nom_equipe}
+                        style={{ width: '30px', height: '30px', objectFit: 'contain' }}
+                      />
+                      {co.nom_competition}
+                    </>
+                  ) : "Sélectionner une équipe";
+                })()}
               </button>
+
             </div>
           </div>
 
@@ -281,14 +320,22 @@ export default function ProfilPage() {
                     key={e.id}
                     style={{
                       ...listItemStyle,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
                       backgroundColor: selectedEquipeId === String(e.id) ? '#F97316' : 'white',
-                      color: selectedEquipeId === String(e.id) ? 'white' : '#1E293B'                      
+                      color: selectedEquipeId === String(e.id) ? 'white' : '#1E293B'
                     }}
                     onClick={() => {
                       setSelectedEquipeId(String(e.id));
                       setShowEquipeModal(false);
                     }}
                   >
+                    <img
+                      src={e.logo_url}
+                      alt={e.nom_equipe}
+                      style={{ width: '35px', height: '35px', objectFit: 'contain' }}
+                    />
                     {e.nom_equipe}
                   </div>
                 ))}
@@ -306,16 +353,26 @@ export default function ProfilPage() {
                     key={c.id}
                     style={{
                       ...listItemStyle,
-                      backgroundColor: selectedChampionshipId === String(c.id) ? '#FFF7ED' : 'white'
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      backgroundColor: selectedChampionshipId === String(c.id) ? '#F97316' : 'white',
+                      color: selectedEquipeId === String(c.id) ? 'white' : '#1E293B'
                     }}
                     onClick={() => {
                       setSelectedChampionshipId(String(c.id));
                       setShowChampModal(false);
                     }}
                   >
-                    {c.nom}
+                    <img
+                      src={c.logo_url}
+                      alt={c.nom_equipe}
+                      style={{ width: '35px', height: '35px', objectFit: 'contain' }}
+                    />
+                    {c.nom_equipe}
                   </div>
                 ))}
+
               </div>
             </div>
           </div>
