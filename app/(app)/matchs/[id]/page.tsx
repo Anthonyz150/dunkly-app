@@ -56,11 +56,13 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
       `)
       .eq("id", matchId)
       .single();
-
+  
     if (data) {
-      setMatch(data as MatchInterface);
-      if (data.config?.scores_quart_temps) {
-        setScores(data.config.scores_quart_temps);
+      const matchData = data as MatchInterface;
+      setMatch(matchData);
+  
+      if (matchData.config?.scores_quart_temps) {
+        setScores(matchData.config.scores_quart_temps);
       }
     }
     setLoading(false);
@@ -95,20 +97,17 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
   const enregistrerScores = async () => {
     if (!match) return;
     setSaving(true);
-
     const totalA = Number(scores.q1.a) + Number(scores.q2.a) + Number(scores.q3.a) + Number(scores.q4.a);
     const totalB = Number(scores.q1.b) + Number(scores.q2.b) + Number(scores.q3.b) + Number(scores.q4.b);
-
     const { error } = await supabase
       .from("matchs")
       .update({
         scoreA: totalA,
         scoreB: totalB,
         status: "termine",
-        config: { ...match.config, scores_quart_temps: scores }
+        config: { ...(match.config || {}), scores_quart_temps: scores }
       })
       .eq("id", matchId);
-
     setSaving(false);
     if (!error) {
       setIsModalOpen(false);
