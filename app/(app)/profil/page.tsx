@@ -4,6 +4,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+// Optionnel : importer un icône pour le bouton Apple si tu veux en ajouter un
+// import { AppleIcon } from '@/components/icons'; 
 
 export default function ProfilPage() {
   const [user, setUser] = useState<any>(null);
@@ -17,27 +19,33 @@ export default function ProfilPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [generatingCard, setGeneratingCard] = useState(false);
   
+  // --- NOUVEAU : État pour détecter si l'utilisateur est sur Apple ---
+  const [isAppleDevice, setIsAppleDevice] = useState(false);
+  // ------------------------------------------------------------------
+  
   const router = useRouter();
 
   useEffect(() => {
+    // --- NOUVEAU : Détection du système d'exploitation ---
+    const userAgent = navigator.userAgent || navigator.vendor;
+    // Vérifie si l'appareil est un iPhone, iPad ou iPod
+    if (/iPad|iPhone|iPod/.test(userAgent)) {
+        setIsAppleDevice(true);
+    }
+    // ----------------------------------------------------
+
     const getProfile = async () => {
       setLoading(true);
-      
-      // --- LIGNE DE DÉBOGAGE AJOUTÉE ---
-      console.log("DEBUG - Cookie de session actuel:", document.cookie);
-      // ---------------------------------
       
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error || !session) {
-        // Redirection vers /login si pas de session
         router.push('/login');
         return;
       }
 
       setUser(session.user);
       
-      // Charger depuis localStorage ou metadata
       const storedUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
       
       setUsername(storedUser.username || session.user.user_metadata.username || '');
@@ -48,16 +56,14 @@ export default function ProfilPage() {
       setLoading(false);
     };
 
-    // 2. Initialiser la récupération du profil
     getProfile();
     
-    // 3. Écouter les changements d'auth (TRÈS IMPORTANT pour éviter la boucle)
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT' || !session) {
         localStorage.removeItem('currentUser');
         router.push('/login');
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        getProfile(); // Recharger le profil si la session change
+        getProfile();
       }
     });
 
@@ -66,6 +72,7 @@ export default function ProfilPage() {
     };
   }, [router]);
 
+  // ... (fonctions uploadAvatar, handleSave, ajouterACarte, confirmerSuppression restent les mêmes)
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       setUploading(true);
@@ -267,11 +274,15 @@ export default function ProfilPage() {
 
           <button type="submit" style={btnSave}>SAUVEGARDER</button>
 
-          <div style={{ marginTop: '20px' }}>
-            <button type="button" onClick={ajouterACarte} style={{ ...btnSave, background: '#4285F4', width: '100%' }} disabled={generatingCard}>
-              {generatingCard ? '⏳ Génération...' : '💳 Ajouter à Google Wallet'}
-            </button>
-          </div>
+          {/* --- MODIFICATION ICI : Affichage conditionnel du bouton --- */}
+          {!isAppleDevice && (
+            <div style={{ marginTop: '20px' }}>
+              <button type="button" onClick={ajouterACarte} style={{ ...btnSave, background: '#4285F4', width: '100%' }} disabled={generatingCard}>
+                {generatingCard ? '⏳ Génération...' : '💳 Ajouter à Google Wallet'}
+              </button>
+            </div>
+          )}
+          {/* ----------------------------------------------------------- */}
 
           <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #F1F5F9' }}>
             <button type="button" onClick={() => setShowDeleteModal(true)} style={btnDelete}>
