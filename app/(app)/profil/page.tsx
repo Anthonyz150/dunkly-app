@@ -18,8 +18,8 @@ export default function ProfilPage() {
   const [generatingCard, setGeneratingCard] = useState(false);
   
   // --- ÉTATS POUR LES FAVORIS ---
-  const [equipes, setEquipes] = useState<any[]>([]);
-  const [competitions, setCompetitions] = useState<any[]>([]);
+  const [equipes, setEquipes] = useState<any[]>([]); // 🔥 Doit être rempli
+  const [competitions, setCompetitions] = useState<any[]>([]); // 🔥 Doit être rempli
   const [selectedEquipe, setSelectedEquipe] = useState("");
   const [selectedChampionship, setSelectedChampionship] = useState("");
   // ------------------------------
@@ -39,7 +39,7 @@ export default function ProfilPage() {
 
       setUser(session.user);
       
-      // ✅ Charger les données du profil, y compris les favoris
+      // ✅ 1. Charger les données du profil (pseudo, favoris actuels)
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('username, prenom, nom, avatar_url, favorite_team_id, favorite_championship_id')
@@ -55,7 +55,7 @@ export default function ProfilPage() {
         setSelectedChampionship(profile.favorite_championship_id || '');
       }
 
-      // ✅ Charger les listes pour les sélecteurs
+      // ✅ 2. Charger les listes pour les sélecteurs (les données qui vont dans les dropdowns)
       const [equipesRes, compRes] = await Promise.all([
         supabase.from('equipes_clubs').select('id, nom_equipe'),
         supabase.from('competitions').select('id, nom')
@@ -130,7 +130,7 @@ export default function ProfilPage() {
     setMessage('⏳ Enregistrement...');
 
     try {
-      // ✅ Mettre à jour profiles avec favoris
+      // ✅ Mise à jour profiles avec favoris
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ 
@@ -295,16 +295,16 @@ export default function ProfilPage() {
             <div style={inputGroup}>
                 <label style={labelStyle}>Équipe favorite</label>
                 <select value={selectedEquipe} onChange={(e) => setSelectedEquipe(e.target.value)} style={inputStyle}>
-                <option value="">Sélectionner une équipe</option>
-                {equipes.map(e => <option key={e.id} value={e.id}>{e.nom_equipe}</option>)}
+                    <option value="">Sélectionner une équipe</option>
+                    {equipes.map(e => <option key={e.id} value={e.id}>{e.nom_equipe}</option>)}
                 </select>
             </div>
             
             <div style={inputGroup}>
                 <label style={labelStyle}>Championnat favori</label>
                 <select value={selectedChampionship} onChange={(e) => setSelectedChampionship(e.target.value)} style={inputStyle}>
-                <option value="">Sélectionner un championnat</option>
-                {competitions.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
+                    <option value="">Sélectionner un championnat</option>
+                    {competitions.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
                 </select>
             </div>
           </div>
