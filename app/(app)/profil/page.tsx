@@ -20,14 +20,14 @@ export default function ProfilPage() {
   type Equipe = {
     id: string;
     nom: string;
-    logo_url?: string;
-  };  
+    logo_url: string;
+  };
 
   const [equipes, setEquipes] = useState<Equipe[]>([]);
   type Competition = {
     id: string;
     nom: string;
-    logo_url?: string;
+    logo_url: string;
   };
 
   const [competitions, setCompetitions] = useState<Competition[]>([]);
@@ -283,11 +283,7 @@ export default function ProfilPage() {
                   return eq ? (
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                       {eq.logo_url && (
-                        <img
-                          src={eq.logo_url}
-                          alt={eq.nom}
-                          style={{ width: '30px', height: '30px', objectFit: 'contain' }}
-                        />
+                        <img src={eq.logo_url} alt={eq.nom} style={{ width: 30, height: 30 }} />
                       )}
                       {eq.nom}
                     </div>
@@ -309,11 +305,7 @@ export default function ProfilPage() {
                   return co ? (
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                       {co.logo_url && (
-                        <img
-                          src={co.logo_url}
-                          alt={co.nom}
-                          style={{ width: '30px', height: '30px', objectFit: 'contain' }}
-                        />
+                        <img src={co.logo_url} alt={co.nom} style={{ width: 30, height: 30, objectFit: 'contain' }} />
                       )}
                       {co.nom}
                     </div>
@@ -338,61 +330,39 @@ export default function ProfilPage() {
 
         {/* MODALES */}
         {showEquipeModal && (
-          <div style={modalOverlayStyle} onClick={() => setShowEquipeModal(false)}>
-            <div style={modalContentStyle} onClick={e => e.stopPropagation()}>
-              <h2 style={{ marginBottom: '20px' }}>Choisir mon équipe</h2>
-              <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                {equipes.map((e) => (
-                  <div
-                    key={e.id}
-                    style={listItemStyle}
-                    onClick={async () => {
-                      const id = String(e.id);
-
-                      setSelectedEquipeId(id);
-                      setShowEquipeModal(false);
-
-                      await supabase
-                        .from('profiles')
-                        .update({ favorite_team_id: id })
-                        .eq('id', user.id);
-                    }}
-                  >
-                    {e.nom}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-        {showChampModal && (
           <div style={modalOverlayStyle} onClick={() => setShowChampModal(false)}>
-            <div style={modalContentStyle} onClick={e => e.stopPropagation()}>
-              <h2 style={{ marginBottom: '20px' }}>Choisir mon championnat</h2>
-              <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+            <div style={{ ...modalContentStyle, maxWidth: '600px' }}>
+              <h2>Choisir ma compétitions</h2>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', maxHeight: '400px', overflowY: 'auto' }}>
                 {competitions.map((c) => (
                   <div
                     key={c.id}
-                    style={listItemStyle}
+                    style={{
+                      border: selectedEquipeId === c.id ? '3px solid #F97316' : '1px solid #ccc',
+                      borderRadius: '12px',
+                      padding: '10px',
+                      textAlign: 'center',
+                      cursor: 'pointer'
+                    }}
                     onClick={async () => {
-                      const id = String(c.id);
-
-                      setSelectedChampionshipId(id);
+                      setSelectedChampionshipId(c.id);
                       setShowChampModal(false);
 
                       await supabase
                         .from('profiles')
-                        .update({ favorite_championship_id: id })
+                        .update({ favorite_championship_id: c.id })
                         .eq('id', user.id);
                     }}
                   >
-                    {c.nom}
+                    <img src={c.logo_url} alt={c.nom} style={{ width: '60px', height: '60px', objectFit: 'contain', marginBottom: '10px' }} />
+                    <div>{c.nom}</div>
                   </div>
                 ))}
               </div>
             </div>
           </div>
         )}
+        image.png
       </div>
     </div >
   );
