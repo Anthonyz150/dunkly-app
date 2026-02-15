@@ -62,9 +62,9 @@ export default function Dashboard() {
           supabase.from('equipes_clubs').select('*', { count: 'exact', head: true }),
           supabase.from('matchs').select('*', { count: 'exact', head: true }),
           // Jointure pour le prochain match
-          supabase.from('matchs').select('*, competition(logo_url)').eq('status', 'a-venir').order('date', { ascending: true }).limit(1).maybeSingle(),
+          supabase.from('matchs').select('*, competition(logo_url, nom)').eq('status', 'a-venir').order('date', { ascending: true }).limit(1).maybeSingle(),
           // Jointure pour le dernier résultat
-          supabase.from('matchs').select('*, competition(logo_url)').eq('status', 'termine').order('date', { ascending: false }).limit(1).maybeSingle()
+          supabase.from('matchs').select('*, competition(logo_url, nom)').eq('status', 'termine').order('date', { ascending: false }).limit(1).maybeSingle()
         ]);
 
         setStats({
@@ -149,7 +149,10 @@ export default function Dashboard() {
                 {prochainMatch.competition?.logo_url && (
                     <img src={prochainMatch.competition.logo_url} alt="Logo" style={{width: '24px', height: '24px', objectFit: 'contain'}} />
                 )}
-                <div style={{ fontSize: '0.8rem', color: '#F97316', fontWeight: 'bold' }}>{prochainMatch.competition}</div>
+                {/* CORRECTION : Affichage du nom, pas de l'objet */}
+                <div style={{ fontSize: '0.8rem', color: '#F97316', fontWeight: 'bold' }}>
+                    {prochainMatch.competition?.nom || 'Championnat'}
+                </div>
               </div>
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '15px' }}>
@@ -185,7 +188,10 @@ export default function Dashboard() {
                 {dernierResultat.competition?.logo_url && (
                     <img src={dernierResultat.competition.logo_url} alt="Logo" style={{width: '24px', height: '24px', objectFit: 'contain'}} />
                 )}
-                <div style={{ fontSize: '0.75rem', color: '#F97316', fontWeight: 'bold' }}>{dernierResultat.competition}</div>
+                {/* CORRECTION : Affichage du nom, pas de l'objet */}
+                <div style={{ fontSize: '0.75rem', color: '#F97316', fontWeight: 'bold' }}>
+                    {dernierResultat.competition?.nom || 'Championnat'}
+                </div>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginBottom: '15px' }}>
