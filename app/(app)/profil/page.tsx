@@ -160,8 +160,8 @@ export default function ProfilPage() {
         setPrenom(profile.prenom || '');
         setNom(profile.nom || '');
         setAvatarUrl(profile.avatar_url || null);
-        setSelectedEquipeIds(profile.favorite_team_id || []);
-        setSelectedChampionshipIds(profile.favorite_championship_id || []);
+        setSelectedEquipeIds(profile.favorite_team_id ? profile.favorite_team_id : []);
+        setSelectedChampionshipIds(profile.favorite_championship_id ? profile.favorite_championship_id : []);
       }
 
       const [equipesRes, compRes] = await Promise.all([
