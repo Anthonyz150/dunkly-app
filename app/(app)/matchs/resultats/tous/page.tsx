@@ -36,7 +36,7 @@ export default function TousLesResultatsPage() {
         .from('matchs')
         .select(`
           *,
-          competitions(logo_url),
+          competition(logo_url),
           journees(nom)
         `)
         .eq('status', 'termine')

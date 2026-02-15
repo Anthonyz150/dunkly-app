@@ -75,7 +75,7 @@ export default function MatchsAVenirPage() {
 
     const { data: listClubs } = await supabase.from('equipes_clubs').select('*');
     const { data: listArb } = await supabase.from('arbitres').select('*').order('nom', { ascending: true });
-    const { data: listComp } = await supabase.from('competitions').select('*');
+    const { data: listComp } = await supabase.from('competition').select('*');
     const { data: listJournees } = await supabase.from('journees').select('*');
 
     if (listClubs) setClubs(listClubs);

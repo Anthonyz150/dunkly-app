@@ -45,7 +45,7 @@ export default function DetailMatchPage({ params }: { params: Promise<{ id: stri
         .select(`
           *,
           journees(nom),
-          competitions(logo_url) 
+          competition(logo_url) 
         `)
         .eq('id', matchId)
         .single();

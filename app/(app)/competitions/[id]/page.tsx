@@ -28,7 +28,7 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
   const chargerDonnees = async () => {
     setLoading(true);
     try {
-      const { data: comp } = await supabase.from('competitions').select('*').eq('id', compId).single();
+      const { data: comp } = await supabase.from('competition').select('*').eq('id', compId).single();
       const { data: listeClubs } = await supabase.from('equipes_clubs').select('*, logo_url').order('nom');
       
       if (comp) {
@@ -109,14 +109,14 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
   const cloturerCompet = async () => {
     if (!isAdmin) return;
     if (confirm("Voulez-vous vraiment clôturer cette compétition ?")) {
-      const { error } = await supabase.from('competitions').update({ statut: 'cloture' }).eq('id', compId);
+      const { error } = await supabase.from('competition').update({ statut: 'cloture' }).eq('id', compId);
       if (!error) setCompetition({ ...competition, statut: 'cloture' });
     }
   };
 
   const updateCompetLogo = async () => {
     if (!isAdmin) return;
-    const { error } = await supabase.from('competitions').update({ logo_url: newLogoUrl }).eq('id', compId);
+    const { error } = await supabase.from('competition').update({ logo_url: newLogoUrl }).eq('id', compId);
     if (!error) {
       setCompetition({ ...competition, logo_url: newLogoUrl });
       alert("Logo de la compétition mis à jour !");
@@ -136,7 +136,7 @@ export default function DetailCompetitionPage({ params }: { params: Promise<{ id
       logoUrl: club.logo_url
     };
     const nouvelles = [...(competition.equipes_engagees || []), nouvelleEntree];
-    const { error } = await supabase.from('competitions').update({ equipes_engagees: nouvelles }).eq('id', compId);
+    const { error } = await supabase.from('competition').update({ equipes_engagees: nouvelles }).eq('id', compId);
     if (!error) {
       setCompetition({ ...competition, equipes_engagees: nouvelles });
       setSelectedEquipe(null);

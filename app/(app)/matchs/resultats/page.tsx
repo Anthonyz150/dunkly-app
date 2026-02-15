@@ -66,7 +66,7 @@ export default function ResultatsPage() {
     const { data, error } = await supabase
       .from('matchs')
       // !left garantit que le match s'affiche même si la jointure échoue
-      .select('*, competitions!left(logo_url), journees!left(id, nom)')
+      .select('*, competition!left(logo_url), journees!left(id, nom)')
       .order('competition', { ascending: true })
       .order('date', { ascending: false });
 

@@ -23,7 +23,7 @@ export default function CompetitionsPage() {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('competitions')
+        .from('competition')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -52,7 +52,7 @@ export default function CompetitionsPage() {
     };
 
     const { data, error } = await supabase
-      .from('competitions')
+      .from('competition')
       .insert([nouvelle])
       .select();
 
@@ -71,7 +71,7 @@ export default function CompetitionsPage() {
     e.preventDefault();
     if (!isAdmin) return;
     if (confirm("Voulez-vous vraiment supprimer cette compétition ?")) {
-      const { error } = await supabase.from('competitions').delete().eq('id', id);
+      const { error } = await supabase.from('competition').delete().eq('id', id);
       if (!error) setCompetitions(competitions.filter(c => c.id !== id));
     }
   };
