@@ -62,9 +62,9 @@ export default function Dashboard() {
           supabase.from('equipes_clubs').select('*', { count: 'exact', head: true }),
           supabase.from('matchs').select('*', { count: 'exact', head: true }),
           // Jointure pour le prochain match
-          supabase.from('matchs').select('*, competitions(logo_url)').eq('status', 'a-venir').order('date', { ascending: true }).limit(1).maybeSingle(),
+          supabase.from('matchs').select('*, competition(logo_url)').eq('status', 'a-venir').order('date', { ascending: true }).limit(1).maybeSingle(),
           // Jointure pour le dernier résultat
-          supabase.from('matchs').select('*, competitions(logo_url)').eq('status', 'termine').order('date', { ascending: false }).limit(1).maybeSingle()
+          supabase.from('matchs').select('*, competition(logo_url)').eq('status', 'termine').order('date', { ascending: false }).limit(1).maybeSingle()
         ]);
 
         setStats({
@@ -146,8 +146,8 @@ export default function Dashboard() {
             <div style={{ position: 'relative', zIndex: 2 }}>
               {/* --- LOGO COMPETITION --- */}
               <div style={{display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px'}}>
-                {prochainMatch.competitions?.logo_url && (
-                    <img src={prochainMatch.competitions.logo_url} alt="Logo" style={{width: '24px', height: '24px', objectFit: 'contain'}} />
+                {prochainMatch.competition?.logo_url && (
+                    <img src={prochainMatch.competition.logo_url} alt="Logo" style={{width: '24px', height: '24px', objectFit: 'contain'}} />
                 )}
                 <div style={{ fontSize: '0.8rem', color: '#F97316', fontWeight: 'bold' }}>{prochainMatch.competition}</div>
               </div>
@@ -182,8 +182,8 @@ export default function Dashboard() {
             <div style={{ textAlign: 'center' }}>
               {/* --- LOGO COMPETITION --- */}
               <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '15px'}}>
-                {dernierResultat.competitions?.logo_url && (
-                    <img src={dernierResultat.competitions.logo_url} alt="Logo" style={{width: '24px', height: '24px', objectFit: 'contain'}} />
+                {dernierResultat.competition?.logo_url && (
+                    <img src={dernierResultat.competition.logo_url} alt="Logo" style={{width: '24px', height: '24px', objectFit: 'contain'}} />
                 )}
                 <div style={{ fontSize: '0.75rem', color: '#F97316', fontWeight: 'bold' }}>{dernierResultat.competition}</div>
               </div>
