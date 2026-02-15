@@ -61,6 +61,10 @@ export default function ProfilPage() {
       if (equipesRes.data) setEquipes(equipesRes.data);
       if (compRes.data) setCompetitions(compRes.data);
 
+      console.log("Equipes:", equipesRes.data);
+      console.log("Competitions:", compRes.data);
+      console.log("Errors:", equipesRes.error, compRes.error);      
+
       setLoading(false);
     };
 
@@ -277,7 +281,8 @@ export default function ProfilPage() {
                     key={e.id}
                     style={{
                       ...listItemStyle,
-                      backgroundColor: selectedEquipeId === String(e.id) ? '#FFF7ED' : 'white'
+                      backgroundColor: selectedEquipeId === String(e.id) ? '#F97316' : 'white',
+                      color: selectedEquipeId === String(e.id) ? 'white' : '#1E293B'                      
                     }}
                     onClick={() => {
                       setSelectedEquipeId(String(e.id));
@@ -350,20 +355,27 @@ const nameGridStyle: React.CSSProperties = {
   gap: '15px',
 };
 
-const inputGroupStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: '8px' };
+const inputGroupStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '12px',
+  marginBottom: '10px'
+};
 const labelStyle: React.CSSProperties = { fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase' };
 const inputStyle: React.CSSProperties = { width: '100%', padding: '16px', borderRadius: '16px', border: '2px solid #F1F5F9', fontSize: '1rem', outline: 'none', color: '#1E293B', boxSizing: 'border-box' };
 const btnStyle: React.CSSProperties = {
   padding: '16px',
-  borderRadius: '16px',
-  border: 'none',
-  backgroundColor: '#F1F5F9',
+  borderRadius: '18px',
+  border: '2px solid #F97316',
+  background: 'linear-gradient(135deg, #F97316, #FB923C)',
+  color: 'white',
   textAlign: 'left',
   cursor: 'pointer',
   fontSize: '1rem',
   width: '100%',
-  color: '#1E293B',
-  fontWeight: '600'
+  fontWeight: '700',
+  boxShadow: '0 6px 15px rgba(249,115,22,0.3)',
+  transition: 'all 0.2s ease'
 };
 const btnSaveStyle: React.CSSProperties = { background: '#F97316', color: 'white', border: 'none', padding: '16px', borderRadius: '16px', cursor: 'pointer', fontWeight: '900', fontSize: '0.95rem' };
 const btnDeleteStyle: React.CSSProperties = { background: 'transparent', color: '#EF4444', border: '2px solid #FEE2E2', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontWeight: '800', fontSize: '0.8rem', width: '100%' };
