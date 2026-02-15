@@ -103,9 +103,9 @@ export default function DetailMatchPage({ params }: { params: Promise<{ id: stri
       {/* --- CARTES DE SCORE MODERNES (Dark Theme) --- */}
       <div style={scoreCard}>
         {/* --- AFFICHAGE LOGO COMPÉTITION --- */}
-        {match.competitions?.logo_url && (
+        {match.competition?.logo_url && (
             <img 
-              src={match.competitions.logo_url} 
+              src={match.competition.logo_url} 
               alt={match.competition}
               style={{ width: '60px', height: '60px', objectFit: 'contain', marginBottom: '15px' }}
             />

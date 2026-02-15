@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from "react";
-import { supabase } from "@/lib/supabase"; 
+import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 
 // 1. DÉFINITION DE L'INTERFACE AVEC LES JOINTURES
@@ -12,13 +12,12 @@ interface MatchInterface {
   clubB: string;
   scoreA: number;
   scoreB: number;
-  competition: string;
   status: 'termine' | 'en-cours' | 'a-venir';
   logo_urlA?: string;
   logo_urlB?: string;
-  // Jointures (nom de la table en minuscule dans la réponse SQL)
-  competitions?: { logo_url?: string } | null;
-  journees?: { nom: string } | null; // <-- Le nom de la journée
+  competition_nom: string; // nom de la compétition
+  competition?: { logo_url?: string } | null; // jointure logo
+  journees?: { nom: string } | null;
 }
 
 export default function TousLesResultatsPage() {
@@ -36,14 +35,14 @@ export default function TousLesResultatsPage() {
         .from('matchs')
         .select(`
           *,
-          competition(logo_url),
+          competition(logo_url, nom),
           journees(nom)
         `)
         .eq('status', 'termine')
         // Tri par compétition puis par date
-        .order('competition', { ascending: true })
+        .order('competition_nom', { ascending: true })
         .order('date', { ascending: false });
-      
+
       if (supabaseError) {
         console.error("Erreur Supabase:", supabaseError);
         setError(`Erreur: ${supabaseError.message}`);
@@ -60,21 +59,20 @@ export default function TousLesResultatsPage() {
   const formatDate = (dateString: string) => {
     if (!dateString) return "Date inconnue";
     return new Date(dateString).toLocaleDateString('fr-FR', {
-        day: 'numeric',
-        month: 'short'
+      day: 'numeric',
+      month: 'short'
     });
   };
 
   // --- REGROUPEMENT PAR COMPÉTITION PUIS JOURNÉE ---
   const matchsGroupes = useMemo(() => {
     return matchs.reduce((acc, match) => {
-      const competName = match.competition || 'Autres';
-      // Récupération du nom depuis la jointure avec sécurité ?
+      const competName = match.competition_nom || 'Autres';
       const journeeName = match.journees?.nom || 'Hors Journée';
 
       if (!acc[competName]) acc[competName] = {};
       if (!acc[competName][journeeName]) acc[competName][journeeName] = [];
-      
+
       acc[competName][journeeName].push(match);
       return acc;
     }, {} as Record<string, Record<string, MatchInterface[]>>);
@@ -86,52 +84,32 @@ export default function TousLesResultatsPage() {
   return (
     <div style={containerStyle}>
       <h1 style={titleStyle}>🛡️ Tous les résultats</h1>
-      
-      {matchs.length === 0 && <p style={{color: '#94a3b8', textAlign: 'center'}}>Aucun résultat disponible.</p>}
+
+      {matchs.length === 0 && <p style={{ color: '#94a3b8', textAlign: 'center' }}>Aucun résultat disponible.</p>}
 
       {/* --- AFFICHAGE HIERARCHIQUE --- */}
       {Object.entries(matchsGroupes).map(([competName, journees]) => (
         <div key={competName} style={competSectionStyle}>
           <h2 style={competTitleStyle}>{competName}</h2>
-          
+
           {Object.entries(journees).map(([journeeName, matchsList]) => (
             <div key={journeeName} style={journeeSectionStyle}>
-              {/* Affichage du nom de la journée */}
               <h3 style={journeeTitleStyle}>{journeeName}</h3>
-              
               <div style={gridStyle}>
                 {matchsList.map((m) => (
                   <Link href={`/matchs/detail/${m.id}`} key={m.id} style={{ textDecoration: 'none' }}>
                     <div style={cardStyle}>
-                      {/* Header card: Date */}
                       <div style={cardHeaderStyle}>
-                          <span style={dateStyle}>{formatDate(m.date)}</span>
+                        <span style={dateStyle}>{formatDate(m.date)}</span>
                       </div>
-                      
-                      {/* Corps card: Logos et Scores */}
                       <div style={matchRowStyle}>
-                        {/* Équipe A */}
                         <div style={teamStyle}>
-                          {m.logo_urlA ? (
-                            <img src={m.logo_urlA} alt={m.clubA} style={logoStyle} />
-                          ) : (
-                            <div style={logoPlaceholderStyle}>{m.clubA ? m.clubA[0] : '?'}</div>
-                          )}
+                        <img src={m.logo_urlA || m.competition?.logo_url || '/default-logo.png'} alt={m.clubA} style={logoStyle}/>
                           <span style={clubNameStyle}>{m.clubA}</span>
                         </div>
-                        
-                        {/* Score */}
-                        <div style={scoreStyle}>
-                          {m.scoreA} - {m.scoreB}
-                        </div>
-                        
-                        {/* Équipe B */}
-                        <div style={{...teamStyle, flexDirection: 'row-reverse'}}>
-                          {m.logo_urlB ? (
-                            <img src={m.logo_urlB} alt={m.clubB} style={logoStyle} />
-                          ) : (
-                            <div style={logoPlaceholderStyle}>{m.clubB ? m.clubB[0] : '?'}</div>
-                          )}
+                        <div style={scoreStyle}>{m.scoreA} - {m.scoreB}</div>
+                        <div style={{ ...teamStyle, flexDirection: 'row-reverse' }}>
+                        <img src={m.logo_urlB || m.competition?.logo_url || '/default-logo.png'} alt={m.clubB} style={logoStyle}/>
                           <span style={clubNameStyle}>{m.clubB}</span>
                         </div>
                       </div>
@@ -144,21 +122,19 @@ export default function TousLesResultatsPage() {
         </div>
       ))}
     </div>
-  );
+  )
 }
 
-// --- STYLES (Sombre, Moderne et Pleine Largeur) ---
-
 // --- CORRECTION: Pleine largeur (width: '100%') ---
-const containerStyle = { 
-  padding: '20px', 
-  width: '100%', 
-  boxSizing: 'border-box' as const, 
-  margin: '0 auto', 
-  fontFamily: 'system-ui, sans-serif', 
-  color: 'white', 
-  minHeight: '100vh', 
-  backgroundColor: '#0f172a' 
+const containerStyle = {
+  padding: '20px',
+  width: '100%',
+  boxSizing: 'border-box' as const,
+  margin: '0 auto',
+  fontFamily: 'system-ui, sans-serif',
+  color: 'white',
+  minHeight: '100vh',
+  backgroundColor: '#0f172a'
 };
 
 const titleStyle = { fontWeight: '900' as const, marginBottom: '30px', color: 'white', textAlign: 'center' as const };
@@ -169,10 +145,10 @@ const journeeTitleStyle = { color: '#e2e8f0', fontSize: '1.2rem', marginBottom: 
 const gridStyle = { display: 'flex' as const, flexDirection: 'column' as const, gap: '15px' };
 
 // --- CORRECTION: Arrondi carte moderne (24px) ---
-const cardStyle = { 
-  border: '1px solid #334155', 
+const cardStyle = {
+  border: '1px solid #334155',
   padding: '20px', // Un peu plus de padding pour les gros arrondis
-  borderRadius: '24px', 
+  borderRadius: '24px',
   backgroundColor: '#1e293b',
   transition: 'transform 0.1s, box-shadow 0.1s',
   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
