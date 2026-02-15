@@ -133,14 +133,23 @@ export default function ProfilPage() {
     setMessage('⏳ Enregistrement...');
     try {
       const { error: profileError } = await supabase.from('profiles')
-        .update({ username, prenom, nom, favorite_team_id: selectedEquipeIds, favorite_championship_id: selectedChampionshipIds })
+        .update({
+          username,
+          prenom,
+          nom,
+          favorite_team_id: selectedEquipeIds[0] || null,
+          favorite_championship_id: selectedChampionshipIds[0] || null
+        })
         .eq('id', user.id);
       if (profileError) throw profileError;
       await supabase.auth.updateUser({ data: { prenom, nom, username } });
       setMessage('✅ Profil mis à jour !');
       setTimeout(() => setMessage(''), 3000);
-    } catch (error: any) { setMessage('❌ Erreur : ' + error.message); }
+    } catch (error: any) {
+      setMessage('❌ Erreur : ' + error.message);
+    }
   };
+
 
   const ajouterACarte = async () => {
     try {
@@ -261,7 +270,12 @@ export default function ProfilPage() {
                   </div>
                 ))}
               </div>
-              <button onClick={async () => { setShowEquipeModal(false); await supabase.from('profiles').update({ favorite_team_id: selectedEquipeIds }).eq('id', user.id); }}>Valider</button>
+              <button onClick={async () => {
+                setShowEquipeModal(false);
+                await supabase.from('profiles')
+                  .update({ favorite_team_id: selectedEquipeIds[0] || null })
+                  .eq('id', user.id);
+              }}>Valider</button>
             </div>
           </div>
         )}
@@ -282,7 +296,12 @@ export default function ProfilPage() {
                   </div>
                 ))}
               </div>
-              <button onClick={async () => { setShowChampModal(false); await supabase.from('profiles').update({ favorite_championship_id: selectedChampionshipIds }).eq('id', user.id); }}>Valider</button>
+              <button onClick={async () => {
+                setShowChampModal(false);
+                await supabase.from('profiles')
+                  .update({ favorite_championship_id: selectedChampionshipIds[0] || null })
+                  .eq('id', user.id);
+              }}>Valider</button>
             </div>
           </div>
         )}
