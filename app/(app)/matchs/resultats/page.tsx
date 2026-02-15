@@ -23,40 +23,45 @@ interface Match {
 }
 
 export default function ResultatsPage() {
-  const [matchs, setMatchs] = useState<Match[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [user, setUser] = useState<any>(null);
+   const [matchs, setMatchs] = useState<Match[]>([]);
+   const [loading, setLoading] = useState(true);
+   const [searchTerm, setSearchTerm] = useState("");
+   const [user, setUser] = useState<any>(null);
+  
+   const formatDate = (date: string) =>
+     date ? new Date(date).toLocaleDateString("fr-FR") : "NC";
+  
+   const chargerDonneesInitiales = useCallback(async () => {
+     setLoading(true);
 
-  const formatDate = (date: string) =>
-    date ? new Date(date).toLocaleDateString("fr-FR") : "NC";
-
-  // --- CORRECTION : La fonction async est définie ici ---
-  const chargerDonneesInitiales = useCallback(async () => {
-    setLoading(true);
-    
-    // 1. Récupérer l'utilisateur stocké
-    const storedUser = localStorage.getItem("currentUser");
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        console.error("Erreur parsing user:", e);
-      }
-    }
-
-    // 2. Charger les matchs depuis Supabase
-    const { data, error } = await supabase
-      .from("matchs")
-      .select("*, competition!left(logo_url), journees!left(id, nom)")
-      .order("competition", { ascending: true })
-      .order("date", { ascending: false });
-
-    if (error) console.error("Erreur Supabase:", error);
-    else setMatchs(data || []);
-    
-    setLoading(false);
-  }, []);
+     // 1. Récupérer l'utilisateur stocké
+      const storedUser = localStorage.getItem("currentUser");
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch (e) {
+          console.error("Erreur parsing user:", e);
+        }
+      }
+  
+      // 2. Charger les matchs depuis Supabase avec le filtre "termine"
+      const { data, error } = await supabase
+        .from("matchs")
+        // --- CORRECTION : Ajout du filtre de statut ici ---
+        .select(`
+          *, 
+          competition!left(logo_url, nom), 
+          journees!left(id, nom)
+        `)
+        .eq("status", "termine") 
+        // Tri par date (la compétition est gérée dans le useMemo)
+        .order("date", { ascending: false });
+  
+      if (error) console.error("Erreur Supabase:", error);
+      else setMatchs(data || []);
+      
+      setLoading(false);
+    }, []);
 
   useEffect(() => {
     // --- CORRECTION : Appel de la fonction async interne ---
