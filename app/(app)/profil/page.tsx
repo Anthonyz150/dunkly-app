@@ -4,8 +4,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-// --- IMPORT DU CSS ---
-import styles from './page.module.css';
 
 export default function ProfilPage() {
   const [user, setUser] = useState<any>(null);
@@ -21,7 +19,6 @@ export default function ProfilPage() {
   
   const [equipes, setEquipes] = useState<any[]>([]);
   const [competitions, setCompetitions] = useState<any[]>([]);
-  // CHANGEMENT: Utilisation de ID pour stocker la sélection
   const [selectedEquipeId, setSelectedEquipeId] = useState("");
   const [selectedChampionshipId, setSelectedChampionshipId] = useState("");
   
@@ -41,10 +38,9 @@ export default function ProfilPage() {
       }
       setUser(session.user);
       
-      // Charger le profil
       const { data: profile } = await supabase
         .from('profiles')
-        .select('username, prenom, nom, avatar_url, favorite_team_id, favorite_championship_id')
+        .select('*')
         .eq('id', session.user.id)
         .single();
       
@@ -57,7 +53,6 @@ export default function ProfilPage() {
         setSelectedChampionshipId(profile.favorite_championship_id || '');
       }
 
-      // Charger les listes de favoris
       const [equipesRes, compRes] = await Promise.all([
         supabase.from('equipes_clubs').select('id, nom_equipe'),
         supabase.from('competitions').select('id, nom')
@@ -99,7 +94,6 @@ export default function ProfilPage() {
       const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
       const newAvatarUrl = data.publicUrl;
 
-      // CORRECTION 1: Mettre à jour la table profiles pour avatar_url avec l'URL publique
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: newAvatarUrl })
@@ -107,13 +101,10 @@ export default function ProfilPage() {
 
       if (updateError) throw updateError;
       
-      setAvatarUrl(newAvatarUrl);
+      setAvatarUrl(`${newAvatarUrl}?t=${new Date().getTime()}`);
       setMessage('✅ Photo mise à jour !');
       setTimeout(() => setMessage(''), 3000);
       
-      const currentData = JSON.parse(localStorage.getItem('currentUser') || '{}');
-      localStorage.setItem('currentUser', JSON.stringify({ ...currentData, avatar_url: newAvatarUrl }));
-      window.dispatchEvent(new Event('storage'));
     } catch (error: any) {
       setMessage('❌ Erreur photo : ' + error.message);
     } finally {
@@ -136,9 +127,6 @@ export default function ProfilPage() {
       if (profileError) throw profileError;
 
       await supabase.auth.updateUser({ data: { prenom, nom, username } });
-      const currentData = JSON.parse(localStorage.getItem('currentUser') || '{}');
-      localStorage.setItem('currentUser', JSON.stringify({ ...currentData, username, prenom, nom }));
-      window.dispatchEvent(new Event('storage'));
       setMessage('✅ Profil mis à jour !');
       setTimeout(() => setMessage(''), 3000);
     } catch (error: any) {
@@ -183,7 +171,6 @@ export default function ProfilPage() {
     }
   };
 
-  // CORRECTION 2: Logique pour afficher le nom dans les boutons
   const getSelectedEquipeName = () => {
     const eq = equipes.find(e => e.id === selectedEquipeId);
     return eq ? eq.nom_equipe : "Sélectionner une équipe";
@@ -194,18 +181,13 @@ export default function ProfilPage() {
     return ch ? ch.nom : "Sélectionner un championnat";
   };
 
-  if (loading) return (
-    <div className={styles.container} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-      <div className={styles.loadingSpinner}>🏀</div>
-    </div>
-  );
+  if (loading) return <div style={containerStyle}>Chargement...</div>;
 
   return (
-    <div className={styles.container}>
-      <div className={styles.contentWrapper}>
+    <div style={containerStyle}>
+      <div style={contentWrapperStyle}>
         <header style={{ marginBottom: '30px', textAlign: 'center' }}>
           <h1 style={{ fontSize: '1.8rem', fontWeight: '900', color: '#0F172A', margin: 0 }}>MON PROFIL <span style={{ color: '#F97316' }}>.</span></h1>
-          <p style={{ color: '#64748B', marginTop: '5px' }}>Gérez votre identité Dunkly.</p>
         </header>
 
         {message && (
@@ -214,74 +196,55 @@ export default function ProfilPage() {
           </div>
         )}
 
-        <form onSubmit={handleSave} className={styles.profileForm}>
+        <form onSubmit={handleSave} style={profileFormStyle}>
           <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-            {/* CORRECTION 1: AFFICHAGE PHOTO CORRIGÉ */}
-            <img src={avatarUrl || 'https://via.placeholder.com/150?text=Avatar'} alt="Avatar" style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', marginBottom: '15px', border: '4px solid white', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
+            <img key={avatarUrl} src={avatarUrl || 'https://via.placeholder.com/150?text=Avatar'} alt="Avatar" style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', marginBottom: '15px', border: '4px solid white', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
             <div>
-              <label htmlFor="avatar-upload" style={{ ...btnSave, padding: '10px 20px', fontSize: '0.8rem', cursor: 'pointer', display: 'inline-block' }}>
+              <label htmlFor="avatar-upload" style={{ background: '#F97316', color: 'white', padding: '10px 20px', borderRadius: '10px', fontSize: '0.8rem', cursor: 'pointer', display: 'inline-block' }}>
                 {uploading ? '⏳...' : 'Changer de photo'}
               </label>
               <input type="file" id="avatar-upload" accept="image/*" onChange={uploadAvatar} disabled={uploading} style={{ display: 'none' }} />
             </div>
           </div>
 
-          <div style={inputGroup}><label style={labelStyle}>Pseudo</label><input type="text" value={username} onChange={(e) => setUsername(e.target.value)} style={inputStyle} required /></div>
-          <div style={inputGroup}><label style={labelStyle}>Adresse E-mail</label><input type="text" value={user?.email} disabled style={disabledInput} /></div>
+          <div style={inputGroupStyle}><label style={labelStyle}>Pseudo</label><input type="text" value={username} onChange={(e) => setUsername(e.target.value)} style={inputStyle} required /></div>
           
-          <div className={styles.nameGrid}>
-            <div style={inputGroup}><label style={labelStyle}>Prénom</label><input type="text" value={prenom} onChange={(e) => setPrenom(e.target.value)} style={inputStyle} required /></div>
-            <div style={inputGroup}><label style={labelStyle}>Nom</label><input type="text" value={nom} onChange={(e) => setNom(e.target.value)} style={inputStyle} required /></div>
+          <div style={nameGridStyle}>
+            <div style={inputGroupStyle}><label style={labelStyle}>Prénom</label><input type="text" value={prenom} onChange={(e) => setPrenom(e.target.value)} style={inputStyle} required /></div>
+            <div style={inputGroupStyle}><label style={labelStyle}>Nom</label><input type="text" value={nom} onChange={(e) => setNom(e.target.value)} style={inputStyle} required /></div>
           </div>
 
-          {/* CORRECTION 2: Remplacement des champs par des BOUTONS */}
           <div style={{borderTop: '1px solid #F1F5F9', marginTop: '10px', paddingTop: '20px'}}>
             <h3 style={{fontSize: '1rem', fontWeight: '700', color: '#0F172A', marginBottom: '15px'}}>Mes Favoris</h3>
-            <div style={inputGroup}>
+            <div style={inputGroupStyle}>
                 <label style={labelStyle}>Équipe favorite</label>
                 <button type="button" onClick={() => setShowEquipeModal(true)} style={btnStyle}>{getSelectedEquipeName()}</button>
             </div>
-            <div style={inputGroup}>
+            <div style={inputGroupStyle}>
                 <label style={labelStyle}>Championnat favori</label>
                 <button type="button" onClick={() => setShowChampModal(true)} style={btnStyle}>{getSelectedChampName()}</button>
             </div>
           </div>
 
-          <button type="submit" style={btnSave}>SAUVEGARDER</button>
+          <button type="submit" style={btnSaveStyle}>SAUVEGARDER</button>
 
-          <div style={{ marginTop: '20px' }}>
-              <button type="button" onClick={ajouterACarte} style={{ ...btnSave, background: '#4285F4', width: '100%' }} disabled={generatingCard}>
-                💳 {generatingCard ? '⏳ Génération...' : 'Ajouter à Google Wallet'}
-              </button>
-          </div>
+          <button type="button" onClick={ajouterACarte} style={{ ...btnSaveStyle, background: '#4285F4', width: '100%', marginTop: '20px' }} disabled={generatingCard}>
+            💳 {generatingCard ? '⏳ Génération...' : 'Ajouter à Google Wallet'}
+          </button>
 
           <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #F1F5F9' }}>
-            <button type="button" onClick={() => setShowDeleteModal(true)} style={btnDelete}>SUPPRIMER MON COMPTE</button>
+            <button type="button" onClick={() => setShowDeleteModal(true)} style={btnDeleteStyle}>SUPPRIMER MON COMPTE</button>
           </div>
         </form>
 
-        {showDeleteModal && (
-          <div className={styles.modalOverlay}>
-            <div className={styles.modalContent}>
-              <div style={{ fontSize: '2rem', marginBottom: '10px' }}>⚠️</div>
-              <h2 style={{ margin: '0 0 10px 0', color: '#0F172A' }}>Supprimer le compte ?</h2>
-              <p style={{ color: '#64748B', fontSize: '0.9rem', lineHeight: '1.5' }}>Cette action est irréversible.</p>
-              <div style={{ display: 'flex', gap: '10px', marginTop: '25px' }}>
-                <button onClick={() => setShowDeleteModal(false)} style={btnCancel}>Annuler</button>
-                <button onClick={confirmerSuppression} style={btnConfirmDelete}>Confirmer</button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* CORRECTION 3: AFFICHAGE DANS LES POPUPS */}
+        {/* MODALES */}
         {showEquipeModal && (
-          <div className={styles.modalOverlay} onClick={() => setShowEquipeModal(false)}>
-            <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
-              <h2 style={{ marginBottom: '20px', fontSize: '1.2rem', color: '#0F172A' }}>Choisir mon équipe</h2>
+          <div style={modalOverlayStyle} onClick={() => setShowEquipeModal(false)}>
+            <div style={modalContentStyle} onClick={e => e.stopPropagation()}>
+              <h2 style={{ marginBottom: '20px' }}>Choisir mon équipe</h2>
               <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                 {equipes.map(e => (
-                    <div key={e.id} style={{...listItemStyle, backgroundColor: selectedEquipeId === e.id ? '#FFF7ED' : 'white', borderColor: selectedEquipeId === e.id ? '#F97316' : '#F1F5F9'}} onClick={() => { setSelectedEquipeId(e.id); setShowEquipeModal(false); }}>
+                    <div key={e.id} style={{...listItemStyle, backgroundColor: selectedEquipeId === e.id ? '#FFF7ED' : 'white'}} onClick={() => { setSelectedEquipeId(e.id); setShowEquipeModal(false); }}>
                         {e.nom_equipe}
                     </div>
                 ))}
@@ -291,12 +254,12 @@ export default function ProfilPage() {
         )}
 
         {showChampModal && (
-          <div className={styles.modalOverlay} onClick={() => setShowChampModal(false)}>
-            <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
-              <h2 style={{ marginBottom: '20px', fontSize: '1.2rem', color: '#0F172A' }}>Choisir mon championnat</h2>
+          <div style={modalOverlayStyle} onClick={() => setShowChampModal(false)}>
+            <div style={modalContentStyle} onClick={e => e.stopPropagation()}>
+              <h2 style={{ marginBottom: '20px' }}>Choisir mon championnat</h2>
               <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                 {competitions.map(c => (
-                    <div key={c.id} style={{...listItemStyle, backgroundColor: selectedChampionshipId === c.id ? '#FFF7ED' : 'white', borderColor: selectedChampionshipId === c.id ? '#F97316' : '#F1F5F9'}} onClick={() => { setSelectedChampionshipId(c.id); setShowChampModal(false); }}>
+                    <div key={c.id} style={{...listItemStyle, backgroundColor: selectedChampionshipId === c.id ? '#FFF7ED' : 'white'}} onClick={() => { setSelectedChampionshipId(c.id); setShowChampModal(false); }}>
                         {c.nom}
                     </div>
                 ))}
@@ -309,14 +272,64 @@ export default function ProfilPage() {
   );
 }
 
-// Styles restants en JS
-const inputGroup = { display: 'flex', flexDirection: 'column' as const, gap: '8px' };
-const labelStyle = { fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase' as const };
-const inputStyle = { width: '100%', padding: '16px', borderRadius: '16px', border: '2px solid #F1F5F9', fontSize: '1rem', outline: 'none', color: '#1E293B', boxSizing: 'border-box' as const };
-const disabledInput = { ...inputStyle, backgroundColor: '#F8FAFC', color: '#94A3B8', cursor: 'not-allowed' };
-const btnStyle = { padding: '16px', borderRadius: '16px', border: '2px solid #F1F5F9', backgroundColor: 'white', textAlign: 'left' as const, cursor: 'pointer', fontSize: '1rem', width: '100%', color: '#1E293B' };
-const btnSave = { background: '#F97316', color: 'white', border: 'none', padding: '16px', borderRadius: '16px', cursor: 'pointer', fontWeight: '900', fontSize: '0.95rem' };
-const btnDelete = { background: 'transparent', color: '#EF4444', border: '2px solid #FEE2E2', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontWeight: '800', fontSize: '0.8rem', width: '100%' };
-const btnCancel = { flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid #E2E8F0', background: 'white', fontWeight: '700', cursor: 'pointer', color: '#64748B' };
-const btnConfirmDelete = { flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: '#EF4444', color: 'white', fontWeight: '700', cursor: 'pointer' };
-const listItemStyle = { padding: '15px', border: '1px solid', borderRadius: '12px', marginBottom: '10px', cursor: 'pointer', textAlign: 'left' as const, fontSize: '0.9rem', color: '#1E293B' };
+// --- STYLES EN LIGNE (Remplace le CSS) ---
+const containerStyle: React.CSSProperties = {
+  padding: '20px',
+  display: 'flex',
+  justifyContent: 'center',
+  minHeight: '100vh',
+  backgroundColor: '#F8FAFC',
+};
+
+const contentWrapperStyle: React.CSSProperties = {
+  width: '100%',
+  maxWidth: '500px',
+  background: 'white',
+  padding: '30px',
+  borderRadius: '20px',
+  boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
+};
+
+const profileFormStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '20px',
+};
+
+const nameGridStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr',
+  gap: '15px',
+};
+
+const inputGroupStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: '8px' };
+const labelStyle: React.CSSProperties = { fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase' };
+const inputStyle: React.CSSProperties = { width: '100%', padding: '16px', borderRadius: '16px', border: '2px solid #F1F5F9', fontSize: '1rem', outline: 'none', color: '#1E293B', boxSizing: 'border-box' };
+const btnStyle: React.CSSProperties = { padding: '16px', borderRadius: '16px', border: '2px solid #F1F5F9', backgroundColor: 'white', textAlign: 'left', cursor: 'pointer', fontSize: '1rem', width: '100%', color: '#1E293B' };
+const btnSaveStyle: React.CSSProperties = { background: '#F97316', color: 'white', border: 'none', padding: '16px', borderRadius: '16px', cursor: 'pointer', fontWeight: '900', fontSize: '0.95rem' };
+const btnDeleteStyle: React.CSSProperties = { background: 'transparent', color: '#EF4444', border: '2px solid #FEE2E2', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontWeight: '800', fontSize: '0.8rem', width: '100%' };
+const listItemStyle: React.CSSProperties = { padding: '15px', border: '1px solid #F1F5F9', borderRadius: '12px', marginBottom: '10px', cursor: 'pointer', textAlign: 'left', fontSize: '0.9rem', color: '#1E293B' };
+
+const modalOverlayStyle: React.CSSProperties = {
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  width: '100%',
+  height: '100%',
+  background: 'rgba(0,0,0,0.5)',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  zIndex: 1000,
+  padding: '20px',
+};
+
+const modalContentStyle: React.CSSProperties = {
+  background: 'white',
+  padding: '25px',
+  borderRadius: '16px',
+  width: '100%',
+  maxWidth: '400px',
+  maxHeight: '80vh',
+  overflowY: 'auto',
+};
