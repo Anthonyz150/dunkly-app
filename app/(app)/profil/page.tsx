@@ -16,34 +16,34 @@ export default function ProfilPage() {
   const [message, setMessage] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [generatingCard, setGeneratingCard] = useState(false);
-  
+
   const [equipes, setEquipes] = useState<any[]>([]);
   const [competitions, setCompetitions] = useState<any[]>([]);
   const [selectedEquipeId, setSelectedEquipeId] = useState("");
   const [selectedChampionshipId, setSelectedChampionshipId] = useState("");
-  
+
   const [showEquipeModal, setShowEquipeModal] = useState(false);
   const [showChampModal, setShowChampModal] = useState(false);
-  
+
   const router = useRouter();
 
   useEffect(() => {
     const getProfile = async () => {
       setLoading(true);
       const { data: { session }, error } = await supabase.auth.getSession();
-      
+
       if (error || !session) {
         router.push('/login');
         return;
       }
       setUser(session.user);
-      
+
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
         .single();
-      
+
       if (profile) {
         setUsername(profile.username || '');
         setPrenom(profile.prenom || '');
@@ -55,17 +55,17 @@ export default function ProfilPage() {
 
       const [equipesRes, compRes] = await Promise.all([
         supabase.from('equipes_clubs').select('id, nom_equipe'),
-        supabase.from('competitions').select('id, nom')
+        supabase.from('competition').select('id, nom')
       ]);
-      
+
       if (equipesRes.data) setEquipes(equipesRes.data);
       if (compRes.data) setCompetitions(compRes.data);
-      
+
       setLoading(false);
     };
 
     getProfile();
-    
+
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT' || !session) {
         localStorage.removeItem('currentUser');
@@ -86,7 +86,7 @@ export default function ProfilPage() {
       const file = event.target.files[0];
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}.${fileExt}`;
-      const filePath = `${fileName}`; 
+      const filePath = `${fileName}`;
 
       let { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file, { upsert: true });
       if (uploadError) throw uploadError;
@@ -100,11 +100,11 @@ export default function ProfilPage() {
         .eq('id', user.id);
 
       if (updateError) throw updateError;
-      
+
       setAvatarUrl(`${newAvatarUrl}?t=${new Date().getTime()}`);
       setMessage('✅ Photo mise à jour !');
       setTimeout(() => setMessage(''), 3000);
-      
+
     } catch (error: any) {
       setMessage('❌ Erreur photo : ' + error.message);
     } finally {
@@ -118,7 +118,7 @@ export default function ProfilPage() {
     try {
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ 
+        .update({
           username, prenom, nom,
           favorite_team_id: selectedEquipeId || null,
           favorite_championship_id: selectedChampionshipId || null,
@@ -172,12 +172,12 @@ export default function ProfilPage() {
   };
 
   const getSelectedEquipeName = () => {
-    const eq = equipes.find(e => e.id === selectedEquipeId);
+    const eq = equipes.find(e => String(e.id) === selectedEquipeId);  
     return eq ? eq.nom_equipe : "Sélectionner une équipe";
   };
 
   const getSelectedChampName = () => {
-    const ch = competitions.find(c => c.id === selectedChampionshipId);
+    const ch = competitions.find(c => String(c.id) === selectedChampionshipId);  
     return ch ? ch.nom : "Sélectionner un championnat";
   };
 
@@ -198,7 +198,24 @@ export default function ProfilPage() {
 
         <form onSubmit={handleSave} style={profileFormStyle}>
           <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-            <img key={avatarUrl} src={avatarUrl || 'https://via.placeholder.com/150?text=Avatar'} alt="Avatar" style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', marginBottom: '15px', border: '4px solid white', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
+            <img
+              key={avatarUrl || "default"}
+              src={avatarUrl ?? "/default-avatar.png"}
+              alt="Avatar"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "/default-avatar.png";
+              }}
+              style={{
+                width: '120px',
+                height: '120px',
+                borderRadius: '50%',
+                objectFit: 'cover',
+                marginBottom: '15px',
+                border: '4px solid white',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+              }}
+            />
+
             <div>
               <label htmlFor="avatar-upload" style={{ background: '#F97316', color: 'white', padding: '10px 20px', borderRadius: '10px', fontSize: '0.8rem', cursor: 'pointer', display: 'inline-block' }}>
                 {uploading ? '⏳...' : 'Changer de photo'}
@@ -208,21 +225,33 @@ export default function ProfilPage() {
           </div>
 
           <div style={inputGroupStyle}><label style={labelStyle}>Pseudo</label><input type="text" value={username} onChange={(e) => setUsername(e.target.value)} style={inputStyle} required /></div>
-          
+
           <div style={nameGridStyle}>
             <div style={inputGroupStyle}><label style={labelStyle}>Prénom</label><input type="text" value={prenom} onChange={(e) => setPrenom(e.target.value)} style={inputStyle} required /></div>
             <div style={inputGroupStyle}><label style={labelStyle}>Nom</label><input type="text" value={nom} onChange={(e) => setNom(e.target.value)} style={inputStyle} required /></div>
           </div>
 
-          <div style={{borderTop: '1px solid #F1F5F9', marginTop: '10px', paddingTop: '20px'}}>
-            <h3 style={{fontSize: '1rem', fontWeight: '700', color: '#0F172A', marginBottom: '15px'}}>Mes Favoris</h3>
+          <div style={{ borderTop: '1px solid #F1F5F9', marginTop: '10px', paddingTop: '20px' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#0F172A', marginBottom: '15px' }}>Mes Favoris</h3>
             <div style={inputGroupStyle}>
-                <label style={labelStyle}>Équipe favorite</label>
-                <button type="button" onClick={() => setShowEquipeModal(true)} style={btnStyle}>{getSelectedEquipeName()}</button>
+              <label style={labelStyle}>Club favori</label>
+              <button
+                type="button"
+                onClick={() => setShowEquipeModal(true)}
+                style={btnStyle}
+              >
+                {getSelectedEquipeName()}
+              </button>
             </div>
             <div style={inputGroupStyle}>
-                <label style={labelStyle}>Championnat favori</label>
-                <button type="button" onClick={() => setShowChampModal(true)} style={btnStyle}>{getSelectedChampName()}</button>
+              <label style={labelStyle}>Championnat favori</label>
+              <button
+                type="button"
+                onClick={() => setShowChampModal(true)}
+                style={btnStyle}
+              >
+                {getSelectedChampName()}
+              </button>
             </div>
           </div>
 
@@ -244,24 +273,43 @@ export default function ProfilPage() {
               <h2 style={{ marginBottom: '20px' }}>Choisir mon équipe</h2>
               <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                 {equipes.map(e => (
-                    <div key={e.id} style={{...listItemStyle, backgroundColor: selectedEquipeId === e.id ? '#FFF7ED' : 'white'}} onClick={() => { setSelectedEquipeId(e.id); setShowEquipeModal(false); }}>
-                        {e.nom_equipe}
-                    </div>
+                  <div
+                    key={e.id}
+                    style={{
+                      ...listItemStyle,
+                      backgroundColor: selectedEquipeId === String(e.id) ? '#FFF7ED' : 'white'
+                    }}
+                    onClick={() => {
+                      setSelectedEquipeId(String(e.id));
+                      setShowEquipeModal(false);
+                    }}
+                  >
+                    {e.nom_equipe}
+                  </div>
                 ))}
               </div>
             </div>
           </div>
         )}
-
         {showChampModal && (
           <div style={modalOverlayStyle} onClick={() => setShowChampModal(false)}>
             <div style={modalContentStyle} onClick={e => e.stopPropagation()}>
               <h2 style={{ marginBottom: '20px' }}>Choisir mon championnat</h2>
               <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                 {competitions.map(c => (
-                    <div key={c.id} style={{...listItemStyle, backgroundColor: selectedChampionshipId === c.id ? '#FFF7ED' : 'white'}} onClick={() => { setSelectedChampionshipId(c.id); setShowChampModal(false); }}>
-                        {c.nom}
-                    </div>
+                  <div
+                    key={c.id}
+                    style={{
+                      ...listItemStyle,
+                      backgroundColor: selectedChampionshipId === String(c.id) ? '#FFF7ED' : 'white'
+                    }}
+                    onClick={() => {
+                      setSelectedChampionshipId(String(c.id));
+                      setShowChampModal(false);
+                    }}
+                  >
+                    {c.nom}
+                  </div>
                 ))}
               </div>
             </div>
@@ -305,7 +353,18 @@ const nameGridStyle: React.CSSProperties = {
 const inputGroupStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: '8px' };
 const labelStyle: React.CSSProperties = { fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase' };
 const inputStyle: React.CSSProperties = { width: '100%', padding: '16px', borderRadius: '16px', border: '2px solid #F1F5F9', fontSize: '1rem', outline: 'none', color: '#1E293B', boxSizing: 'border-box' };
-const btnStyle: React.CSSProperties = { padding: '16px', borderRadius: '16px', border: '2px solid #F1F5F9', backgroundColor: 'white', textAlign: 'left', cursor: 'pointer', fontSize: '1rem', width: '100%', color: '#1E293B' };
+const btnStyle: React.CSSProperties = {
+  padding: '16px',
+  borderRadius: '16px',
+  border: 'none',
+  backgroundColor: '#F1F5F9',
+  textAlign: 'left',
+  cursor: 'pointer',
+  fontSize: '1rem',
+  width: '100%',
+  color: '#1E293B',
+  fontWeight: '600'
+};
 const btnSaveStyle: React.CSSProperties = { background: '#F97316', color: 'white', border: 'none', padding: '16px', borderRadius: '16px', cursor: 'pointer', fontWeight: '900', fontSize: '0.95rem' };
 const btnDeleteStyle: React.CSSProperties = { background: 'transparent', color: '#EF4444', border: '2px solid #FEE2E2', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontWeight: '800', fontSize: '0.8rem', width: '100%' };
 const listItemStyle: React.CSSProperties = { padding: '15px', border: '1px solid #F1F5F9', borderRadius: '12px', marginBottom: '10px', cursor: 'pointer', textAlign: 'left', fontSize: '0.9rem', color: '#1E293B' };
