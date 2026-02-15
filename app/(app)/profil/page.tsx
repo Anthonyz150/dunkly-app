@@ -18,10 +18,14 @@ export default function ProfilPage() {
   const [generatingCard, setGeneratingCard] = useState(false);
   
   // --- ÉTATS POUR LES FAVORIS ---
-  const [equipes, setEquipes] = useState<any[]>([]); // 🔥 Doit être rempli
-  const [competitions, setCompetitions] = useState<any[]>([]); // 🔥 Doit être rempli
+  const [equipes, setEquipes] = useState<any[]>([]);
+  const [competitions, setCompetitions] = useState<any[]>([]);
   const [selectedEquipe, setSelectedEquipe] = useState("");
   const [selectedChampionship, setSelectedChampionship] = useState("");
+  
+  // --- NOUVEAUX ÉTATS POUR LES POPUPS ---
+  const [showEquipeModal, setShowEquipeModal] = useState(false);
+  const [showChampModal, setShowChampModal] = useState(false);
   // ------------------------------
   
   const router = useRouter();
@@ -39,7 +43,6 @@ export default function ProfilPage() {
 
       setUser(session.user);
       
-      // ✅ 1. Charger les données du profil (pseudo, favoris actuels)
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('username, prenom, nom, avatar_url, favorite_team_id, favorite_championship_id')
@@ -55,7 +58,6 @@ export default function ProfilPage() {
         setSelectedChampionship(profile.favorite_championship_id || '');
       }
 
-      // ✅ 2. Charger les listes pour les sélecteurs (les données qui vont dans les dropdowns)
       const [equipesRes, compRes] = await Promise.all([
         supabase.from('equipes_clubs').select('id, nom_equipe'),
         supabase.from('competitions').select('id, nom')
@@ -130,7 +132,6 @@ export default function ProfilPage() {
     setMessage('⏳ Enregistrement...');
 
     try {
-      // ✅ Mise à jour profiles avec favoris
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ 
@@ -144,7 +145,6 @@ export default function ProfilPage() {
 
       if (profileError) throw profileError;
 
-      // Mettre à jour les métadonnées auth
       await supabase.auth.updateUser({
         data: { prenom, nom, username }
       });
@@ -202,6 +202,17 @@ export default function ProfilPage() {
       alert("Erreur lors de la suppression : " + error.message);
       setShowDeleteModal(false);
     }
+  };
+
+  // --- FONCTIONS POUR AFFICHER LES NOMS SÉLECTIONNÉS ---
+  const getSelectedEquipeName = () => {
+    const eq = equipes.find(e => e.id === selectedEquipe);
+    return eq ? eq.nom_equipe : "Sélectionner une équipe";
+  };
+
+  const getSelectedChampName = () => {
+    const ch = competitions.find(c => c.id === selectedChampionship);
+    return ch ? ch.nom : "Sélectionner un championnat";
   };
 
   if (loading) return (
@@ -288,24 +299,22 @@ export default function ProfilPage() {
             </div>
           </div>
 
-          {/* ✅ SECTION FAVORIS */}
+          {/* ✅ SECTION FAVORIS - NOUVEAUX BOUTONS */}
           <div style={{borderTop: '1px solid #F1F5F9', marginTop: '10px', paddingTop: '20px'}}>
             <h3 style={{fontSize: '1rem', fontWeight: '700', color: '#0F172A', marginBottom: '15px'}}>Mes Favoris</h3>
             
             <div style={inputGroup}>
                 <label style={labelStyle}>Équipe favorite</label>
-                <select value={selectedEquipe} onChange={(e) => setSelectedEquipe(e.target.value)} style={inputStyle}>
-                    <option value="">Sélectionner une équipe</option>
-                    {equipes.map(e => <option key={e.id} value={e.id}>{e.nom_equipe}</option>)}
-                </select>
+                <button type="button" onClick={() => setShowEquipeModal(true)} style={btnStyle}>
+                    {getSelectedEquipeName()}
+                </button>
             </div>
             
             <div style={inputGroup}>
                 <label style={labelStyle}>Championnat favori</label>
-                <select value={selectedChampionship} onChange={(e) => setSelectedChampionship(e.target.value)} style={inputStyle}>
-                    <option value="">Sélectionner un championnat</option>
-                    {competitions.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
-                </select>
+                <button type="button" onClick={() => setShowChampModal(true)} style={btnStyle}>
+                    {getSelectedChampName()}
+                </button>
             </div>
           </div>
           {/* ------------------ */}
@@ -342,6 +351,7 @@ export default function ProfilPage() {
           `}</style>
         </form>
 
+        {/* 🛡️ MODALE SUPPRESSION */}
         {showDeleteModal && (
           <div className="modal-overlay">
             <div className="modal-content">
@@ -355,24 +365,63 @@ export default function ProfilPage() {
                 <button onClick={confirmerSuppression} style={btnConfirmDelete}>Confirmer</button>
               </div>
             </div>
-            <style jsx>{`
-              .modal-overlay {
+          </div>
+        )}
+
+        {/* 🛡️ MODALE ÉQUIPES */}
+        {showEquipeModal && (
+          <div className="modal-overlay" onClick={() => setShowEquipeModal(false)}>
+            <div className="modal-content" onClick={e => e.stopPropagation()}>
+              <h2 style={{ marginBottom: '20px', fontSize: '1.2rem', color: '#0F172A' }}>Choisir mon équipe</h2>
+              <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                {equipes.map(e => (
+                    <div key={e.id} 
+                        style={{...listItemStyle, backgroundColor: selectedEquipe === e.id ? '#FFF7ED' : 'white', borderColor: selectedEquipe === e.id ? '#F97316' : '#F1F5F9'}}
+                        onClick={() => { setSelectedEquipe(e.id); setShowEquipeModal(false); }}
+                    >
+                        {e.nom_equipe}
+                    </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 🛡️ MODALE CHAMPIONNATS */}
+        {showChampModal && (
+          <div className="modal-overlay" onClick={() => setShowChampModal(false)}>
+            <div className="modal-content" onClick={e => e.stopPropagation()}>
+              <h2 style={{ marginBottom: '20px', fontSize: '1.2rem', color: '#0F172A' }}>Choisir mon championnat</h2>
+              <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                {competitions.map(c => (
+                    <div key={c.id} 
+                        style={{...listItemStyle, backgroundColor: selectedChampionship === c.id ? '#FFF7ED' : 'white', borderColor: selectedChampionship === c.id ? '#F97316' : '#F1F5F9'}}
+                        onClick={() => { setSelectedChampionship(c.id); setShowChampModal(false); }}
+                    >
+                        {c.nom}
+                    </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <style jsx>{`
+            .modal-overlay {
                 position: fixed; top: 0; left: 0; right: 0; bottom: 0;
                 background: rgba(15, 23, 42, 0.7); display: flex;
                 align-items: center; justify-content: center; z-index: 1000;
                 animation: fadeIn 0.2s ease;
-              }
-              .modal-content {
+            }
+            .modal-content {
                 background: white; padding: 30px; border-radius: 20px;
                 max-width: 400px; width: 90%; text-align: center;
                 box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
                 animation: scaleUp 0.2s ease;
-              }
-              @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-              @keyframes scaleUp { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-            `}</style>
-          </div>
-        )}
+            }
+            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes scaleUp { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        `}</style>
       </div>
     </div>
   );
@@ -382,7 +431,9 @@ const inputGroup = { display: 'flex', flexDirection: 'column' as const, gap: '8p
 const labelStyle = { fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase' as const };
 const inputStyle = { width: '100%', padding: '16px', borderRadius: '16px', border: '2px solid #F1F5F9', fontSize: '1rem', outline: 'none', color: '#1E293B', boxSizing: 'border-box' as const };
 const disabledInput = { ...inputStyle, backgroundColor: '#F8FAFC', color: '#94A3B8', cursor: 'not-allowed' };
+const btnStyle = { padding: '16px', borderRadius: '16px', border: '2px solid #F1F5F9', backgroundColor: 'white', textAlign: 'left' as const, cursor: 'pointer', fontSize: '1rem', width: '100%', color: '#1E293B' };
 const btnSave = { background: '#F97316', color: 'white', border: 'none', padding: '16px', borderRadius: '16px', cursor: 'pointer', fontWeight: '900', fontSize: '0.95rem' };
 const btnDelete = { background: 'transparent', color: '#EF4444', border: '2px solid #FEE2E2', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontWeight: '800', fontSize: '0.8rem', width: '100%' };
 const btnCancel = { flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid #E2E8F0', background: 'white', fontWeight: '700', cursor: 'pointer', color: '#64748B' };
 const btnConfirmDelete = { flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: '#EF4444', color: 'white', fontWeight: '700', cursor: 'pointer' };
+const listItemStyle = { padding: '15px', border: '1px solid', borderRadius: '12px', marginBottom: '10px', cursor: 'pointer', textAlign: 'left' as const, fontSize: '0.9rem', color: '#1E293B' };
