@@ -17,45 +17,144 @@ export default function ProfilPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [generatingCard, setGeneratingCard] = useState(false);
 
-  type Equipe = {
-    id: string;
-    nom: string;
-    logo_url: string;
-  };
+  type Equipe = { id: string; nom: string; logo_url: string; };
+  type Competition = { id: string; nom: string; logo_url: string; };
 
   const [equipes, setEquipes] = useState<Equipe[]>([]);
-  type Competition = {
-    id: string;
-    nom: string;
-    logo_url: string;
-  };
-
   const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [selectedEquipeId, setSelectedEquipeId] = useState("");
   const [selectedChampionshipId, setSelectedChampionshipId] = useState("");
-
   const [showEquipeModal, setShowEquipeModal] = useState(false);
   const [showChampModal, setShowChampModal] = useState(false);
 
   const router = useRouter();
 
+  // --- STYLES EN LIGNE ---
+  const containerStyle: React.CSSProperties = {
+    padding: '20px',
+    display: 'flex',
+    justifyContent: 'center',
+    minHeight: '100vh',
+    backgroundColor: '#F8FAFC',
+  };
+
+  const contentWrapperStyle: React.CSSProperties = {
+    width: '100%',
+    maxWidth: '500px',
+    background: 'white',
+    padding: '30px',
+    borderRadius: '20px',
+    boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
+  };
+
+  const profileFormStyle: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '20px',
+  };
+
+  const nameGridStyle: React.CSSProperties = {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '15px',
+  };
+
+  const inputGroupStyle: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    marginBottom: '10px'
+  };
+
+  const labelStyle: React.CSSProperties = {
+    fontSize: '0.75rem',
+    fontWeight: '800',
+    color: '#475569',
+    textTransform: 'uppercase'
+  };
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '16px',
+    borderRadius: '16px',
+    border: '2px solid #F1F5F9',
+    fontSize: '1rem',
+    outline: 'none',
+    color: '#1E293B',
+    boxSizing: 'border-box'
+  };
+
+  const btnStyle: React.CSSProperties = {
+    padding: '16px',
+    borderRadius: '18px',
+    border: '2px solid #F97316',
+    background: 'linear-gradient(135deg, #F97316, #FB923C)',
+    color: 'white',
+    textAlign: 'left',
+    cursor: 'pointer',
+    fontSize: '1rem',
+    width: '100%',
+    fontWeight: '700',
+    boxShadow: '0 6px 15px rgba(249,115,22,0.3)',
+    transition: 'all 0.2s ease'
+  };
+
+  const btnSaveStyle: React.CSSProperties = {
+    background: '#F97316',
+    color: 'white',
+    border: 'none',
+    padding: '16px',
+    borderRadius: '16px',
+    cursor: 'pointer',
+    fontWeight: '900',
+    fontSize: '0.95rem'
+  };
+
+  const btnDeleteStyle: React.CSSProperties = {
+    background: 'transparent',
+    color: '#EF4444',
+    border: '2px solid #FEE2E2',
+    padding: '12px',
+    borderRadius: '12px',
+    cursor: 'pointer',
+    fontWeight: '800',
+    fontSize: '0.8rem',
+    width: '100%'
+  };
+
+  const modalOverlayStyle: React.CSSProperties = {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    background: 'rgba(0,0,0,0.5)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+    padding: '20px',
+  };
+
+  const modalContentStyle: React.CSSProperties = {
+    background: 'white',
+    padding: '25px',
+    borderRadius: '16px',
+    width: '100%',
+    maxWidth: '400px',
+    maxHeight: '80vh',
+    overflowY: 'auto',
+  };
+
+  // --- USEEFFECT POUR CHARGER LE PROFIL ---
   useEffect(() => {
     const getProfile = async () => {
       setLoading(true);
       const { data: { session }, error } = await supabase.auth.getSession();
-
-      if (error || !session) {
-        router.push('/login');
-        return;
-      }
+      if (error || !session) { router.push('/login'); return; }
       setUser(session.user);
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
-
+      const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
       if (profile) {
         setUsername(profile.username || '');
         setPrenom(profile.prenom || '');
@@ -72,14 +171,6 @@ export default function ProfilPage() {
 
       if (equipesRes.data) setEquipes(equipesRes.data);
       if (compRes.data) setCompetitions(compRes.data);
-
-      console.log("Equipes:", equipesRes.data);
-      console.log("Competitions:", compRes.data);
-      console.log("Errors:", equipesRes.error, compRes.error);
-      console.log("Equipes DATA:", equipesRes.data);
-      console.log("Equipes ERROR:", equipesRes.error);
-      console.log("Competitions:", competitions);
-
       setLoading(false);
     };
 
@@ -100,8 +191,7 @@ export default function ProfilPage() {
   useEffect(() => {
     if (equipes.length > 0 && user) {
       const loadProfileFavorites = async () => {
-        const { data: profile } = await supabase
-          .from('profiles')
+        const { data: profile } = await supabase.from('profiles')
           .select('favorite_team_id, favorite_championship_id')
           .eq('id', user.id)
           .single();
@@ -111,16 +201,15 @@ export default function ProfilPage() {
           setSelectedChampionshipId(profile.favorite_championship_id ? String(profile.favorite_championship_id) : '');
         }
       };
-
       loadProfileFavorites();
     }
   }, [equipes, competitions]);
 
+  // --- FONCTIONS ---
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       setUploading(true);
       if (!event.target.files || event.target.files.length === 0) throw new Error('Sélectionnez une image.');
-
       const file = event.target.files[0];
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}.${fileExt}`;
@@ -132,30 +221,22 @@ export default function ProfilPage() {
       const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
       const newAvatarUrl = data.publicUrl;
 
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: newAvatarUrl })
-        .eq('id', user.id);
-
+      const { error: updateError } = await supabase.from('profiles').update({ avatar_url: newAvatarUrl }).eq('id', user.id);
       if (updateError) throw updateError;
 
       setAvatarUrl(`${newAvatarUrl}?t=${new Date().getTime()}`);
       setMessage('✅ Photo mise à jour !');
       setTimeout(() => setMessage(''), 3000);
-
     } catch (error: any) {
       setMessage('❌ Erreur photo : ' + error.message);
-    } finally {
-      setUploading(false);
-    }
+    } finally { setUploading(false); }
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('⏳ Enregistrement...');
     try {
-      const { error: profileError } = await supabase
-        .from('profiles')
+      const { error: profileError } = await supabase.from('profiles')
         .update({
           username, prenom, nom,
           favorite_team_id: selectedEquipeId ? selectedEquipeId : null,
@@ -186,14 +267,10 @@ export default function ProfilPage() {
         window.open(data.link, '_blank');
         setMessage('✅ Redirection Wallet...');
         setTimeout(() => setMessage(''), 3000);
-      } else {
-        throw new Error(data.error || "Erreur génération");
-      }
+      } else { throw new Error(data.error || "Erreur génération"); }
     } catch (error: any) {
       setMessage('❌ Erreur Wallet : ' + error.message);
-    } finally {
-      setGeneratingCard(false);
-    }
+    } finally { setGeneratingCard(false); }
   };
 
   const confirmerSuppression = async () => {
@@ -219,41 +296,43 @@ export default function ProfilPage() {
     return ch ? ch.nom : "Sélectionner un championnat";
   };
 
+  // --- RENDER ---
   if (loading) return <div style={containerStyle}>Chargement...</div>;
 
   return (
     <div style={containerStyle}>
       <div style={contentWrapperStyle}>
+        {/* HEADER */}
         <header style={{ marginBottom: '30px', textAlign: 'center' }}>
-          <h1 style={{ fontSize: '1.8rem', fontWeight: '900', color: '#0F172A', margin: 0 }}>MON PROFIL <span style={{ color: '#F97316' }}>.</span></h1>
+          <h1 style={{ fontSize: '1.8rem', fontWeight: '900', color: '#0F172A', margin: 0 }}>
+            MON PROFIL <span style={{ color: '#F97316' }}>.</span>
+          </h1>
         </header>
 
+        {/* MESSAGE */}
         {message && (
-          <div style={{ padding: '15px', backgroundColor: message.includes('✅') ? '#DCFCE7' : '#FEE2E2', color: message.includes('✅') ? '#166534' : '#991B1B', borderRadius: '12px', marginBottom: '20px', fontWeight: '700', border: '1px solid', textAlign: 'center' }}>
-            {message}
-          </div>
+          <div style={{
+            padding: '15px',
+            backgroundColor: message.includes('✅') ? '#DCFCE7' : '#FEE2E2',
+            color: message.includes('✅') ? '#166534' : '#991B1B',
+            borderRadius: '12px',
+            marginBottom: '20px',
+            fontWeight: '700',
+            border: '1px solid',
+            textAlign: 'center'
+          }}>{message}</div>
         )}
 
+        {/* FORMULAIRE */}
         <form onSubmit={handleSave} style={profileFormStyle}>
           <div style={{ textAlign: 'center', marginBottom: '10px' }}>
             <img
               key={avatarUrl || "default"}
               src={avatarUrl ?? "/default-avatar.png"}
               alt="Avatar"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = "/default-avatar.png";
-              }}
-              style={{
-                width: '120px',
-                height: '120px',
-                borderRadius: '50%',
-                objectFit: 'cover',
-                marginBottom: '15px',
-                border: '4px solid white',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-              }}
+              onError={(e) => { (e.target as HTMLImageElement).src = "/default-avatar.png"; }}
+              style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', marginBottom: '15px', border: '4px solid white', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
             />
-
             <div>
               <label htmlFor="avatar-upload" style={{ background: '#F97316', color: 'white', padding: '10px 20px', borderRadius: '10px', fontSize: '0.8rem', cursor: 'pointer', display: 'inline-block' }}>
                 {uploading ? '⏳...' : 'Changer de photo'}
@@ -269,56 +348,26 @@ export default function ProfilPage() {
             <div style={inputGroupStyle}><label style={labelStyle}>Nom</label><input type="text" value={nom} onChange={(e) => setNom(e.target.value)} style={inputStyle} required /></div>
           </div>
 
+          {/* FAVORIS */}
           <div style={{ borderTop: '1px solid #F1F5F9', marginTop: '10px', paddingTop: '20px' }}>
             <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#0F172A', marginBottom: '15px' }}>Mes Favoris</h3>
+
             <div style={inputGroupStyle}>
               <label style={labelStyle}>Club favori</label>
-              <button
-                type="button"
-                style={btnStyle}
-                onClick={() => setShowEquipeModal(true)}
-              >
-                {(() => {
-                  const eq = equipes.find(e => String(e.id) === selectedEquipeId);
-                  return eq ? (
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      {eq.logo_url && (
-                        <img src={eq.logo_url} alt={eq.nom} style={{ width: 30, height: 30 }} />
-                      )}
-                      {eq.nom}
-                    </div>
-                  ) : "Sélectionner un club";
-                })()}
+              <button type="button" style={btnStyle} onClick={() => setShowEquipeModal(true)}>
+                {getSelectedEquipeName()}
               </button>
-
-
             </div>
+
             <div style={inputGroupStyle}>
               <label style={labelStyle}>Championnat favori</label>
-              <button
-                type="button"
-                style={btnStyle}
-                onClick={() => setShowChampModal(true)}
-              >
-                {(() => {
-                  const co = competitions.find(c => String(c.id) === selectedChampionshipId);
-                  return co ? (
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      {co.logo_url && (
-                        <img src={co.logo_url} alt={co.nom} style={{ width: 30, height: 30, objectFit: 'contain' }} />
-                      )}
-                      {co.nom}
-                    </div>
-                  ) : "Sélectionner un championnat";
-                })()}
+              <button type="button" style={btnStyle} onClick={() => setShowChampModal(true)}>
+                {getSelectedChampName()}
               </button>
-
-
             </div>
           </div>
 
           <button type="submit" style={btnSaveStyle}>SAUVEGARDER</button>
-
           <button type="button" onClick={ajouterACarte} style={{ ...btnSaveStyle, background: '#4285F4', width: '100%', marginTop: '20px' }} disabled={generatingCard}>
             💳 {generatingCard ? '⏳ Génération...' : 'Ajouter à Google Wallet'}
           </button>
@@ -330,31 +379,31 @@ export default function ProfilPage() {
 
         {/* MODALES */}
         {showEquipeModal && (
-          <div style={modalOverlayStyle} onClick={() => setShowChampModal(false)}>
-            <div style={{ ...modalContentStyle, maxWidth: '600px' }}>
-              <h2>Choisir ma compétitions</h2>
+          <div style={modalOverlayStyle} onClick={() => setShowEquipeModal(false)}>
+            <div style={{ ...modalContentStyle, maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
+              <h2>Choisir mon club</h2>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', maxHeight: '400px', overflowY: 'auto' }}>
-                {competitions.map((c) => (
-                  <div
-                    key={c.id}
-                    style={{
-                      border: selectedEquipeId === c.id ? '3px solid #F97316' : '1px solid #ccc',
-                      borderRadius: '12px',
-                      padding: '10px',
-                      textAlign: 'center',
-                      cursor: 'pointer'
-                    }}
-                    onClick={async () => {
-                      setSelectedChampionshipId(c.id);
-                      setShowChampModal(false);
+                {equipes.map(e => (
+                  <div key={e.id} style={{ border: selectedEquipeId === e.id ? '3px solid #F97316' : '1px solid #ccc', borderRadius: '12px', padding: '10px', textAlign: 'center', cursor: 'pointer' }}
+                       onClick={async () => { setSelectedEquipeId(e.id); setShowEquipeModal(false); await supabase.from('profiles').update({ favorite_team_id: e.id }).eq('id', user.id); }}>
+                    {e.logo_url && <img src={e.logo_url} alt={e.nom} style={{ width: '60px', height: '60px', objectFit: 'contain', marginBottom: '10px' }} />}
+                    <div>{e.nom}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
-                      await supabase
-                        .from('profiles')
-                        .update({ favorite_championship_id: c.id })
-                        .eq('id', user.id);
-                    }}
-                  >
-                    <img src={c.logo_url} alt={c.nom} style={{ width: '60px', height: '60px', objectFit: 'contain', marginBottom: '10px' }} />
+        {showChampModal && (
+          <div style={modalOverlayStyle} onClick={() => setShowChampModal(false)}>
+            <div style={{ ...modalContentStyle, maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
+              <h2>Choisir mon championnat</h2>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', maxHeight: '400px', overflowY: 'auto' }}>
+                {competitions.map(c => (
+                  <div key={c.id} style={{ border: selectedChampionshipId === c.id ? '3px solid #F97316' : '1px solid #ccc', borderRadius: '12px', padding: '10px', textAlign: 'center', cursor: 'pointer' }}
+                       onClick={async () => { setSelectedChampionshipId(c.id); setShowChampModal(false); await supabase.from('profiles').update({ favorite_championship_id: c.id }).eq('id', user.id); }}>
+                    {c.logo_url && <img src={c.logo_url} alt={c.nom} style={{ width: '60px', height: '60px', objectFit: 'contain', marginBottom: '10px' }} />}
                     <div>{c.nom}</div>
                   </div>
                 ))}
@@ -362,88 +411,8 @@ export default function ProfilPage() {
             </div>
           </div>
         )}
-        image.png
+
       </div>
-    </div >
+    </div>
   );
 }
-
-// --- STYLES EN LIGNE (Remplace le CSS) ---
-const containerStyle: React.CSSProperties = {
-  padding: '20px',
-  display: 'flex',
-  justifyContent: 'center',
-  minHeight: '100vh',
-  backgroundColor: '#F8FAFC',
-};
-
-const contentWrapperStyle: React.CSSProperties = {
-  width: '100%',
-  maxWidth: '500px',
-  background: 'white',
-  padding: '30px',
-  borderRadius: '20px',
-  boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
-};
-
-const profileFormStyle: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '20px',
-};
-
-const nameGridStyle: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: '1fr 1fr',
-  gap: '15px',
-};
-
-const inputGroupStyle: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '12px',
-  marginBottom: '10px'
-};
-const labelStyle: React.CSSProperties = { fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase' };
-const inputStyle: React.CSSProperties = { width: '100%', padding: '16px', borderRadius: '16px', border: '2px solid #F1F5F9', fontSize: '1rem', outline: 'none', color: '#1E293B', boxSizing: 'border-box' };
-const btnStyle: React.CSSProperties = {
-  padding: '16px',
-  borderRadius: '18px',
-  border: '2px solid #F97316',
-  background: 'linear-gradient(135deg, #F97316, #FB923C)',
-  color: 'white',
-  textAlign: 'left',
-  cursor: 'pointer',
-  fontSize: '1rem',
-  width: '100%',
-  fontWeight: '700',
-  boxShadow: '0 6px 15px rgba(249,115,22,0.3)',
-  transition: 'all 0.2s ease'
-};
-const btnSaveStyle: React.CSSProperties = { background: '#F97316', color: 'white', border: 'none', padding: '16px', borderRadius: '16px', cursor: 'pointer', fontWeight: '900', fontSize: '0.95rem' };
-const btnDeleteStyle: React.CSSProperties = { background: 'transparent', color: '#EF4444', border: '2px solid #FEE2E2', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontWeight: '800', fontSize: '0.8rem', width: '100%' };
-const listItemStyle: React.CSSProperties = { padding: '15px', border: '1px solid #F1F5F9', borderRadius: '12px', marginBottom: '10px', cursor: 'pointer', textAlign: 'left', fontSize: '0.9rem', color: '#1E293B' };
-
-const modalOverlayStyle: React.CSSProperties = {
-  position: 'fixed',
-  top: 0,
-  left: 0,
-  width: '100%',
-  height: '100%',
-  background: 'rgba(0,0,0,0.5)',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  zIndex: 1000,
-  padding: '20px',
-};
-
-const modalContentStyle: React.CSSProperties = {
-  background: 'white',
-  padding: '25px',
-  borderRadius: '16px',
-  width: '100%',
-  maxWidth: '400px',
-  maxHeight: '80vh',
-  overflowY: 'auto',
-};
