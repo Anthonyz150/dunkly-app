@@ -33,16 +33,14 @@ export default function MatchsAVenirPage() {
   const [arbitres, setArbitres] = useState<any[]>([]);
   const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [journees, setJournees] = useState<Journee[]>([]);
-  
+  const [selectedCompetitionId, setSelectedCompetitionId] = useState("");
   const [user, setUser] = useState<any>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-
   const [selectedClubA, setSelectedClubA] = useState("");
   const [selectedClubB, setSelectedClubB] = useState("");
   const [selectedJournee, setSelectedJournee] = useState("");
   const [selectedArbitres, setSelectedArbitres] = useState<string[]>([]);
-  
   const [newMatch, setNewMatch] = useState({
     equipeA: "", clubA: "", equipeB: "", clubB: "",
     date: "", competition: "", lieu: ""
@@ -101,13 +99,16 @@ export default function MatchsAVenirPage() {
 
     const matchData = {
       clubA: clubAObj?.nom,
-      logo_urlA: clubAObj?.logo_url || null, 
+      logo_urlA: clubAObj?.logo_url || null,
       equipeA: newMatch.equipeA,
       clubB: clubBObj?.nom,
       logo_urlB: clubBObj?.logo_url || null,
       equipeB: newMatch.equipeB,
       date: newMatch.date,
-      competition: newMatch.competition,
+      // --- SUPPRIMEZ CETTE LIGNE ---
+      // competition: newMatch.competition, 
+      // -----------------------------
+      competition_id: selectedCompetitionId, // C'est cette ligne qui doit contenir l'UUID
       journee_id: selectedJournee || null,
       arbitre: selectedArbitres.join(" / "),
       lieu: newMatch.lieu,
@@ -143,7 +144,7 @@ export default function MatchsAVenirPage() {
     const clubBObj = clubs.find(c => c.nom === m.clubB);
     if (clubAObj) setSelectedClubA(clubAObj.id);
     if (clubBObj) setSelectedClubB(clubBObj.id);
-    
+
     setSelectedJournee(m.journee_id || "");
     setShowForm(true);
   };
@@ -198,7 +199,7 @@ export default function MatchsAVenirPage() {
         <div style={formCardStyle}>
           <h2 style={formTitleStyle}>{editingId ? "Modifier le match" : "Nouveau match"}</h2>
           <form onSubmit={handleSoumettre} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-            
+
             <div style={colStyle}>
               <label style={miniLabel}>ÉQUIPE DOMICILE</label>
               <select required value={selectedClubA} onChange={e => setSelectedClubA(e.target.value)} style={inputStyle}>
@@ -233,9 +234,17 @@ export default function MatchsAVenirPage() {
 
             <div style={colStyle}>
               <label style={miniLabel}>COMPÉTITION</label>
-              <select required value={newMatch.competition} onChange={e => setNewMatch({ ...newMatch, competition: e.target.value })} style={inputStyle}>
+              <select
+                required
+                value={selectedCompetitionId}
+                onChange={e => setSelectedCompetitionId(e.target.value)} // Mise à jour ici
+                style={inputStyle}
+              >
                 <option value="">Sélectionner...</option>
-                {competitions.map(comp => <option key={comp.id} value={comp.nom}>{comp.nom}</option>)}
+                {competitions.map(comp => (
+                  // La valeur doit être l'ID (uuid)
+                  <option key={comp.id} value={comp.id}>{comp.nom}</option>
+                ))}
               </select>
             </div>
 
@@ -279,7 +288,7 @@ export default function MatchsAVenirPage() {
         {matchs.map((m) => (
           <div key={m.id} style={matchCardStyle}>
             <div style={cardMainRow}>
-              
+
               <div style={teamContainerStyle}>
                 {m.logo_urlA && <img src={m.logo_urlA} alt={m.clubA} style={logoStyle} />}
                 <div style={teamNameWrapper}>
@@ -289,8 +298,8 @@ export default function MatchsAVenirPage() {
               </div>
 
               <div style={vsStyle}>VS</div>
-              
-              <div style={{...teamContainerStyle, justifyContent: 'flex-start', textAlign: 'left'}}>
+
+              <div style={{ ...teamContainerStyle, justifyContent: 'flex-start', textAlign: 'left' }}>
                 <div style={teamNameWrapper}>
                   <div style={clubNameStyle}>{m.clubB}</div>
                   <div style={teamCatStyle}>{m.equipeB}</div>
@@ -298,14 +307,14 @@ export default function MatchsAVenirPage() {
                 {m.logo_urlB && <img src={m.logo_urlB} alt={m.clubB} style={logoStyle} />}
               </div>
             </div>
-            
+
             <div style={footerCard}>
               <div style={footerInfoStyle}>
                 {m.journees && <div style={journeeBadgeStyle}>🏆 {m.journees.nom}</div>}
                 <div style={dateLocationStyle}>📅 {formatteDateParis(m.date)} | {m.competition} | 📍 {m.lieu || 'Lieu non défini'}</div>
                 <div style={refereeStyle}>🏁 <span style={{ fontWeight: '700', color: 'white' }}>{m.arbitre || "Arbitre non assigné"}</span></div>
               </div>
-              
+
               <div style={actionButtonsStyle}>
                 {isAdmin ? (
                   <>
@@ -326,106 +335,106 @@ export default function MatchsAVenirPage() {
 }
 
 // --- STYLES CORRIGÉS (Sombre, Pleine Largeur, Arrondis Modernes) ---
-const pageContainer = { 
-  padding: '24px', 
+const pageContainer = {
+  padding: '24px',
   width: '100%',
   boxSizing: 'border-box' as const,
-  fontFamily: 'system-ui, -apple-system, sans-serif', 
-  backgroundColor: '#0f172a', 
-  minHeight: '100vh', 
-  color: '#f1f5f9' 
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+  backgroundColor: '#0f172a',
+  minHeight: '100vh',
+  color: '#f1f5f9'
 };
 
-const headerStyle = { 
-  display: 'flex' as const, 
-  justifyContent: 'space-between', 
-  alignItems: 'center', 
-  marginBottom: '40px', 
-  paddingBottom: '20px', 
-  borderBottom: '1px solid #334155' 
+const headerStyle = {
+  display: 'flex' as const,
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: '40px',
+  paddingBottom: '20px',
+  borderBottom: '1px solid #334155'
 };
 
 const titleStyle = { fontSize: '2.5rem', fontWeight: '800' as const, margin: 0, color: 'white' };
 const subtitleStyle = { color: '#94a3b8', fontSize: '1rem', margin: '8px 0 0' };
 
-const addBtnStyle = { 
-  backgroundColor: '#F97316', 
-  color: 'white', 
-  border: 'none', 
-  padding: '14px 28px', 
+const addBtnStyle = {
+  backgroundColor: '#F97316',
+  color: 'white',
+  border: 'none',
+  padding: '14px 28px',
   borderRadius: '16px', // Arrondi plus prononcé
-  fontWeight: 'bold' as const, 
-  cursor: 'pointer', 
+  fontWeight: 'bold' as const,
+  cursor: 'pointer',
   fontSize: '0.95rem',
   transition: 'background-color 0.2s'
 };
 
-const formCardStyle = { 
-  marginBottom: '40px', 
-  padding: '30px', 
+const formCardStyle = {
+  marginBottom: '40px',
+  padding: '30px',
   borderRadius: '24px', // Arrondi carte
-  backgroundColor: '#1e293b', 
-  border: '1px solid #334155', 
-  boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)' 
+  backgroundColor: '#1e293b',
+  border: '1px solid #334155',
+  boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)'
 };
 
 const formTitleStyle = { fontSize: '1.5rem', fontWeight: '800' as const, marginBottom: '25px', color: 'white' };
 
-const inputStyle = { 
-  padding: '14px', 
+const inputStyle = {
+  padding: '14px',
   borderRadius: '12px', // Arrondi input
-  border: '1px solid #334155', 
-  fontSize: '15px', 
-  width: '100%', 
-  boxSizing: 'border-box' as const, 
-  backgroundColor: '#0f172a', 
-  color: 'white' 
+  border: '1px solid #334155',
+  fontSize: '15px',
+  width: '100%',
+  boxSizing: 'border-box' as const,
+  backgroundColor: '#0f172a',
+  color: 'white'
 };
 
 const colStyle = { display: 'flex' as const, flexDirection: 'column' as const, gap: '8px' };
 
 const miniLabel = { fontSize: '0.7rem', fontWeight: '900' as const, color: '#94a3b8', textTransform: 'uppercase' as const, letterSpacing: '1px' };
 
-const arbitreGridStyle = { 
-  display: 'flex' as const, 
-  flexWrap: 'wrap' as const, 
-  gap: '10px', 
-  padding: '16px', 
-  background: '#0f172a', 
+const arbitreGridStyle = {
+  display: 'flex' as const,
+  flexWrap: 'wrap' as const,
+  gap: '10px',
+  padding: '16px',
+  background: '#0f172a',
   borderRadius: '16px', // Arrondi grille
-  border: '1px solid #334155' 
+  border: '1px solid #334155'
 };
 
-const arbitreBtnStyle = { 
-  padding: '8px 16px', 
+const arbitreBtnStyle = {
+  padding: '8px 16px',
   borderRadius: '20px', // Arrondi badge
-  border: 'none', 
-  fontSize: '0.8rem', 
-  fontWeight: 'bold' as const, 
-  cursor: 'pointer', 
-  transition: '0.2s' 
+  border: 'none',
+  fontSize: '0.8rem',
+  fontWeight: 'bold' as const,
+  cursor: 'pointer',
+  transition: '0.2s'
 };
 
-const submitBtn = { 
-  gridColumn: '1/span 2', 
-  backgroundColor: '#F97316', 
-  color: 'white', 
-  padding: '16px', 
+const submitBtn = {
+  gridColumn: '1/span 2',
+  backgroundColor: '#F97316',
+  color: 'white',
+  padding: '16px',
   borderRadius: '16px', // Arrondi bouton
-  cursor: 'pointer', 
-  fontWeight: '900' as const, 
-  border: 'none', 
-  marginTop: '20px', 
-  fontSize: '1.1rem' 
+  cursor: 'pointer',
+  fontWeight: '900' as const,
+  border: 'none',
+  marginTop: '20px',
+  fontSize: '1.1rem'
 };
 
-const matchCardStyle = { 
-  padding: '24px', 
-  border: '1px solid #334155', 
+const matchCardStyle = {
+  padding: '24px',
+  border: '1px solid #334155',
   borderRadius: '24px', // Arrondi carte
-  background: '#1e293b', 
-  boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', 
-  transition: 'transform 0.2s, box-shadow 0.2s' 
+  background: '#1e293b',
+  boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+  transition: 'transform 0.2s, box-shadow 0.2s'
 };
 
 const cardMainRow = { display: 'flex' as const, justifyContent: 'space-between', alignItems: 'center', gap: '20px' };
@@ -437,14 +446,14 @@ const teamCatStyle = { fontSize: '0.8rem', color: '#94a3b8', fontWeight: '600' a
 const logoStyle = { width: '60px', height: '60px', objectFit: 'contain' as const, flexShrink: 0 };
 const vsStyle = { fontWeight: '900' as const, color: '#F97316', fontSize: '1.5rem', padding: '0 10px' };
 
-const footerCard = { 
-  marginTop: '24px', 
-  paddingTop: '20px', 
-  borderTop: '1px solid #334155', 
-  display: 'flex' as const, 
-  justifyContent: 'space-between', 
-  alignItems: 'center', 
-  gap: '15px' 
+const footerCard = {
+  marginTop: '24px',
+  paddingTop: '20px',
+  borderTop: '1px solid #334155',
+  display: 'flex' as const,
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  gap: '15px'
 };
 
 const footerInfoStyle = { fontSize: '0.9rem', color: '#cbd5e1' };
@@ -453,52 +462,52 @@ const dateLocationStyle = { marginBottom: '6px' };
 const refereeStyle = { marginTop: '8px', fontSize: '0.85rem' };
 const actionButtonsStyle = { display: 'flex' as const, gap: '12px', flexShrink: 0 };
 
-const startBtnStyle = { 
-  backgroundColor: '#F97316', 
-  color: 'white', 
-  textDecoration: 'none' as const, 
-  padding: '12px 24px', 
-  borderRadius: '12px', 
-  fontSize: '0.9rem', 
-  fontWeight: 'bold' as const 
+const startBtnStyle = {
+  backgroundColor: '#F97316',
+  color: 'white',
+  textDecoration: 'none' as const,
+  padding: '12px 24px',
+  borderRadius: '12px',
+  fontSize: '0.9rem',
+  fontWeight: 'bold' as const
 };
 
-const detailsBtnStyle = { 
-  backgroundColor: '#334155', 
-  color: 'white', 
-  textDecoration: 'none' as const, 
-  padding: '12px 24px', 
-  borderRadius: '12px', 
-  fontSize: '0.9rem', 
-  fontWeight: 'bold' as const 
+const detailsBtnStyle = {
+  backgroundColor: '#334155',
+  color: 'white',
+  textDecoration: 'none' as const,
+  padding: '12px 24px',
+  borderRadius: '12px',
+  fontSize: '0.9rem',
+  fontWeight: 'bold' as const
 };
 
-const iconBtn = { 
-  border: 'none', 
-  background: '#334155', 
-  cursor: 'pointer', 
-  fontSize: '1.2rem', 
-  padding: '12px', 
-  borderRadius: '12px', 
-  color: 'white' 
+const iconBtn = {
+  border: 'none',
+  background: '#334155',
+  cursor: 'pointer',
+  fontSize: '1.2rem',
+  padding: '12px',
+  borderRadius: '12px',
+  color: 'white'
 };
 
-const editBtnSmall = { 
-  border: 'none', 
-  background: '#334155', 
-  color: 'white', 
-  cursor: 'pointer', 
-  padding: '12px 18px', 
-  borderRadius: '12px', 
-  fontWeight: 'bold' as const, 
-  fontSize: '0.85rem' 
+const editBtnSmall = {
+  border: 'none',
+  background: '#334155',
+  color: 'white',
+  cursor: 'pointer',
+  padding: '12px 18px',
+  borderRadius: '12px',
+  fontWeight: 'bold' as const,
+  fontSize: '0.85rem'
 };
 
-const emptyState = { 
-  textAlign: 'center' as const, 
-  padding: '60px', 
-  color: '#94a3b8', 
-  backgroundColor: '#1e293b', 
-  borderRadius: '24px', 
-  border: '1px solid #334155' 
+const emptyState = {
+  textAlign: 'center' as const,
+  padding: '60px',
+  color: '#94a3b8',
+  backgroundColor: '#1e293b',
+  borderRadius: '24px',
+  border: '1px solid #334155'
 };
