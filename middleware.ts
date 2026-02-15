@@ -48,11 +48,11 @@ export async function middleware(req: NextRequest) {
 
   // Si pas de session valide, on redirige vers /login
   // --- COMMENTE CES LIGNES TEMPORAIREMENT ---
-   if (!session && isProtectedPath) {
-       const redirectUrl = new URL('/login', req.url);
-       redirectUrl.searchParams.set('redirect', req.nextUrl.pathname);
-       return NextResponse.redirect(redirectUrl);
-      }
+  //if (!session && isProtectedPath) {
+  //   const redirectUrl = new URL('/login', req.url);
+  //   redirectUrl.searchParams.set('redirect', req.nextUrl.pathname);
+  //  return NextResponse.redirect(redirectUrl);
+  //  }
 
   return res;
 }
