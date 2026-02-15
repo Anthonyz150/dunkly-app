@@ -19,9 +19,9 @@ export default function ProfilPage() {
 
   type Equipe = {
     id: string;
-    nom_equipe: string;
+    nom: string;
     logo_url?: string;
-  };
+  };  
 
   const [equipes, setEquipes] = useState<Equipe[]>([]);
   type Competition = {
@@ -66,7 +66,7 @@ export default function ProfilPage() {
       }
 
       const [equipesRes, compRes] = await Promise.all([
-        supabase.from('equipes_clubs').select('id, nom_equipe, logo_url'),
+        supabase.from('equipes_clubs').select('id, nom, logo_url'),
         supabase.from('competition').select('id, nom, logo_url')
       ]);
 
@@ -211,7 +211,7 @@ export default function ProfilPage() {
 
   const getSelectedEquipeName = () => {
     const eq = equipes.find(e => String(e.id) === selectedEquipeId);
-    return eq ? eq.nom_equipe : "Sélectionner une équipe";
+    return eq ? eq.nom : "Sélectionner une équipe";
   };
 
   const getSelectedChampName = () => {
@@ -285,11 +285,11 @@ export default function ProfilPage() {
                       {eq.logo_url && (
                         <img
                           src={eq.logo_url}
-                          alt={eq.nom_equipe}
+                          alt={eq.nom}
                           style={{ width: '30px', height: '30px', objectFit: 'contain' }}
                         />
                       )}
-                      {eq.nom_equipe}
+                      {eq.nom}
                     </div>
                   ) : "Sélectionner un club";
                 })()}
@@ -358,7 +358,7 @@ export default function ProfilPage() {
                         .eq('id', user.id);
                     }}
                   >
-                    {e.nom_equipe}
+                    {e.nom}
                   </div>
                 ))}
               </div>
