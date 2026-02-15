@@ -1,4 +1,4 @@
-// app/profil/page.tsx
+// app/(app)/profil/page.tsx
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -21,8 +21,9 @@ export default function ProfilPage() {
   
   const [equipes, setEquipes] = useState<any[]>([]);
   const [competitions, setCompetitions] = useState<any[]>([]);
-  const [selectedEquipe, setSelectedEquipe] = useState("");
-  const [selectedChampionship, setSelectedChampionship] = useState("");
+  // CHANGEMENT: Utilisation de ID pour stocker la sélection
+  const [selectedEquipeId, setSelectedEquipeId] = useState("");
+  const [selectedChampionshipId, setSelectedChampionshipId] = useState("");
   
   const [showEquipeModal, setShowEquipeModal] = useState(false);
   const [showChampModal, setShowChampModal] = useState(false);
@@ -52,8 +53,8 @@ export default function ProfilPage() {
         setPrenom(profile.prenom || '');
         setNom(profile.nom || '');
         setAvatarUrl(profile.avatar_url || null);
-        setSelectedEquipe(profile.favorite_team_id || '');
-        setSelectedChampionship(profile.favorite_championship_id || '');
+        setSelectedEquipeId(profile.favorite_team_id || '');
+        setSelectedChampionshipId(profile.favorite_championship_id || '');
       }
 
       // Charger les listes de favoris
@@ -98,7 +99,7 @@ export default function ProfilPage() {
       const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
       const newAvatarUrl = data.publicUrl;
 
-      // CORRECTION 1: Mettre à jour la table profiles pour avatar_url
+      // CORRECTION 1: Mettre à jour la table profiles pour avatar_url avec l'URL publique
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: newAvatarUrl })
@@ -128,8 +129,8 @@ export default function ProfilPage() {
         .from('profiles')
         .update({ 
           username, prenom, nom,
-          favorite_team_id: selectedEquipe || null,
-          favorite_championship_id: selectedChampionship || null,
+          favorite_team_id: selectedEquipeId || null,
+          favorite_championship_id: selectedChampionshipId || null,
         })
         .eq('id', user.id);
       if (profileError) throw profileError;
@@ -182,14 +183,14 @@ export default function ProfilPage() {
     }
   };
 
-  // Logique pour afficher le nom dans les boutons
+  // CORRECTION 2: Logique pour afficher le nom dans les boutons
   const getSelectedEquipeName = () => {
-    const eq = equipes.find(e => e.id === selectedEquipe);
+    const eq = equipes.find(e => e.id === selectedEquipeId);
     return eq ? eq.nom_equipe : "Sélectionner une équipe";
   };
 
   const getSelectedChampName = () => {
-    const ch = competitions.find(c => c.id === selectedChampionship);
+    const ch = competitions.find(c => c.id === selectedChampionshipId);
     return ch ? ch.nom : "Sélectionner un championnat";
   };
 
@@ -215,7 +216,7 @@ export default function ProfilPage() {
 
         <form onSubmit={handleSave} className={styles.profileForm}>
           <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-            {/* AFFICHAGE PHOTO CORRIGÉ */}
+            {/* CORRECTION 1: AFFICHAGE PHOTO CORRIGÉ */}
             <img src={avatarUrl || 'https://via.placeholder.com/150?text=Avatar'} alt="Avatar" style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', marginBottom: '15px', border: '4px solid white', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
             <div>
               <label htmlFor="avatar-upload" style={{ ...btnSave, padding: '10px 20px', fontSize: '0.8rem', cursor: 'pointer', display: 'inline-block' }}>
@@ -280,7 +281,7 @@ export default function ProfilPage() {
               <h2 style={{ marginBottom: '20px', fontSize: '1.2rem', color: '#0F172A' }}>Choisir mon équipe</h2>
               <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                 {equipes.map(e => (
-                    <div key={e.id} style={{...listItemStyle, backgroundColor: selectedEquipe === e.id ? '#FFF7ED' : 'white', borderColor: selectedEquipe === e.id ? '#F97316' : '#F1F5F9'}} onClick={() => { setSelectedEquipe(e.id); setShowEquipeModal(false); }}>
+                    <div key={e.id} style={{...listItemStyle, backgroundColor: selectedEquipeId === e.id ? '#FFF7ED' : 'white', borderColor: selectedEquipeId === e.id ? '#F97316' : '#F1F5F9'}} onClick={() => { setSelectedEquipeId(e.id); setShowEquipeModal(false); }}>
                         {e.nom_equipe}
                     </div>
                 ))}
@@ -295,7 +296,7 @@ export default function ProfilPage() {
               <h2 style={{ marginBottom: '20px', fontSize: '1.2rem', color: '#0F172A' }}>Choisir mon championnat</h2>
               <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                 {competitions.map(c => (
-                    <div key={c.id} style={{...listItemStyle, backgroundColor: selectedChampionship === c.id ? '#FFF7ED' : 'white', borderColor: selectedChampionship === c.id ? '#F97316' : '#F1F5F9'}} onClick={() => { setSelectedChampionship(c.id); setShowChampModal(false); }}>
+                    <div key={c.id} style={{...listItemStyle, backgroundColor: selectedChampionshipId === c.id ? '#FFF7ED' : 'white', borderColor: selectedChampionshipId === c.id ? '#F97316' : '#F1F5F9'}} onClick={() => { setSelectedChampionshipId(c.id); setShowChampModal(false); }}>
                         {c.nom}
                     </div>
                 ))}
