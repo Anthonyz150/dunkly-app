@@ -22,8 +22,8 @@ export default function ProfilPage() {
 
   const [equipes, setEquipes] = useState<Equipe[]>([]);
   const [competitions, setCompetitions] = useState<Competition[]>([]);
-  const [selectedEquipeId, setSelectedEquipeId] = useState("");
-  const [selectedChampionshipId, setSelectedChampionshipId] = useState("");
+  const [selectedEquipeIds, setSelectedEquipeIds] = useState<string[]>([]);
+  const [selectedChampionshipIds, setSelectedChampionshipIds] = useState<string[]>([]);
   const [showEquipeModal, setShowEquipeModal] = useState(false);
   const [showChampModal, setShowChampModal] = useState(false);
 
@@ -141,7 +141,7 @@ export default function ProfilPage() {
     padding: '25px',
     borderRadius: '16px',
     width: '100%',
-    maxWidth: '400px',
+    maxWidth: '600px',
     maxHeight: '80vh',
     overflowY: 'auto',
   };
@@ -160,8 +160,8 @@ export default function ProfilPage() {
         setPrenom(profile.prenom || '');
         setNom(profile.nom || '');
         setAvatarUrl(profile.avatar_url || null);
-        setSelectedEquipeId(profile.favorite_team_id ? String(profile.favorite_team_id) : '');
-        setSelectedChampionshipId(profile.favorite_championship_id ? String(profile.favorite_championship_id) : '');
+        setSelectedEquipeIds(profile.favorite_team_id || []);
+        setSelectedChampionshipIds(profile.favorite_championship_id || []);
       }
 
       const [equipesRes, compRes] = await Promise.all([
@@ -187,23 +187,6 @@ export default function ProfilPage() {
 
     return () => authListener.subscription.unsubscribe();
   }, [router]);
-
-  useEffect(() => {
-    if (equipes.length > 0 && user) {
-      const loadProfileFavorites = async () => {
-        const { data: profile } = await supabase.from('profiles')
-          .select('favorite_team_id, favorite_championship_id')
-          .eq('id', user.id)
-          .single();
-
-        if (profile) {
-          setSelectedEquipeId(profile.favorite_team_id ? String(profile.favorite_team_id) : '');
-          setSelectedChampionshipId(profile.favorite_championship_id ? String(profile.favorite_championship_id) : '');
-        }
-      };
-      loadProfileFavorites();
-    }
-  }, [equipes, competitions]);
 
   // --- FONCTIONS ---
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -239,8 +222,8 @@ export default function ProfilPage() {
       const { error: profileError } = await supabase.from('profiles')
         .update({
           username, prenom, nom,
-          favorite_team_id: selectedEquipeId ? selectedEquipeId : null,
-          favorite_championship_id: selectedChampionshipId ? selectedChampionshipId : null,
+          favorite_team_id: selectedEquipeIds,
+          favorite_championship_id: selectedChampionshipIds,
         })
         .eq('id', user.id);
       if (profileError) throw profileError;
@@ -286,16 +269,6 @@ export default function ProfilPage() {
     }
   };
 
-  const getSelectedEquipeName = () => {
-    const eq = equipes.find(e => String(e.id) === selectedEquipeId);
-    return eq ? eq.nom : "Sélectionner une équipe";
-  };
-
-  const getSelectedChampName = () => {
-    const ch = competitions.find(c => String(c.id) === selectedChampionshipId);
-    return ch ? ch.nom : "Sélectionner un championnat";
-  };
-
   // --- RENDER ---
   if (loading) return <div style={containerStyle}>Chargement...</div>;
 
@@ -325,6 +298,7 @@ export default function ProfilPage() {
 
         {/* FORMULAIRE */}
         <form onSubmit={handleSave} style={profileFormStyle}>
+          {/* AVATAR */}
           <div style={{ textAlign: 'center', marginBottom: '10px' }}>
             <img
               key={avatarUrl || "default"}
@@ -341,6 +315,7 @@ export default function ProfilPage() {
             </div>
           </div>
 
+          {/* PSEUDO / NOM */}
           <div style={inputGroupStyle}><label style={labelStyle}>Pseudo</label><input type="text" value={username} onChange={(e) => setUsername(e.target.value)} style={inputStyle} required /></div>
 
           <div style={nameGridStyle}>
@@ -352,18 +327,30 @@ export default function ProfilPage() {
           <div style={{ borderTop: '1px solid #F1F5F9', marginTop: '10px', paddingTop: '20px' }}>
             <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#0F172A', marginBottom: '15px' }}>Mes Favoris</h3>
 
+            {/* CLUBS */}
             <div style={inputGroupStyle}>
-              <label style={labelStyle}>Club favori</label>
-              <button type="button" style={btnStyle} onClick={() => setShowEquipeModal(true)}>
-                {getSelectedEquipeName()}
-              </button>
+              <label style={labelStyle}>Clubs favoris</label>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                {selectedEquipeIds.map(id => {
+                  const eq = equipes.find(e => e.id === id);
+                  if (!eq) return null;
+                  return <img key={id} src={eq.logo_url} alt={eq.nom} style={{ width: '40px', height: '40px', objectFit: 'contain', borderRadius: '8px' }} />;
+                })}
+              </div>
+              <button type="button" style={btnStyle} onClick={() => setShowEquipeModal(true)}>Choisir mes clubs</button>
             </div>
 
+            {/* CHAMPIONNATS */}
             <div style={inputGroupStyle}>
-              <label style={labelStyle}>Championnat favori</label>
-              <button type="button" style={btnStyle} onClick={() => setShowChampModal(true)}>
-                {getSelectedChampName()}
-              </button>
+              <label style={labelStyle}>Championnats favoris</label>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                {selectedChampionshipIds.map(id => {
+                  const co = competitions.find(c => c.id === id);
+                  if (!co) return null;
+                  return <img key={id} src={co.logo_url} alt={co.nom} style={{ width: '40px', height: '40px', objectFit: 'contain', borderRadius: '8px' }} />;
+                })}
+              </div>
+              <button type="button" style={btnStyle} onClick={() => setShowChampModal(true)}>Choisir mes championnats</button>
             </div>
           </div>
 
@@ -377,37 +364,62 @@ export default function ProfilPage() {
           </div>
         </form>
 
-        {/* MODALES */}
+        {/* MODALE CLUBS */}
         {showEquipeModal && (
           <div style={modalOverlayStyle} onClick={() => setShowEquipeModal(false)}>
-            <div style={{ ...modalContentStyle, maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
-              <h2>Choisir mon club</h2>
+            <div style={modalContentStyle} onClick={e => e.stopPropagation()}>
+              <h2>Choisir mes clubs</h2>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', maxHeight: '400px', overflowY: 'auto' }}>
                 {equipes.map(e => (
-                  <div key={e.id} style={{ border: selectedEquipeId === e.id ? '3px solid #F97316' : '1px solid #ccc', borderRadius: '12px', padding: '10px', textAlign: 'center', cursor: 'pointer' }}
-                       onClick={async () => { setSelectedEquipeId(e.id); setShowEquipeModal(false); await supabase.from('profiles').update({ favorite_team_id: e.id }).eq('id', user.id); }}>
+                  <div key={e.id} style={{
+                    border: selectedEquipeIds.includes(e.id) ? '3px solid #F97316' : '1px solid #ccc',
+                    borderRadius: '12px', padding: '10px', textAlign: 'center', cursor: 'pointer'
+                  }}
+                    onClick={() => {
+                      const newSelection = selectedEquipeIds.includes(e.id)
+                        ? selectedEquipeIds.filter(id => id !== e.id)
+                        : [...selectedEquipeIds, e.id];
+                      setSelectedEquipeIds(newSelection);
+                    }}>
                     {e.logo_url && <img src={e.logo_url} alt={e.nom} style={{ width: '60px', height: '60px', objectFit: 'contain', marginBottom: '10px' }} />}
                     <div>{e.nom}</div>
                   </div>
                 ))}
               </div>
+              <button onClick={async () => {
+                setShowEquipeModal(false);
+                await supabase.from('profiles').update({ favorite_team_id: selectedEquipeIds }).eq('id', user.id);
+              }}>Valider</button>
             </div>
           </div>
         )}
 
+        {/* MODALE CHAMPIONNATS */}
         {showChampModal && (
           <div style={modalOverlayStyle} onClick={() => setShowChampModal(false)}>
-            <div style={{ ...modalContentStyle, maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
-              <h2>Choisir mon championnat</h2>
+            <div style={modalContentStyle} onClick={e => e.stopPropagation()}>
+              <h2>Choisir mes championnats</h2>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', maxHeight: '400px', overflowY: 'auto' }}>
                 {competitions.map(c => (
-                  <div key={c.id} style={{ border: selectedChampionshipId === c.id ? '3px solid #F97316' : '1px solid #ccc', borderRadius: '12px', padding: '10px', textAlign: 'center', cursor: 'pointer' }}
-                       onClick={async () => { setSelectedChampionshipId(c.id); setShowChampModal(false); await supabase.from('profiles').update({ favorite_championship_id: c.id }).eq('id', user.id); }}>
+                  <div key={c.id} style={{
+                    border: selectedChampionshipIds.includes(c.id) ? '3px solid #F97316' : '1px solid #ccc',
+                    borderRadius: '12px', padding: '10px', textAlign: 'center', cursor: 'pointer'
+                  }}
+                    onClick={() => {
+                      const newSelection = selectedChampionshipIds.includes(c.id)
+                        ? selectedChampionshipIds.filter(id => id !== c.id)
+                        : [...selectedChampionshipIds, c.id];
+                      setSelectedChampionshipIds(newSelection);
+                    }}>
                     {c.logo_url && <img src={c.logo_url} alt={c.nom} style={{ width: '60px', height: '60px', objectFit: 'contain', marginBottom: '10px' }} />}
                     <div>{c.nom}</div>
                   </div>
                 ))}
               </div>
+              <button onClick={async () => {
+                setShowChampModal(false);
+                await supabase.from('profiles').update({ favorite_championship_id: selectedChampionshipIds }).eq('id', user.id);
+              }}>Valider</button>
             </div>
           </div>
         )}
