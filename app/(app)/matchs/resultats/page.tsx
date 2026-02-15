@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 
@@ -28,63 +28,84 @@ export default function ResultatsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [user, setUser] = useState<any>(null);
 
-  // --- Fonction pour formater la date
-  const formatDate = (date: string) => date ? new Date(date).toLocaleDateString('fr-FR') : 'NC';
-  const chargerTousLesMatchs = async () => {
+  const formatDate = (date: string) =>
+    date ? new Date(date).toLocaleDateString("fr-FR") : "NC";
+
+  // --- CORRECTION : La fonction async est définie ici ---
+  const chargerDonneesInitiales = useCallback(async () => {
     setLoading(true);
+    
+    // 1. Récupérer l'utilisateur stocké
+    const storedUser = localStorage.getItem("currentUser");
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("Erreur parsing user:", e);
+      }
+    }
+
+    // 2. Charger les matchs depuis Supabase
     const { data, error } = await supabase
-      .from('matchs')
-      .select('*, competition!left(logo_url), journees!left(id, nom)')
-      .order('competition', { ascending: true })
-      .order('date', { ascending: false });
+      .from("matchs")
+      .select("*, competition!left(logo_url), journees!left(id, nom)")
+      .order("competition", { ascending: true })
+      .order("date", { ascending: false });
 
     if (error) console.error("Erreur Supabase:", error);
     else setMatchs(data || []);
-
+    
     setLoading(false);
-  };
-  useEffect(() => {
-    const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-      try { setUser(JSON.parse(storedUser)); } catch (e) { console.error(e); }
-    }
-
-    chargerTousLesMatchs();
-
-    const channel = supabase
-      .channel('schema-db-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'matchs' },
-        () => chargerTousLesMatchs()
-      )
-      .subscribe();
-
-    return () => supabase.removeChannel(channel);
   }, []);
 
-  const isAdmin = user?.role?.toLowerCase() === 'admin' || user?.email === 'anthony.didier.pro@gmail.com';
+  useEffect(() => {
+    // --- CORRECTION : Appel de la fonction async interne ---
+    chargerDonneesInitiales();
+  
+    // S'abonner aux changements de la table "matchs"
+    const channel = supabase
+      .channel("schema-db-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "matchs" },
+        () => chargerDonneesInitiales() // Recharger si changement
+      )
+      .subscribe();
+      
+    // Fonction de nettoyage : se désabonner quand le composant se démonte
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [chargerDonneesInitiales]);
+
+  const isAdmin =
+    user?.role?.toLowerCase() === "admin" ||
+    user?.email === "anthony.didier.pro@gmail.com";
 
   const matchGroupes = useMemo(() => {
-    const filtered = matchs.filter(m =>
-      m.clubA.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      m.clubB.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      m.competition_nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      m.journees?.nom?.toLowerCase().includes(searchTerm.toLowerCase())
+    const filtered = matchs.filter(
+      (m) =>
+        m.clubA.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        m.clubB.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        m.competition_nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        m.journees?.nom?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    return filtered.reduce((acc, match) => {
-      const competName = match.competition_nom || 'Autres';
-      const nomJournee = match.journees?.nom || 'Hors Journée';
-      const competLogo = match.competition?.logo_url;
+    return filtered.reduce(
+      (acc, match) => {
+        const competName = match.competition_nom || "Autres";
+        const nomJournee = match.journees?.nom || "Hors Journée";
+        const competLogo = match.competition?.logo_url;
 
-      if (!acc[competName]) acc[competName] = { logo: competLogo, journees: {} };
-      if (!acc[competName].logo && competLogo) acc[competName].logo = competLogo;
-      if (!acc[competName].journees[nomJournee]) acc[competName].journees[nomJournee] = [];
+        if (!acc[competName]) acc[competName] = { logo: competLogo, journees: {} };
+        if (!acc[competName].logo && competLogo) acc[competName].logo = competLogo;
+        if (!acc[competName].journees[nomJournee]) acc[competName].journees[nomJournee] = [];
 
-      acc[competName].journees[nomJournee].push(match);
-      return acc;
-    }, {} as Record<string, { logo?: string; journees: Record<string, Match[]> }>);
+        acc[competName].journees[nomJournee].push(match);
+        return acc;
+      },
+      {} as Record<string, { logo?: string; journees: Record<string, Match[]> }>
+    );
   }, [matchs, searchTerm]);
 
   if (loading) return <div style={loadingStyle}>🏀 Chargement des scores...</div>;
@@ -95,16 +116,22 @@ export default function ResultatsPage() {
       <header style={dashboardHeader}>
         <div style={headerTop}>
           <div style={headerLeft}>
-            <h1 style={headerTitle}>RÉSULTATS <span style={orangeDot}>.</span></h1>
+            <h1 style={headerTitle}>
+              RÉSULTATS <span style={orangeDot}>.</span>
+            </h1>
             <p style={subtitle}>Consultez les derniers scores de la saison.</p>
           </div>
-          {isAdmin && <Link href="/matchs/a-venir" style={btnAdminMobile}>+ Match à venir</Link>}
+          {isAdmin && (
+            <Link href="/matchs/a-venir" style={btnAdminMobile}>
+              + Match à venir
+            </Link>
+          )}
         </div>
         <input
           type="text"
           placeholder="Rechercher club, compétition ou journée..."
           style={searchInput}
-          onChange={e => setSearchTerm(e.target.value)}
+          onChange={(e) => setSearchTerm(e.target.value)}
         />
       </header>
 
@@ -112,7 +139,9 @@ export default function ResultatsPage() {
       {Object.entries(matchGroupes).map(([compet, competData]) => (
         <div key={compet} style={competSection}>
           <h2 style={competTitle}>
-            {competData.logo && <img src={competData.logo} alt={compet} style={competLogoStyle} />}
+            {competData.logo && (
+              <img src={competData.logo} alt={compet} style={competLogoStyle} />
+            )}
             🏆 {compet}
           </h2>
 
@@ -120,25 +149,38 @@ export default function ResultatsPage() {
             <div key={nomJournee}>
               <h3 style={journeeTitle}>{nomJournee}</h3>
               <div style={matchsGrid}>
-                {matchsJournee.map(m => (
-                  <Link href={`/matchs/resultats/${m.id}`} key={m.id} style={matchCardLink}>
+                {matchsJournee.map((m) => (
+                  <Link
+                    href={`/matchs/resultats/${m.id}`}
+                    key={m.id}
+                    style={matchCardLink}
+                  >
                     <div style={matchCard}>
-                      <div style={{ ...statusBorder, backgroundColor: m.status === 'en-cours' ? '#22c55e' : '#f97316' }} />
+                      <div
+                        style={{
+                          ...statusBorder,
+                          backgroundColor: m.status === "en-cours" ? "#22c55e" : "#f97316",
+                        }}
+                      />
                       <div style={cardContent}>
                         <div style={cardTop}>
                           <span style={dateStyle}>{formatDate(m.date)}</span>
                         </div>
 
-
-
                         <div style={mainScoreRow}>
                           {/* Équipe A */}
-                          <div style={{ ...teamInfo, textAlign: 'right' }}>
+                          <div style={{ ...teamInfo, textAlign: "right" }}>
                             <div style={teamFlexRow}>
                               <span style={teamNameStyle}>{m.clubA}</span>
                               {m.logo_urlA ? (
-                                <img src={m.logo_urlA || m.competition?.logo_url || '/default-logo.png'} alt={m.clubA} style={logoStyle} />
-                              ) : <div style={logoPlaceholderStyle}>{m.clubA?.[0] || '?'}</div>}
+                                <img
+                                  src={m.logo_urlA || m.competition?.logo_url || "/default-logo.png"}
+                                  alt={m.clubA}
+                                  style={logoStyle}
+                                />
+                              ) : (
+                                <div style={logoPlaceholderStyle}>{m.clubA?.[0] || "?"}</div>
+                              )}
                             </div>
                             <span style={teamCatStyle}>{m.equipeA}</span>
                           </div>
@@ -151,11 +193,17 @@ export default function ResultatsPage() {
                           </div>
 
                           {/* Équipe B */}
-                          <div style={{ ...teamInfo, textAlign: 'left' }}>
+                          <div style={{ ...teamInfo, textAlign: "left" }}>
                             <div style={teamFlexRow}>
                               {m.logo_urlB ? (
-                                <img src={m.logo_urlB || m.competition?.logo_url || '/default-logo.png'} alt={m.clubB} style={logoStyle} />
-                              ) : <div style={logoPlaceholderStyle}>{m.clubB?.[0] || '?'}</div>}
+                                <img
+                                  src={m.logo_urlB || m.competition?.logo_url || "/default-logo.png"}
+                                  alt={m.clubB}
+                                  style={logoStyle}
+                                />
+                              ) : (
+                                <div style={logoPlaceholderStyle}>{m.clubB?.[0] || "?"}</div>
+                              )}
                               <span style={teamNameStyle}>{m.clubB}</span>
                             </div>
                             <span style={teamCatStyle}>{m.equipeB}</span>
@@ -163,7 +211,7 @@ export default function ResultatsPage() {
                         </div>
 
                         <div style={cardBottom}>
-                          <div style={locationStyle}>📍 {m.lieu || 'Lieu non défini'}</div>
+                          <div style={locationStyle}>📍 {m.lieu || "Lieu non défini"}</div>
                         </div>
                       </div>
                     </div>
@@ -183,59 +231,53 @@ export default function ResultatsPage() {
 }
 
 // --- Styles (inchangés) ---
-
-// --- STYLES OBJETS (CSS-in-JS avec 'as const' et arrondis modernes) ---
-const loadingStyle = { display: 'flex' as const, height: '100vh', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui, sans-serif', backgroundColor: '#f8fafc', color: '#64748b' };
-
-// --- CORRECTION: Pleine largeur (width: '100%') ---
-const pageContainer = { padding: '20px', width: '100%', boxSizing: 'border-box' as const, fontFamily: 'system-ui, sans-serif', backgroundColor: '#f8fafc', minHeight: '100vh' };
-
-const dashboardHeader = { display: 'flex' as const, flexDirection: 'column' as const, gap: '15px', marginBottom: '30px' };
-const headerTop = { display: 'flex' as const, justifyContent: 'space-between', alignItems: 'center', gap: '15px' };
+const loadingStyle = {
+  display: "flex" as const,
+  height: "100vh",
+  flexDirection: "column" as const,
+  alignItems: "center",
+  justifyContent: "center",
+  fontFamily: "system-ui, sans-serif",
+  backgroundColor: "#f8fafc",
+  color: "#64748b",
+};
+const pageContainer = {
+  padding: "20px",
+  width: "100%",
+  boxSizing: "border-box" as const,
+  fontFamily: "system-ui, sans-serif",
+  backgroundColor: "#f8fafc",
+  minHeight: "100vh",
+};
+const dashboardHeader = { display: "flex" as const, flexDirection: "column" as const, gap: "15px", marginBottom: "30px" };
+const headerTop = { display: "flex" as const, justifyContent: "space-between", alignItems: "center", gap: "15px" };
 const headerLeft = {};
-const headerTitle = { fontSize: '1.8rem', fontWeight: '800' as const, color: '#0f172a', margin: 0 };
-const orangeDot = { color: '#f97316' };
-const subtitle = { color: '#64748b', fontSize: '0.9rem', margin: '5px 0 0' };
-
-// --- CORRECTION: Arrondi input (16px) ---
-const searchInput = { padding: '12px 16px', borderRadius: '16px', border: '1px solid #e2e8f0', background: 'white', width: '100%', outline: 'none', fontSize: '0.95rem', boxSizing: 'border-box' as const };
-// --- CORRECTION: Arrondi bouton (12px) ---
-const btnAdminMobile = { backgroundColor: '#0f172a', color: 'white', textDecoration: 'none', padding: '10px 15px', borderRadius: '12px', fontWeight: 'bold' as const, fontSize: '0.85rem', whiteSpace: 'nowrap' as const };
-
-const competSection = { marginBottom: '40px' };
-const competTitle = { display: 'flex' as const, alignItems: 'center', gap: '15px', fontSize: '1.4rem', fontWeight: '800' as const, color: '#0f172a', marginBottom: '25px', paddingBottom: '15px', borderBottom: '2px solid #e2e8f0' };
-const competLogoStyle = { width: '40px', height: '40px', objectFit: 'contain' as const };
-
-const journeeSection = { marginLeft: '15px', marginBottom: '30px' };
-const journeeTitle = { color: '#f97316', fontWeight: '800' as const, fontSize: '1.1rem', marginBottom: '15px', paddingLeft: '10px', borderLeft: '3px solid #f97316' };
-
-// --- CORRECTION: Grille responsive ---
-const matchsGrid = { display: 'grid' as const, gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '20px' };
-const matchCardLink = { textDecoration: 'none', color: 'inherit' };
-
-// --- CORRECTION: Arrondi carte (20px) ---
-const matchCard = { backgroundColor: 'white', borderRadius: '20px', display: 'flex' as const, overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', border: '1px solid #f1f5f9', transition: 'transform 0.2s', height: '100%' };
-
-const statusBorder = { width: '6px', flexShrink: 0 };
-const cardContent = { flex: 1, padding: '15px', display: 'flex' as const, flexDirection: 'column' as const, justifyContent: 'space-between' as const };
-const cardTop = { display: 'flex' as const, justifyContent: 'space-between', marginBottom: '10px' };
-const dateStyle = { fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600' as const };
-const mainScoreRow = { display: 'flex' as const, alignItems: 'center', justifyContent: 'space-between', gap: '10px', margin: '5px 0' };
-const teamInfo = { display: 'flex' as const, flexDirection: 'column' as const, width: '40%' };
-const teamFlexRow = { display: 'flex' as const, alignItems: 'center', gap: '10px' };
-const teamNameStyle = { fontSize: '0.9rem', fontWeight: '800' as const, color: '#0f172a', textTransform: 'uppercase' as const };
-const teamCatStyle = { fontSize: '0.7rem', color: '#94a3b8', fontWeight: '600' as const };
-
-// --- CORRECTION: Arrondi score (12px) ---
-const scoreBadge = { background: '#f8fafc', padding: '6px 12px', borderRadius: '12px', display: 'flex' as const, alignItems: 'center', gap: '5px', border: '1px solid #e2e8f0' };
-
-const scoreNum = { fontSize: '1.2rem', fontWeight: '900' as const, color: '#0f172a' };
-const scoreSep = { color: '#cbd5e1', fontWeight: 'bold' as const };
-const cardBottom = { marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #f1f5f9', fontSize: '0.75rem', color: '#64748b', fontWeight: '600' as const };
-const locationStyle = { fontSize: '0.75rem', color: '#64748b', marginTop: '5px' };
-const liveTag = { color: '#22c55e', fontWeight: '800' as const, fontSize: '0.7rem' };
-
-// --- CORRECTION: Arrondi EmptyState (20px) ---
-const emptyState = { textAlign: 'center' as const, padding: '40px', color: '#64748b', background: 'white', borderRadius: '20px', border: '2px dashed #e2e8f0' };
-const logoStyle = { width: '35px', height: '35px', borderRadius: '50%', objectFit: 'contain' as const, backgroundColor: 'white', border: '1px solid #f1f5f9' };
-const logoPlaceholderStyle = { width: '35px', height: '35px', borderRadius: '50%', backgroundColor: '#f1f5f9', display: 'flex' as const, alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' as const, fontSize: '1rem', color: '#64748b' };
+const headerTitle = { fontSize: "1.8rem", fontWeight: "800" as const, color: "#0f172a", margin: 0 };
+const orangeDot = { color: "#f97316" };
+const subtitle = { color: "#64748b", fontSize: "0.9rem", margin: "5px 0 0" };
+const searchInput = { padding: "12px 16px", borderRadius: "16px", border: "1px solid #e2e8f0", background: "white", width: "100%", outline: "none", fontSize: "0.95rem", boxSizing: "border-box" as const };
+const btnAdminMobile = { backgroundColor: "#0f172a", color: "white", textDecoration: "none", padding: "10px 15px", borderRadius: "12px", fontWeight: "bold" as const, fontSize: "0.85rem", whiteSpace: "nowrap" as const };
+const competSection = { marginBottom: "40px" };
+const competTitle = { display: "flex" as const, alignItems: "center", gap: "15px", fontSize: "1.4rem", fontWeight: "800" as const, color: "#0f172a", marginBottom: "25px", paddingBottom: "15px", borderBottom: "2px solid #e2e8f0" };
+const competLogoStyle = { width: "40px", height: "40px", objectFit: "contain" as const };
+const journeeTitle = { color: "#f97316", fontWeight: "800" as const, fontSize: "1.1rem", marginBottom: "15px", paddingLeft: "10px", borderLeft: "3px solid #f97316" };
+const matchsGrid = { display: "grid" as const, gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: "20px" };
+const matchCardLink = { textDecoration: "none", color: "inherit" };
+const matchCard = { backgroundColor: "white", borderRadius: "20px", display: "flex" as const, overflow: "hidden", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)", border: "1px solid #f1f5f9", transition: "transform 0.2s", height: "100%" };
+const statusBorder = { width: "6px", flexShrink: 0 };
+const cardContent = { flex: 1, padding: "15px", display: "flex" as const, flexDirection: "column" as const, justifyContent: "space-between" as const };
+const cardTop = { display: "flex" as const, justifyContent: "space-between", marginBottom: "10px" };
+const dateStyle = { fontSize: "0.75rem", color: "#94a3b8", fontWeight: "600" as const };
+const mainScoreRow = { display: "flex" as const, alignItems: "center", justifyContent: "space-between", gap: "10px", margin: "5px 0" };
+const teamInfo = { display: "flex" as const, flexDirection: "column" as const, width: "40%" };
+const teamFlexRow = { display: "flex" as const, alignItems: "center", gap: "10px" };
+const teamNameStyle = { fontSize: "0.9rem", fontWeight: "800" as const, color: "#0f172a", textTransform: "uppercase" as const };
+const teamCatStyle = { fontSize: "0.7rem", color: "#94a3b8", fontWeight: "600" as const };
+const scoreBadge = { background: "#f8fafc", padding: "6px 12px", borderRadius: "12px", display: "flex" as const, alignItems: "center", gap: "5px", border: "1px solid #e2e8f0" };
+const scoreNum = { fontSize: "1.2rem", fontWeight: "900" as const, color: "#0f172a" };
+const scoreSep = { color: "#cbd5e1", fontWeight: "bold" as const };
+const cardBottom = { marginTop: "10px", paddingTop: "10px", borderTop: "1px solid #f1f5f9", fontSize: "0.75rem", color: "#64748b", fontWeight: "600" as const };
+const locationStyle = { fontSize: "0.75rem", color: "#64748b", marginTop: "5px" };
+const emptyState = { textAlign: "center" as const, padding: "40px", color: "#64748b", background: "white", borderRadius: "20px", border: "2px dashed #e2e8f0" };
+const logoStyle = { width: "35px", height: "35px", borderRadius: "50%", objectFit: "contain" as const, backgroundColor: "white", border: "1px solid #f1f5f9" };
+const logoPlaceholderStyle = { width: "35px", height: "35px", borderRadius: "50%", backgroundColor: "#f1f5f9", display: "flex" as const, alignItems: "center", justifyContent: "center", fontWeight: "bold" as const, fontSize: "1rem", color: "#64748b" };
