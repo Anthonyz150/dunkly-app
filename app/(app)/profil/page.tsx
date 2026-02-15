@@ -4,8 +4,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-// Optionnel : importer un icône pour le bouton Apple si tu veux en ajouter un
-// import { AppleIcon } from '@/components/icons'; 
 
 export default function ProfilPage() {
   const [user, setUser] = useState<any>(null);
@@ -19,21 +17,16 @@ export default function ProfilPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [generatingCard, setGeneratingCard] = useState(false);
   
-  // --- NOUVEAU : État pour détecter si l'utilisateur est sur Apple ---
-  const [isAppleDevice, setIsAppleDevice] = useState(false);
-  // ------------------------------------------------------------------
+  // --- ÉTATS POUR LES FAVORIS ---
+  const [equipes, setEquipes] = useState<any[]>([]);
+  const [competitions, setCompetitions] = useState<any[]>([]);
+  const [selectedEquipe, setSelectedEquipe] = useState("");
+  const [selectedChampionship, setSelectedChampionship] = useState("");
+  // ------------------------------
   
   const router = useRouter();
 
   useEffect(() => {
-    // --- NOUVEAU : Détection du système d'exploitation ---
-    const userAgent = navigator.userAgent || navigator.vendor;
-    // Vérifie si l'appareil est un iPhone, iPad ou iPod
-    if (/iPad|iPhone|iPod/.test(userAgent)) {
-        setIsAppleDevice(true);
-    }
-    // ----------------------------------------------------
-
     const getProfile = async () => {
       setLoading(true);
       
@@ -46,12 +39,30 @@ export default function ProfilPage() {
 
       setUser(session.user);
       
-      const storedUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      // ✅ Charger les données du profil, y compris les favoris
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('username, prenom, nom, avatar_url, favorite_team_id, favorite_championship_id')
+        .eq('id', session.user.id)
+        .single();
       
-      setUsername(storedUser.username || session.user.user_metadata.username || '');
-      setPrenom(storedUser.prenom || session.user.user_metadata.prenom || '');
-      setNom(storedUser.nom || session.user.user_metadata.nom || '');
-      setAvatarUrl(storedUser.avatar_url || session.user.user_metadata.avatar_url || null);
+      if (profile) {
+        setUsername(profile.username || '');
+        setPrenom(profile.prenom || '');
+        setNom(profile.nom || '');
+        setAvatarUrl(profile.avatar_url || null);
+        setSelectedEquipe(profile.favorite_team_id || '');
+        setSelectedChampionship(profile.favorite_championship_id || '');
+      }
+
+      // ✅ Charger les listes pour les sélecteurs
+      const [equipesRes, compRes] = await Promise.all([
+        supabase.from('equipes_clubs').select('id, nom_equipe'),
+        supabase.from('competitions').select('id, nom')
+      ]);
+      
+      if (equipesRes.data) setEquipes(equipesRes.data);
+      if (compRes.data) setCompetitions(compRes.data);
       
       setLoading(false);
     };
@@ -72,7 +83,6 @@ export default function ProfilPage() {
     };
   }, [router]);
 
-  // ... (fonctions uploadAvatar, handleSave, ajouterACarte, confirmerSuppression restent les mêmes)
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       setUploading(true);
@@ -120,10 +130,16 @@ export default function ProfilPage() {
     setMessage('⏳ Enregistrement...');
 
     try {
-      // Mettre à jour la table profiles
+      // ✅ Mettre à jour profiles avec favoris
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ username, prenom, nom })
+        .update({ 
+          username, 
+          prenom, 
+          nom,
+          favorite_team_id: selectedEquipe || null,
+          favorite_championship_id: selectedChampionship || null,
+        })
         .eq('id', user.id);
 
       if (profileError) throw profileError;
@@ -272,17 +288,37 @@ export default function ProfilPage() {
             </div>
           </div>
 
+          {/* ✅ SECTION FAVORIS */}
+          <div style={{borderTop: '1px solid #F1F5F9', marginTop: '10px', paddingTop: '20px'}}>
+            <h3 style={{fontSize: '1rem', fontWeight: '700', color: '#0F172A', marginBottom: '15px'}}>Mes Favoris</h3>
+            
+            <div style={inputGroup}>
+                <label style={labelStyle}>Équipe favorite</label>
+                <select value={selectedEquipe} onChange={(e) => setSelectedEquipe(e.target.value)} style={inputStyle}>
+                <option value="">Sélectionner une équipe</option>
+                {equipes.map(e => <option key={e.id} value={e.id}>{e.nom_equipe}</option>)}
+                </select>
+            </div>
+            
+            <div style={inputGroup}>
+                <label style={labelStyle}>Championnat favori</label>
+                <select value={selectedChampionship} onChange={(e) => setSelectedChampionship(e.target.value)} style={inputStyle}>
+                <option value="">Sélectionner un championnat</option>
+                {competitions.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
+                </select>
+            </div>
+          </div>
+          {/* ------------------ */}
+
           <button type="submit" style={btnSave}>SAUVEGARDER</button>
 
-          {/* --- MODIFICATION ICI : Affichage conditionnel du bouton --- */}
-          {!isAppleDevice && (
-            <div style={{ marginTop: '20px' }}>
+          {/* ✅ BOUTON GOOGLE WALLET */}
+          <div style={{ marginTop: '20px' }}>
               <button type="button" onClick={ajouterACarte} style={{ ...btnSave, background: '#4285F4', width: '100%' }} disabled={generatingCard}>
-                {generatingCard ? '⏳ Génération...' : '💳 Ajouter à Google Wallet'}
+                💳 {generatingCard ? '⏳ Génération...' : 'Ajouter à Google Wallet'}
               </button>
-            </div>
-          )}
-          {/* ----------------------------------------------------------- */}
+          </div>
+          {/* --------------------------- */}
 
           <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #F1F5F9' }}>
             <button type="button" onClick={() => setShowDeleteModal(true)} style={btnDelete}>
