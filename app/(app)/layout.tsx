@@ -92,13 +92,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             ☰
           </button>
           <span className="logo dark:text-white">🏀 DUNKLY</span>
-          {/* Ajouté : Conteneur pour le switcher et avatar */}
-          <div className="flex items-center gap-2">
-            <ThemeSwitcher />
-            <Link href="/profil">
-              <AvatarDisplay />
-            </Link>
-          </div>
         </header>
 
         {menuOpen && (
