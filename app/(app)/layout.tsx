@@ -125,7 +125,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 {/* Modifié : Class dark sur la ligne */}
                 <hr className="dark:border-slate-700" />
                 <Link href="/membres" className="dark:text-slate-300 dark:hover:text-white">👥 Membres</Link>
-                <Link href="/admin/newsletter" className="dark:text-slate-300 dark:hover:text-white">📩 Newsletter</Link>
               </>
             )}
 
