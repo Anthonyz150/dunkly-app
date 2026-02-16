@@ -4,7 +4,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 
 export default function ProfilPage() {
   const [user, setUser] = useState<any>(null);
@@ -254,16 +253,6 @@ export default function ProfilPage() {
               <button type="button" style={btnStyle} onClick={() => setShowChampModal(true)}>Choisir mes championnats</button>
             </div>
           </div>
-
-          {/* --- AJOUT DU BOUTON THÈME --- */}
-          <div style={{...inputGroupStyle, marginTop: '10px', borderTop: '1px solid #F1F5F9', paddingTop: '20px'}}>
-            <label style={labelStyle}>Apparence</label>
-            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#F8FAFC', padding: '10px', borderRadius: '12px'}}>
-              <span style={{color: '#1E293B', fontWeight: '500'}}>Mode sombre</span>
-              <ThemeSwitcher />
-            </div>
-          </div>
-          {/* ----------------------------- */}
 
           <button type="submit" style={btnSaveStyle}>SAUVEGARDER</button>
           
