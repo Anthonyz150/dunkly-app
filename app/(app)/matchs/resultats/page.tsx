@@ -176,7 +176,8 @@ export default function ResultatsPage() {
 
           {Object.entries(competData.journees).map(([nomJournee, matchsJournee]) => (
             <div key={nomJournee}>
-              <h3 style={journeeTitle}>{nomJournee}</h3>
+              {/* CORRECTION : Utilisez 'compet' qui est la clé de la boucle parente, ou m[0].competition_nom */}
+              <h3 style={journeeTitle}>{compet} - {nomJournee}</h3>
               <div style={matchsGrid}>
                 {matchsJournee.map((m) => (
                   <Link
