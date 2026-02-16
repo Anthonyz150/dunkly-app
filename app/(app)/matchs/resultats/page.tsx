@@ -136,7 +136,7 @@ export default function ResultatsPage() {
           {/* --- BOUTON ADMIN : MATCHS À VENIR --- */}
           {isAdmin && (
             <Link
-              href="/admin/matchs-a-venir"
+              href="/admin/matchs/a-venir"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
