@@ -54,6 +54,23 @@ export default function ResultatsPage() {
   }, []);
 
   useEffect(() => {
+    const getSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      setUser(data.session?.user || null);
+    };
+    getSession();
+
+    // Optionnel : écouter les changements de connexion
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
     // --- CORRECTION : Appel de la fonction async interne ---
     chargerDonneesInitiales();
 
