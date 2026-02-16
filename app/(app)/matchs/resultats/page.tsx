@@ -23,39 +23,39 @@ interface Match {
 }
 
 export default function ResultatsPage() {
-   const [matchs, setMatchs] = useState<Match[]>([]);
-   const [loading, setLoading] = useState(true);
-   const [searchTerm, setSearchTerm] = useState("");
-   const [user, setUser] = useState<any>(null);
-  
-   const formatDate = (date: string) =>
-     date ? new Date(date).toLocaleDateString("fr-FR") : "NC";
-  
-   // app/matchs/resultats/page.tsx
+  const [matchs, setMatchs] = useState<Match[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [user, setUser] = useState<any>(null);
 
-const chargerDonneesInitiales = useCallback(async () => {
-  setLoading(true);
-  // 2. Charger TOUS les matchs depuis Supabase
-  const { data, error } = await supabase
-    .from("matchs")
-    .select(`
+  const formatDate = (date: string) =>
+    date ? new Date(date).toLocaleDateString("fr-FR") : "NC";
+
+  // app/matchs/resultats/page.tsx
+
+  const chargerDonneesInitiales = useCallback(async () => {
+    setLoading(true);
+    // 2. Charger TOUS les matchs depuis Supabase
+    const { data, error } = await supabase
+      .from("matchs")
+      .select(`
       *, 
       competition!left(logo_url, nom), 
       journees!left(id, nom)
     `)
-    // --- LE FILTRE A ÉTÉ SUPPRIMÉ ICI ---
-    .order("date", { ascending: false });
+      // --- LE FILTRE A ÉTÉ SUPPRIMÉ ICI ---
+      .order("date", { ascending: false });
 
-  if (error) console.error("Erreur Supabase:", error);
-  else setMatchs(data || []);
+    if (error) console.error("Erreur Supabase:", error);
+    else setMatchs(data || []);
 
-  setLoading(false);
-}, []);
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
     // --- CORRECTION : Appel de la fonction async interne ---
     chargerDonneesInitiales();
-  
+
     // S'abonner aux changements de la table "matchs"
     const channel = supabase
       .channel("schema-db-changes")
@@ -65,7 +65,7 @@ const chargerDonneesInitiales = useCallback(async () => {
         () => chargerDonneesInitiales() // Recharger si changement
       )
       .subscribe();
-      
+
     // Fonction de nettoyage : se désabonner quand le composant se démonte
     return () => {
       supabase.removeChannel(channel);
@@ -115,9 +115,26 @@ const chargerDonneesInitiales = useCallback(async () => {
             </h1>
             <p style={subtitle}>Consultez les derniers scores de la saison.</p>
           </div>
+          {/* --- BOUTON ADMIN : MATCHS À VENIR --- */}
           {isAdmin && (
-            <Link href="/matchs/a-venir" style={btnAdminMobile}>
-              + Match à venir
+            <Link
+              href="/admin/matchs-a-venir"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                backgroundColor: '#1E293B',
+                color: 'white',
+                padding: '10px 20px',
+                borderRadius: '12px',
+                textDecoration: 'none',
+                fontWeight: 'bold',
+                fontSize: '0.9rem',
+                marginTop: '10px',
+                border: '1px solid #334155'
+              }}
+            >
+              <span>⚙️</span> Gérer les matchs à venir
             </Link>
           )}
         </div>
