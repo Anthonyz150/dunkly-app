@@ -1,4 +1,4 @@
-import { ThemeProvider } from "@/components/ThemeContext"; // Ajustez le chemin
+import { ThemeProvider } from "@/components/ThemeContext";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
