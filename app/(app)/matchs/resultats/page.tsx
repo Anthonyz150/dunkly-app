@@ -30,6 +30,7 @@ export default function ResultatsPage() {
 
   const formatDate = (date: string) =>
     date ? new Date(date).toLocaleDateString("fr-FR") : "NC";
+  console.log("Utilisateur actuel :", user);
 
   // app/matchs/resultats/page.tsx
 
