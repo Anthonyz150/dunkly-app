@@ -5,6 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next"
+// Ajouté : Import du switcher
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -80,17 +82,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <div className="app">
+      {/* Modifié : Class dark sur la div principale */}
+      <div className="app dark:bg-slate-950 text-slate-900 dark:text-slate-100">
 
         {/* HEADER MOBILE */}
-        <header className="mobile-header">
-          <button onClick={() => setMenuOpen(true)} className="burger">
+        {/* Modifié : Class dark sur le header */}
+        <header className="mobile-header dark:bg-slate-900 dark:border-slate-700">
+          <button onClick={() => setMenuOpen(true)} className="burger dark:text-white">
             ☰
           </button>
-          <span className="logo">🏀 DUNKLY</span>
-          <Link href="/profil">
-            <AvatarDisplay />
-          </Link>
+          <span className="logo dark:text-white">🏀 DUNKLY</span>
+          {/* Ajouté : Conteneur pour le switcher et avatar */}
+          <div className="flex items-center gap-2">
+            <ThemeSwitcher />
+            <Link href="/profil">
+              <AvatarDisplay />
+            </Link>
+          </div>
         </header>
 
         {menuOpen && (
@@ -98,40 +106,44 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         )}
 
         {/* SIDEBAR */}
-        <aside className={`sidebar ${menuOpen ? "open" : ""}`}>
-          <h2 className="brand">🏀 DUNKLY</h2>
+        {/* Modifié : Class dark sur la sidebar */}
+        <aside className={`sidebar ${menuOpen ? "open" : ""} dark:bg-slate-900 dark:border-slate-700`}>
+          <h2 className="brand dark:text-white">🏀 DUNKLY</h2>
 
-          <div className="user-card">
+          {/* Modifié : Class dark sur user-card */}
+          <div className="user-card dark:bg-white/5">
             <AvatarDisplay size="80px" />
-            <div className="username">
+            <div className="username dark:text-white">
               {user?.username || "Utilisateur"}
             </div>
-            <div className="fullname">
+            <div className="fullname dark:text-slate-300">
               {user?.prenom} {user?.nom}
             </div>
           </div>
 
           <nav>
-            <Link href="/">🏠 Accueil</Link>
-            <Link href="/competitions">🏆 Compétitions</Link>
-            <Link href="/matchs/resultats">✅ Résultats</Link>
-            <Link href="/equipes">🛡️ Clubs</Link>
-            <Link href="/arbitres">🏁 Arbitres</Link>
+            {/* Modifié : Classes dark sur les liens */}
+            <Link href="/" className="dark:text-slate-300 dark:hover:text-white">🏠 Accueil</Link>
+            <Link href="/competitions" className="dark:text-slate-300 dark:hover:text-white">🏆 Compétitions</Link>
+            <Link href="/matchs/resultats" className="dark:text-slate-300 dark:hover:text-white">✅ Résultats</Link>
+            <Link href="/equipes" className="dark:text-slate-300 dark:hover:text-white">🛡️ Clubs</Link>
+            <Link href="/arbitres" className="dark:text-slate-300 dark:hover:text-white">🏁 Arbitres</Link>
 
             {isAdmin && (
               <>
-                <hr />
-                <Link href="/membres">👥 Membres</Link>
-                <Link href="/admin/newsletter">📩 Newsletter</Link>
+                {/* Modifié : Class dark sur la ligne */}
+                <hr className="dark:border-slate-700" />
+                <Link href="/membres" className="dark:text-slate-300 dark:hover:text-white">👥 Membres</Link>
+                <Link href="/admin/newsletter" className="dark:text-slate-300 dark:hover:text-white">📩 Newsletter</Link>
               </>
             )}
 
-            <hr />
-            <Link href="/profil">👤 Profil</Link>
+            <hr className="dark:border-slate-700" />
+            <Link href="/profil" className="dark:text-slate-300 dark:hover:text-white">👤 Profil</Link>
           </nav>
 
           <button
-            className="logout"
+            className="logout dark:bg-white/5 dark:text-red-300"
             onClick={() => {
               localStorage.clear();
               router.push("/login");
@@ -142,11 +154,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </aside>
 
         {/* CONTENU */}
-        <main className="content">{children}</main>
+        {/* Modifié : Class dark sur le main */}
+        <main className="content dark:bg-slate-950">{children}</main>
       </div>
 
       <Analytics />
+      <SpeedInsights />
 
+      {/* --- Reste du style jsx intact --- */}
       <style jsx global>{`
         body {
           margin: 0;

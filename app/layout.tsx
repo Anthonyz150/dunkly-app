@@ -1,17 +1,12 @@
-import { Analytics } from "@vercel/analytics/next"
-import { SpeedInsights } from "@vercel/speed-insights/next"
-import "./globals.css";
+import { ThemeProvider } from "@/components/ThemeContext"; // Ajustez le chemin
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className="bg-slate-950 text-white">
-      {/* --- CORRECTION: Ajout de classes pour le fond sombre global et la police --- */}
-      <body className="antialiased font-sans">
-        {/* --- OPTIMISATION: Conteneur principal sémantique --- */}
-        <div className="relative flex min-h-screen flex-col">
+    <html lang="fr" suppressHydrationWarning>
+      <body>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}
-        </div>
-        <Analytics />
+        </ThemeProvider>
       </body>
     </html>
   );
