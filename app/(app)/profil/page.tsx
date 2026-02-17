@@ -168,20 +168,6 @@ export default function ProfilPage() {
     }
   };
 
-  // ... (ajouterACarte et confirmerSuppression restent les mêmes)
-
-  const ajouterACarte = async () => {
-    try {
-      setGeneratingCard(true);
-      setMessage('⏳ Génération de la carte...');
-      const response = await fetch('/api/generate-card', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prenom, nom }) });
-      const data = await response.json();
-      if (data.link) { window.open(data.link, '_blank'); setMessage('✅ Redirection Wallet...'); setTimeout(() => setMessage(''), 3000); }
-      else throw new Error(data.error || "Erreur génération");
-    } catch (error: any) { setMessage('❌ Erreur Wallet : ' + error.message); }
-    finally { setGeneratingCard(false); }
-  };
-
   const confirmerSuppression = async () => {
     try {
       const { error } = await supabase.rpc('delete_user');
@@ -253,20 +239,7 @@ export default function ProfilPage() {
               <button type="button" style={btnStyle} onClick={() => setShowChampModal(true)}>Choisir mes championnats</button>
             </div>
           </div>
-
           <button type="submit" style={btnSaveStyle}>SAUVEGARDER</button>
-          
-          {!isAppleDevice && (
-             <button
-               type="button"
-               onClick={ajouterACarte}
-               style={{ ...btnSaveStyle, background: '#4285F4', width: '100%', marginTop: '20px' }}
-               disabled={generatingCard}
-             >
-               💳 {generatingCard ? '⏳ Génération...' : 'Ajouter à Google Wallet'}
-             </button>
-           )}
-
           <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #F1F5F9' }}>
             <button type="button" onClick={() => setShowDeleteModal(true)} style={btnDeleteStyle}>SUPPRIMER MON COMPTE</button>
           </div>
